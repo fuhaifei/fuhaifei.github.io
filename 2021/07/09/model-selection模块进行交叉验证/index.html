@@ -20,26 +20,23 @@
     var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="主要包括六个模块，其中四个模块为分类，回归，聚类，降维的算法模块，两个其他模型，模型选择评估模块和预处理模块。">
+  <meta name="description" content="为了避免模型过拟合，通过添加验证集，模型训练完成后使用验证集验证模型的效果后，再对测试集进行测试。 训练集和测试集划分使用train_test_split函数 12345678910111213141516&gt;&gt; import numpy as np&gt;&gt; from sklearn.model_selection import train_test_split&gt;&gt;">
 <meta property="og:type" content="article">
-<meta property="og:title" content="sklearn主要模块理解">
-<meta property="og:url" content="https://fuhaifei.github.io/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/index.html">
+<meta property="og:title" content="model_selection模块进行交叉验证">
+<meta property="og:url" content="https://fuhaifei.github.io/2021/07/09/model-selection%E6%A8%A1%E5%9D%97%E8%BF%9B%E8%A1%8C%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81/index.html">
 <meta property="og:site_name" content="光与影的个人博客">
-<meta property="og:description" content="主要包括六个模块，其中四个模块为分类，回归，聚类，降维的算法模块，两个其他模型，模型选择评估模块和预处理模块。">
+<meta property="og:description" content="为了避免模型过拟合，通过添加验证集，模型训练完成后使用验证集验证模型的效果后，再对测试集进行测试。 训练集和测试集划分使用train_test_split函数 12345678910111213141516&gt;&gt; import numpy as np&gt;&gt; from sklearn.model_selection import train_test_split&gt;&gt;">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://fuhaifei.github.io/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164825577.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164843880.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164855098.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164909443.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164919754.png">
-<meta property="article:published_time" content="2021-07-09T08:49:54.000Z">
-<meta property="article:modified_time" content="2021-07-09T08:52:42.154Z">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/07/09/model-selection%E6%A8%A1%E5%9D%97%E8%BF%9B%E8%A1%8C%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81/sklearn%20model_selection模块进行交叉验证/image-20210709165817836.png">
+<meta property="og:image" content="c:/Users/79351/AppData/Roaming/Typora/typora-user-images/image-20210604090841624.png">
+<meta property="article:published_time" content="2021-07-09T08:57:47.000Z">
+<meta property="article:modified_time" content="2021-07-09T08:58:57.304Z">
 <meta property="article:author" content="NEU-FHF">
 <meta property="article:tag" content="sklearn">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fuhaifei.github.io/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164825577.png">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2021/07/09/model-selection%E6%A8%A1%E5%9D%97%E8%BF%9B%E8%A1%8C%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81/sklearn%20model_selection模块进行交叉验证/image-20210709165817836.png">
 
-<link rel="canonical" href="https://fuhaifei.github.io/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/">
+<link rel="canonical" href="https://fuhaifei.github.io/2021/07/09/model-selection%E6%A8%A1%E5%9D%97%E8%BF%9B%E8%A1%8C%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81/">
 
 
 <script id="page-configurations">
@@ -52,7 +49,7 @@
   };
 </script>
 
-  <title>sklearn主要模块理解 | 光与影的个人博客</title>
+  <title>model_selection模块进行交叉验证 | 光与影的个人博客</title>
   
 
 
@@ -168,7 +165,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/09/model-selection%E6%A8%A1%E5%9D%97%E8%BF%9B%E8%A1%8C%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -181,7 +178,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          sklearn主要模块理解
+          model_selection模块进行交叉验证
         </h1>
 
         <div class="post-meta">
@@ -192,7 +189,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2021-07-09 16:49:54 / 修改时间：16:52:42" itemprop="dateCreated datePublished" datetime="2021-07-09T16:49:54+08:00">2021-07-09</time>
+              <time title="创建时间：2021-07-09 16:57:47 / 修改时间：16:58:57" itemprop="dateCreated datePublished" datetime="2021-07-09T16:57:47+08:00">2021-07-09</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -215,32 +212,18 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>主要包括六个模块，其中四个模块为<strong>分类，回归，聚类，降维</strong>的算法模块，两个其他模型，模型选择评估模块和预处理模块。</p>
-<img src="/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164825577.png" class="" title="image-20210709164825577">
+        <p>为了避免模型过拟合，通过添加<strong>验证集</strong>，模型训练完成后使用<strong>验证集</strong>验证模型的效果后，再对测试集进行测试。</p>
+<h3 id="训练集和测试集划分"><a href="#训练集和测试集划分" class="headerlink" title="训练集和测试集划分"></a>训练集和测试集划分</h3><p>使用train_test_split函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt; <span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line">&gt;&gt; <span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split</span><br><span class="line">&gt;&gt; <span class="keyword">from</span> sklearn <span class="keyword">import</span> datasets</span><br><span class="line"></span><br><span class="line"><span class="comment"># 加载鸢尾花数据集</span></span><br><span class="line">&gt;&gt; x_data, y_data = datasets.load_iris(return_X_y=<span class="literal">True</span>)</span><br><span class="line"><span class="comment"># 划分测试集和训练集</span></span><br><span class="line">&gt;&gt; x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size = <span class="number">0.2</span>, random_state = <span class="number">42</span>)</span><br><span class="line">&gt;&gt; <span class="built_in">print</span>(x_train.shape)</span><br><span class="line">&gt;&gt; <span class="built_in">print</span>(x_test.shape)</span><br><span class="line">(<span class="number">120</span>, <span class="number">4</span>)</span><br><span class="line">(<span class="number">30</span>, <span class="number">4</span>)</span><br><span class="line">&gt;&gt; <span class="keyword">from</span> sklearn <span class="keyword">import</span> svm</span><br><span class="line">&gt;&gt; clf = svm.SVC(kernel=<span class="string">&#x27;linear&#x27;</span>, C=<span class="number">1</span>).fit(X_train, y_train)</span><br><span class="line">&gt;&gt; clf.score(X_test, y_test)</span><br><span class="line"><span class="number">1.0</span></span><br></pre></td></tr></table></figure>
 <span id="more"></span>
-<h3 id="一个数据分析流程中涉及的sklearn模块"><a href="#一个数据分析流程中涉及的sklearn模块" class="headerlink" title="一个数据分析流程中涉及的sklearn模块"></a>一个数据分析流程中涉及的sklearn模块</h3><p>机器学习项目的一般流程为 <strong>数据集获取</strong>-》<strong>数据预处理</strong>-》<strong>训练模型</strong>-》<strong>评估模型</strong>-》<strong>应用模型</strong></p>
-<ol>
-<li><p>获取数据集，使用dataset模块</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sklearn <span class="keyword">import</span> datasets</span><br><span class="line">iris = datasets.load_iris()</span><br><span class="line"><span class="comment"># 返回一个包含data和target的字典</span></span><br><span class="line">iris_data = iris.data</span><br><span class="line">iris_target = iris.target</span><br></pre></td></tr></table></figure>
-<p>包含常用的数据集加载</p>
-<img src="/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164843880.png" class="" title="image-20210709164843880">
-</li>
-<li><p>数据预处理，使用sklearn的Preprocessing模块</p>
-<p>包括常用的归一化、one_hot等处理方式</p>
-<img src="/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164855098.png" class="" title="image-20210709164855098">
-</li>
-<li><p>划分数据集，使用model_selection模块中的划分函数（不同的训练集测试集划分方式)</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split</span><br><span class="line">X_train, X_test, y_train, y_test = train_test_split(iris_data, iris_target, test_size=<span class="number">0.2</span>, random_state=<span class="number">42</span>)</span><br></pre></td></tr></table></figure>
-<img src="/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164909443.png" class="" title="image-20210709164909443">
-</li>
-<li><p>模型选择，直接导入特定模型</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sklearn <span class="keyword">import</span> svm</span><br><span class="line">clf = svm.SVC(gamma=<span class="number">0.001</span>, C=<span class="number">100.</span>)</span><br><span class="line"><span class="comment"># 训练模型fit</span></span><br><span class="line">clf.fit(X_train, y_train)</span><br><span class="line"><span class="built_in">print</span>(clf.get_params())</span><br><span class="line"><span class="comment"># 评价模型</span></span><br><span class="line"><span class="built_in">print</span>(clf.score(X_test,y_test))</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>评价模型，使用metircs模块进行评价</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> accuracy_score</span><br><span class="line">accuracy_score(y_test, clf.predict(X_test))</span><br></pre></td></tr></table></figure>
-<img src="/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/image-20210709164919754.png" class="" title="image-20210709164919754">
-</li>
-</ol>
+<h3 id="cross-validation-交叉验证"><a href="#cross-validation-交叉验证" class="headerlink" title="cross validation 交叉验证"></a>cross validation 交叉验证</h3><p><img src="sklearn model_selection模块进行交叉验证/image-20210709165817836.png" alt="image-20210709165817836"></p>
+<h4 id="cross-val-score函数进行模型交叉验证评价"><a href="#cross-val-score函数进行模型交叉验证评价" class="headerlink" title="cross_val_score函数进行模型交叉验证评价"></a>cross_val_score函数进行模型交叉验证评价</h4><p>简单使用</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt; <span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> cross_val_score</span><br><span class="line">&gt;&gt; clf = svm.SVC(kernel=<span class="string">&#x27;linear&#x27;</span>, C=<span class="number">1</span>, random_state=<span class="number">42</span>)</span><br><span class="line">&gt;&gt; scores = cross_val_score(clf, x_data, y_data, cv = <span class="number">5</span>)</span><br><span class="line">&gt;&gt; <span class="built_in">print</span>(scores)</span><br><span class="line">[<span class="number">0.96666667</span> <span class="number">1.</span>         <span class="number">0.96666667</span> <span class="number">0.96666667</span> <span class="number">1.</span>        ]</span><br></pre></td></tr></table></figure>
+<p>通过scoring参数，自定义评估函数，如果不显示指定，则调用estimator的默认score函数</p>
+<p><img src="C:\Users\79351\AppData\Roaming\Typora\typora-user-images\image-20210604090841624.png" alt="image-20210604090841624"></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt; scores = cross_val_score(clf, x_data, y_data, cv = <span class="number">5</span>, scoring = <span class="string">&#x27;f1_macro&#x27;</span>)</span><br><span class="line">&gt;&gt; <span class="built_in">print</span>(scores)</span><br><span class="line">[<span class="number">0.96658312</span> <span class="number">1.</span>         <span class="number">0.96658312</span> <span class="number">0.96658312</span> <span class="number">1.</span>        ]</span><br></pre></td></tr></table></figure>
+<p>cv参数不止可以传入k折的折数，还可以传入<strong>cross-validation generator or an iterable</strong>等</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 传入交叉验证生成器</span></span><br><span class="line">&gt;&gt; <span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> ShuffleSplit</span><br><span class="line">&gt;&gt; cv = ShuffleSplit(n_splits=<span class="number">5</span>, test_size=<span class="number">0.2</span>, random_state= <span class="number">42</span>)</span><br><span class="line">&gt;&gt; cross_val_score(clf, x_data, y_data, cv=cv)</span><br><span class="line">array([<span class="number">1.</span>        , <span class="number">1.</span>        , <span class="number">0.96666667</span>, <span class="number">0.93333333</span>, <span class="number">0.96666667</span>])</span><br><span class="line"><span class="comment"># 传入index生成迭代器（教程代码）</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="function"><span class="keyword">def</span> <span class="title">custom_cv_2folds</span>(<span class="params">X</span>):</span></span><br><span class="line"><span class="meta">... </span>    n = X.shape[<span class="number">0</span>]</span><br><span class="line"><span class="meta">... </span>    i = <span class="number">1</span></span><br><span class="line"><span class="meta">... </span>    <span class="keyword">while</span> i &lt;= <span class="number">2</span>:</span><br><span class="line"><span class="meta">... </span>        idx = np.arange(n * (i - <span class="number">1</span>) / <span class="number">2</span>, n * i / <span class="number">2</span>, dtype=<span class="built_in">int</span>)</span><br><span class="line"><span class="meta">... </span>        <span class="keyword">yield</span> idx, idx</span><br><span class="line"><span class="meta">... </span>        i += <span class="number">1</span></span><br><span class="line">...</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>custom_cv = custom_cv_2folds(X)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>cross_val_score(clf, X, y, cv=custom_cv)</span><br><span class="line">array([<span class="number">1.</span>        , <span class="number">0.973</span>...])</span><br></pre></td></tr></table></figure>
 
     </div>
 
@@ -260,12 +243,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/07/09/Scatter%E5%92%8Cgather%E5%87%BD%E6%95%B0%E4%BD%BF%E7%94%A8/" rel="prev" title="pytorch Scatter和gather函数使用">
-      <i class="fa fa-chevron-left"></i> pytorch Scatter和gather函数使用
+    <a href="/2021/07/09/sklearn%E4%B8%BB%E8%A6%81%E6%A8%A1%E5%9D%97%E7%90%86%E8%A7%A3/" rel="prev" title="sklearn主要模块理解">
+      <i class="fa fa-chevron-left"></i> sklearn主要模块理解
     </a></div>
       <div class="post-nav-item">
-    <a href="/2021/07/09/model-selection%E6%A8%A1%E5%9D%97%E8%BF%9B%E8%A1%8C%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81/" rel="next" title="model_selection模块进行交叉验证">
-      model_selection模块进行交叉验证 <i class="fa fa-chevron-right"></i>
+    <a href="/2021/07/09/%E7%BB%84%E5%90%88%E5%A4%9A%E4%B8%AA%E9%A2%84%E5%A4%84%E7%90%86%E5%92%8C%E9%A2%84%E6%B5%8B%E6%A8%A1%E5%9E%8B/" rel="next" title="sklearn Pipeline 组合多个预处理和预测模型">
+      sklearn Pipeline 组合多个预处理和预测模型 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -326,7 +309,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E6%B5%81%E7%A8%8B%E4%B8%AD%E6%B6%89%E5%8F%8A%E7%9A%84sklearn%E6%A8%A1%E5%9D%97"><span class="nav-number">1.</span> <span class="nav-text">一个数据分析流程中涉及的sklearn模块</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%AD%E7%BB%83%E9%9B%86%E5%92%8C%E6%B5%8B%E8%AF%95%E9%9B%86%E5%88%92%E5%88%86"><span class="nav-number">1.</span> <span class="nav-text">训练集和测试集划分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cross-validation-%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81"><span class="nav-number">2.</span> <span class="nav-text">cross validation 交叉验证</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#cross-val-score%E5%87%BD%E6%95%B0%E8%BF%9B%E8%A1%8C%E6%A8%A1%E5%9E%8B%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81%E8%AF%84%E4%BB%B7"><span class="nav-number">2.1.</span> <span class="nav-text">cross_val_score函数进行模型交叉验证评价</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -479,7 +462,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'MyBlogComment',
       owner       : 'fuhaifei',
       admin       : ['fuhaifei'],
-      id          : '880fbe4940f17aa73e27c35605ebcee4',
+      id          : '78df840f182c85ff6766af6b082d1586',
         language: 'zh-CN',
       distractionFreeMode: true
     });
