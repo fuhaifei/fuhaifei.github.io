@@ -156,6 +156,92 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/08/11/cs224n-1.%E5%A6%82%E4%BD%95%E5%9C%A8%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%AF%8D%E8%AF%AD/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/08/11/cs224n-1.%E5%A6%82%E4%BD%95%E5%9C%A8%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%AF%8D%E8%AF%AD/" class="post-title-link" itemprop="url">cs224n-1.如何表示在计算机中词语</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-08-11 11:12:51 / 修改时间：11:18:10" itemprop="dateCreated datePublished" datetime="2021-08-11T11:12:51+08:00">2021-08-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <img src="/2021/08/11/cs224n-1.%E5%A6%82%E4%BD%95%E5%9C%A8%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%AF%8D%E8%AF%AD/image-20210809091658017.png" class="" title="image-20210809091658017">
+<p>想要通过计算机解决NLP问题，首先要解决的就是词语表示问题，由于一个词语在不同语境以及不同文化背景下含义的多样性，如何在计算机中有效的存储，表示不同词语的不同含义，是需要解决的重要问题。</p>
+<h4 id="WordNet-（discrete-representation）"><a href="#WordNet-（discrete-representation）" class="headerlink" title="WordNet （discrete representation）"></a>WordNet （discrete representation）</h4><blockquote>
+<p>上义词是对事物的概括性、抽象性说明；下义词是事物的具体表现形式或更为具体的说明</p>
+</blockquote>
+<p>采用同义词（synonym）和上义词（hypernym）两个相关词语集合来描述当前词语的含义，当前方法一定程度上能够正确表示词语含义，但是存在一定问题</p>
+<ol>
+<li>忽略了词语在不同语境中的细微语义差异（比如 “中” 只有在河南话中和 “好” 是同义词）</li>
+<li>词语的新的词义的添加较为困难</li>
+<li>同义词和上义词定义较为主观，需要人工来整理两个词语集合</li>
+</ol>
+<img src="/2021/08/11/cs224n-1.%E5%A6%82%E4%BD%95%E5%9C%A8%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%AF%8D%E8%AF%AD/image-20210809091554618.png" class="" title="image-20210809091554618">
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/08/11/cs224n-1.%E5%A6%82%E4%BD%95%E5%9C%A8%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%AF%8D%E8%AF%AD/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/27/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -906,92 +992,6 @@ v_t = (1-\beta)\theta_t + (1-\beta)\beta\theta_{t-1} + (1-\beta)\beta^2\theta_{t
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/09/pytorch%E5%A6%82%E4%BD%95%E5%AF%B9%E6%A2%AF%E5%BA%A6%E8%BF%BD%E8%B8%AA%E5%BC%A0%E9%87%8F%E8%BF%9B%E8%A1%8Cinplace%E6%93%8D%E4%BD%9C/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/09/pytorch%E5%A6%82%E4%BD%95%E5%AF%B9%E6%A2%AF%E5%BA%A6%E8%BF%BD%E8%B8%AA%E5%BC%A0%E9%87%8F%E8%BF%9B%E8%A1%8Cinplace%E6%93%8D%E4%BD%9C/" class="post-title-link" itemprop="url">pytroch如何对梯度追踪张量进行inplace操作</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2021-07-09 16:42:26" itemprop="dateCreated datePublished" datetime="2021-07-09T16:42:26+08:00">2021-07-09</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-07-21 14:55:44" itemprop="dateModified" datetime="2021-07-21T14:55:44+08:00">2021-07-21</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/" itemprop="url" rel="index"><span itemprop="name">ML/DL编程总结</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="如何对梯度追踪张量进行inplace操作"><a href="#如何对梯度追踪张量进行inplace操作" class="headerlink" title="如何对梯度追踪张量进行inplace操作"></a>如何对梯度追踪张量进行inplace操作</h3><blockquote>
-<p>别忘了梯度追踪张量必须为float</p>
-<p>Only Tensors of floating point and complex dtype can require gradients</p>
-</blockquote>
-<h4 id="问题来源"><a href="#问题来源" class="headerlink" title="问题来源"></a>问题来源</h4><p>当对设置了requires_grad=True的张量进行原地操作时，pytorch会抛出运行错误：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt; X = torch.rand((3,4),requires_grad = True)</span><br><span class="line">&gt;&gt; X.fill_(0)</span><br><span class="line">RuntimeError: a leaf Variable that requires grad is being used in an in-place operation.</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/09/pytorch%E5%A6%82%E4%BD%95%E5%AF%B9%E6%A2%AF%E5%BA%A6%E8%BF%BD%E8%B8%AA%E5%BC%A0%E9%87%8F%E8%BF%9B%E8%A1%8Cinplace%E6%93%8D%E4%BD%9C/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1063,7 +1063,7 @@ v_t = (1-\beta)\theta_t + (1-\beta)\beta\theta_{t-1} + (1-\beta)\beta^2\theta_{t
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-count">16</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1076,7 +1076,7 @@ v_t = (1-\beta)\theta_t + (1-\beta)\beta\theta_{t-1} + (1-\beta)\beta^2\theta_{t
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
