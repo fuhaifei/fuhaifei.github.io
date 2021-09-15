@@ -43,7 +43,7 @@
 <meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915200931271.png">
 <meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915201518821.png">
 <meta property="article:published_time" content="2021-09-15T13:25:40.000Z">
-<meta property="article:modified_time" content="2021-09-15T13:27:28.896Z">
+<meta property="article:modified_time" content="2021-09-15T13:30:01.579Z">
 <meta property="article:author" content="NEU-FHF">
 <meta property="article:tag" content="NLP理论,cs224n">
 <meta name="twitter:card" content="summary">
@@ -202,7 +202,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2021-09-15 21:25:40 / 修改时间：21:27:28" itemprop="dateCreated datePublished" datetime="2021-09-15T21:25:40+08:00">2021-09-15</time>
+              <time title="创建时间：2021-09-15 21:25:40 / 修改时间：21:30:01" itemprop="dateCreated datePublished" datetime="2021-09-15T21:25:40+08:00">2021-09-15</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -240,7 +240,7 @@ O_t = W_oS_t+b_o</script><p>反向传播的损失函数求导结果为</p>
 <img src="/2021/09/15/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914154543524.png" class="" title="image-20210914154543524">
 <h4 id="解决梯度爆炸问题"><a href="#解决梯度爆炸问题" class="headerlink" title="解决梯度爆炸问题"></a>解决梯度爆炸问题</h4><p>梯度剪切（clipping）</p>
 <img src="/2021/09/15/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914154902059.png" class="" title="image-20210914154902059">
-<h3 id="Long-Short-term-Memory-LSTM"><a href="#Long-Short-term-Memory-LSTM" class="headerlink" title="Long Short-term Memory(LSTM)"></a>Long Short-term Memory(LSTM)</h3><p>在原RNN每个时间步拥有一个隐藏状态 $h^$ 的基础上，增加一个存储单元 $c^{(t)}$（cell state）存储RNN无法捕捉的长距离时间步信息</p>
+<h3 id="Long-Short-term-Memory-LSTM"><a href="#Long-Short-term-Memory-LSTM" class="headerlink" title="Long Short-term Memory(LSTM)"></a>Long Short-term Memory(LSTM)</h3><p>在原RNN每个时间步拥有一个隐藏状态 $h^{(t)}$ 的基础上，增加一个存储单元 $c^{(t)}$（cell state）存储RNN无法捕捉的长距离时间步信息</p>
 <ul>
 <li>LSTM能够从存储单元中删除、写入以及读取相关信息，是否执行这些操作由对应的控制门（gate）决定</li>
 <li>每个时间步gate值由当前时间步信息动态计算</li>
