@@ -156,6 +156,189 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/30/lc517.%E8%B6%85%E7%BA%A7%E6%B4%97%E8%A1%A3%E6%9C%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/09/30/lc517.%E8%B6%85%E7%BA%A7%E6%B4%97%E8%A1%A3%E6%9C%BA/" class="post-title-link" itemprop="url">lc517.超级洗衣机</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-09-30 19:37:37 / 修改时间：19:38:54" itemprop="dateCreated datePublished" datetime="2021-09-30T19:37:37+08:00">2021-09-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">力扣刷题</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="517-超级洗衣机"><a href="#517-超级洗衣机" class="headerlink" title="517. 超级洗衣机"></a><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/super-washing-machines/">517. 超级洗衣机</a></h3><p>贪心的思路并不难，就是太难想到了</p>
+<h4 id="思路1：邻居平分法（我自己的思路）"><a href="#思路1：邻居平分法（我自己的思路）" class="headerlink" title="思路1：邻居平分法（我自己的思路）"></a>思路1：邻居平分法（我自己的思路）</h4><p>类似于最优解的区域法，针对每个洗衣机，将整个数组划分为左边右边两个子区域，计算左右两个区域的衣服总和，并定会存在总数小于或者大于 平均*区域数量 的区域，如果当前洗衣机衣服多，就将多余的衣服分给缺衣服的区域（给了邻居）</p>
+<ol>
+<li>每遍历一次所有洗衣机等价于一次移动</li>
+<li>最后一次遍历所有情况下划分的子区域，均满足 平均*区域数量 的性质</li>
+</ol>
+<p><strong>复杂度分析：</strong></p>
+<ol>
+<li>时间复杂度：每次平均都需要从头到尾遍历数组，共需要遍历结果次数的数组，<strong>时间复杂度为O(KN)</strong></li>
+<li>空间复杂度：额外开辟了一个存储前缀和的数组，<strong>空间复杂度为O(N)</strong></li>
+</ol>
+<p><strong>代码实现：</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">findMinMoves</span><span class="params">(<span class="keyword">int</span>[] machines)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> average;</span><br><span class="line">        <span class="keyword">int</span> numOFMach = machines.length;</span><br><span class="line">        <span class="keyword">int</span>[] preSum = <span class="keyword">new</span> <span class="keyword">int</span>[numOFMach];</span><br><span class="line">        preSum[<span class="number">0</span>] = machines[<span class="number">0</span>];</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt; numOFMach;i++)&#123;</span><br><span class="line">            preSum[i] = preSum[i - <span class="number">1</span>] + machines[i];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//判断是否可分</span></span><br><span class="line">        <span class="keyword">if</span>(preSum[numOFMach - <span class="number">1</span>] % numOFMach != <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        average = preSum[numOFMach - <span class="number">1</span>] / numOFMach;</span><br><span class="line">        <span class="keyword">boolean</span> flag;</span><br><span class="line">        <span class="keyword">while</span>(<span class="keyword">true</span>)&#123;</span><br><span class="line">            flag = <span class="keyword">true</span>;</span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; numOFMach;i++)&#123;</span><br><span class="line">                <span class="comment">//如果左边区域小，往左边区域移动</span></span><br><span class="line">                <span class="keyword">if</span>(machines[i] &gt; <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="keyword">if</span>(i != <span class="number">0</span> &amp;&amp; preSum[i] - machines[i] &lt; i * average)&#123;</span><br><span class="line">                        machines[i] -= <span class="number">1</span>;</span><br><span class="line">                        machines[i - <span class="number">1</span>] += <span class="number">1</span>;</span><br><span class="line">                        preSum[i - <span class="number">1</span>] += <span class="number">1</span>;</span><br><span class="line">                        flag = <span class="keyword">false</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">else</span> <span class="keyword">if</span>(i != numOFMach - <span class="number">1</span> &amp;&amp; preSum[numOFMach - <span class="number">1</span>] - preSum[i] &lt; (numOFMach - i - <span class="number">1</span>) * average)&#123;</span><br><span class="line">                        machines[i] -= <span class="number">1</span>;</span><br><span class="line">                        machines[i + <span class="number">1</span>] += <span class="number">1</span>;</span><br><span class="line">                        preSum[i] -= <span class="number">1</span>;</span><br><span class="line">                        flag = <span class="keyword">false</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//没有平均操作就返回</span></span><br><span class="line">            <span class="keyword">if</span>(flag)&#123;</span><br><span class="line">                <span class="keyword">return</span> result;</span><br><span class="line">            &#125;</span><br><span class="line">            result++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>可惜差两个测试用例，超时</p>
+<img src="/2021/09/30/lc517.%E8%B6%85%E7%BA%A7%E6%B4%97%E8%A1%A3%E6%9C%BA/image-20210930181801433.png" class="" title="image-20210930181801433">
+</li>
+</ul>
+<h4 id="思路2：官方题解"><a href="#思路2：官方题解" class="headerlink" title="思路2：官方题解"></a>思路2：官方题解</h4><p>基于区域的最优，主要是三个点</p>
+<ol>
+<li><p>如果将数组划分为前后两个区域，如果是一个多衣服，一个少衣服，要达到平均状态最少也要将</p>
+<p>多衣服的区域多的衣服，转移到少衣服区域，也就是 <strong>最少的次数至少也是多衣服区域多出来的衣服</strong></p>
+</li>
+<li><p>单个区域内要达到平均，最多衣服的洗衣机，要转移成平均，意味着 <strong>最少的次数至少最多衣服数量洗衣机转移的衣服数量</strong></p>
+</li>
+<li><p>这种转移可以并行进行，也就得到了最终的贪心策略-<strong>寻找多最多的区域或者某个洗衣机</strong></p>
+</li>
+</ol>
+<p><strong>复杂度分析：</strong></p>
+<ol>
+<li>时间复杂度：只需要遍历一次数组计算上面两个状态，<strong>时间复杂度为O(N)</strong></li>
+<li>空间复杂度：不需要额外空间，<strong>空间复杂度为O(1)</strong></li>
+</ol>
+<p><strong>代码实现：</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">findMinMoves</span><span class="params">(<span class="keyword">int</span>[] machines)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//首先求和计算平均值</span></span><br><span class="line">    <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> sum = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> average;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; machines.length;i++)&#123;</span><br><span class="line">        sum += machines[i];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(sum % machines.length != <span class="number">0</span>)&#123;</span><br><span class="line">        <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//计算平均数，并用sum作为前i个元素所需要移入或移出的个数</span></span><br><span class="line">    average = sum / machines.length;</span><br><span class="line">    sum = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> tempNeed;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; machines.length;i++)&#123;</span><br><span class="line">        tempNeed = machines[i] - average;</span><br><span class="line">        sum += tempNeed;</span><br><span class="line">        result = Math.max(Math.abs(sum),Math.max(tempNeed, result));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/30/lc437.%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8CIII/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/09/30/lc437.%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8CIII/" class="post-title-link" itemprop="url">lc437.路径总和III</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-09-30 19:35:27 / 修改时间：19:36:58" itemprop="dateCreated datePublished" datetime="2021-09-30T19:35:27+08:00">2021-09-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">力扣刷题</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="437-路径总和-III"><a href="#437-路径总和-III" class="headerlink" title="437. 路径总和 III"></a><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/path-sum-iii/">437. 路径总和 III</a></h3><p>前后一共做了三次，每次都想不出来使用前缀和的方法。</p>
+<h4 id="思路1：DFS遍历"><a href="#思路1：DFS遍历" class="headerlink" title="思路1：DFS遍历"></a>思路1：DFS遍历</h4><p>先序遍历整个二叉树，遍历到某一结点后，以该节点为子树，查找当前子树中，是否存在一条从根节点出发的路径，满足路径和条件。</p>
+<p><strong>复杂度分析</strong>：</p>
+<ul>
+<li>时间复杂度：与DFS遍历不同的点，在于每到达一个节点都需要重新遍历子树，寻找备选最优解，<strong>时间复杂度为O(N^2)</strong></li>
+<li>空间复杂度：两次遍历不影响栈的深度，最大栈深度与DFS相同，<strong>空间复杂度为O(logN)</strong></li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/09/30/lc437.%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8CIII/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/30/cs224n-7.%E6%9C%BA%E5%99%A8%E9%97%AE%E7%AD%94/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -812,181 +995,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/27/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/27/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/" class="post-title-link" itemprop="url">Docker基础概念</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-07-27 16:26:46 / 修改时间：16:37:17" itemprop="dateCreated datePublished" datetime="2021-07-27T16:26:46+08:00">2021-07-27</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%A1%86%E6%9E%B6-%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">框架/技术学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>主要包括三个基本核心概念：</p>
-<ul>
-<li><strong>镜像（image)</strong>：相当于一个静态的文件系统，类似于未安装的windows ios文件，相当于是一个未挂载的root文件系统</li>
-<li><strong>容器（container)</strong>：容器是镜像运行时的实体，可以启动、创建、停止以及删除。容器的实质是进程，但与直接在宿主执行的进程不同，容器进程运行于属于自己的独立的命名空间</li>
-<li><strong>仓库（Repository）</strong>：镜像中心，类似于maven的依赖包中心，用来保存镜像，最常使用的公共仓库是官方的Docker Hub</li>
-</ul>
-<p>基本架构（cs架构）:</p>
-<blockquote>
-<p>守护进程（daemon）是生存期长的一种进程，没有控制终端。它们常常在系统引导装入时启动，仅在系统关闭时才终止</p>
-</blockquote>
-<ul>
-<li><strong>Docker 客户端(Client)</strong>:与docker host中的守护进程进行通信，通过命令执行实际的操作（cs架构中的c）</li>
-<li><strong>Docker 主机(Host)</strong>:运行容器，存储镜像的机器</li>
-<li><strong>Docker Registry</strong>：一个 Docker Registry 中可以包含多个仓库（Repository）；每个仓库可以包含多个标签（Tag）；每个标签对应一个镜像。</li>
-</ul>
-<img src="/2021/07/27/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20210727162745322.png" class="" title="image-20210727162745322">
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/27/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/27/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/27/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/" class="post-title-link" itemprop="url">Dockerfile理解使用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-07-27 16:22:28 / 修改时间：16:35:31" itemprop="dateCreated datePublished" datetime="2021-07-27T16:22:28+08:00">2021-07-27</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%A1%86%E6%9E%B6-%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">框架/技术学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>docker file 包含一系列命令行，docker通过该文件组织生成镜像，一个docker file文件主要包括四部分：</p>
-<ol>
-<li>基础镜像信息</li>
-<li>维护者信息</li>
-<li>镜像操作指令</li>
-<li>容器启动时执行指令</li>
-</ol>
-<p>以一个dockerfile为例：<br><img src="/2021/07/27/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/image-20210618162710697.png" class="" title="image-20210618162710697.png"></p>
-<blockquote>
-<p>Dockerfile 的指令每执行一次都会在 docker 上新建一层。所以过多无意义的层，会造成镜像膨胀过大</p>
-</blockquote>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/27/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1058,20 +1066,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
