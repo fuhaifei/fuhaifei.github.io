@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="内容回顾Beam Search：不同K的区别 小K值可能导致生成序列效果较差（语法上、语义上、流畅度上） 大K值虽然能够解决以上问题，但是会带来更多的计算成本，一定程度上减低NMT任务中的BLUE分数 开放式问答任务中，更大的K可能导致 回答更加的宽泛（与原问题的关联度更低）     其他的解决方案  Sampling-based decoding（与Beam search不同在于decoder每">
+<meta property="og:type" content="article">
+<meta property="og:title" content="cs224n-12.自然语言生成">
+<meta property="og:url" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="内容回顾Beam Search：不同K的区别 小K值可能导致生成序列效果较差（语法上、语义上、流畅度上） 大K值虽然能够解决以上问题，但是会带来更多的计算成本，一定程度上减低NMT任务中的BLUE分数 开放式问答任务中，更大的K可能导致 回答更加的宽泛（与原问题的关联度更低）     其他的解决方案  Sampling-based decoding（与Beam search不同在于decoder每">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019145744076.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019151158168.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019151618394.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019151751505.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019152628788.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019153334719.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019153513309.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019153742775.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019154611084.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019164507272.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019164852685.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019170212035.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211020112720437.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211020113937063.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211020114155828.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211020114245710.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211023091146567.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211023094731197.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211023095226942.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211023101005268.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211023101625189.png">
+<meta property="article:published_time" content="2021-11-21T02:30:19.000Z">
+<meta property="article:modified_time" content="2021-11-21T02:33:19.007Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="NLP理论">
+<meta property="article:tag" content="cs224n">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019145744076.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>cs224n-12.自然语言生成 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          cs224n-12.自然语言生成
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-11-21 10:30:19 / 修改时间：10:33:19" itemprop="dateCreated datePublished" datetime="2021-11-21T10:30:19+08:00">2021-11-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="内容回顾"><a href="#内容回顾" class="headerlink" title="内容回顾"></a>内容回顾</h3><h4 id="Beam-Search：不同K的区别"><a href="#Beam-Search：不同K的区别" class="headerlink" title="Beam Search：不同K的区别"></a>Beam Search：不同K的区别</h4><ol>
+<li>小K值可能导致生成序列效果较差（语法上、语义上、流畅度上）</li>
+<li>大K值虽然能够解决以上问题，但是会带来更多的计算成本，一定程度上减低NMT任务中的BLUE分数<ul>
+<li>开放式问答任务中，更大的K可能导致 回答更加的宽泛（与原问题的关联度更低）</li>
+</ul>
+</li>
+</ol>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019145744076.png" class="" title="image-20211019145744076">
+<p><strong>其他的解决方案</strong></p>
+<ol>
+<li><strong>Sampling-based decoding</strong>（与Beam search不同在于decoder每一步只需要追踪一个词）<ul>
+<li>Pure Sampling：每次随机选择概率分布中的某一个词，作为decoder输出词</li>
+<li>Top-n Sampling：每次从前N个概率大小词语中选择某一个词，作为decoder输出词</li>
+</ul>
+</li>
+</ol>
+<h4 id="Softmax-temperature-带温度系数的Softmax方法"><a href="#Softmax-temperature-带温度系数的Softmax方法" class="headerlink" title="Softmax temperature: 带温度系数的Softmax方法"></a>Softmax temperature: 带温度系数的Softmax方法</h4><blockquote>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/132785733">$\tau$解释</a></p>
+</blockquote>
+<p>在原始的Softmax函数中添加 <strong>temperature hyperparameter: $\tau$</strong> .</p>
+<ol>
+<li>$\tau$ 起到一种平滑作用， $\tau$ 越大softmax计算得到的概率分布越平滑，t越小分布越不均匀</li>
+<li>在训练开始将 $\tau$ 值设置较大，概率分布较为平滑，loss较大可以避免模型落入局部最优解，随着训练的进行，不断增大 $\tau$ 值，从而提升模型的效果。（某一个 $\tau$ 值并不影响模型的结果）</li>
+</ol>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019151158168.png" class="" title="image-20211019151158168">
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019151618394.png" class="" title="image-20211019151618394">
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019151751505.png" class="" title="image-20211019151751505">
+<span id="more"></span>
+<h3 id="NLG"><a href="#NLG" class="headerlink" title="NLG"></a>NLG</h3><p>NLG主要解决的问题就是，给定输入文本，对文本进行分析和抽取，输出我们需要的指定文本信息（summary或者再创作）</p>
+<ol>
+<li>输入可以是单个文档，也可以是多个文档（多个文档通常内容是相关的）</li>
+</ol>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019152628788.png" class="" title="image-20211019152628788">
+<p>目前NLG任务领域的主要数据集有</p>
+<ol>
+<li><p>single-document任务</p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019153334719.png" class="" title="image-20211019153334719">
+</li>
+<li><p>句子简化（sentence simplification）</p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019153513309.png" class="" title="image-20211019153513309">
+</li>
+</ol>
+<p>NLG任务的<strong>两种</strong>主要实现方式</p>
+<ol>
+<li>抽取性（extractive）摘要</li>
+<li>生成式（abstractive）摘要</li>
+</ol>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019153742775.png" class="" title="image-20211019153742775">
+<h4 id="神经网络之前的NLG"><a href="#神经网络之前的NLG" class="headerlink" title="神经网络之前的NLG"></a>神经网络之前的NLG</h4><p>一般的单文本摘要流程如下</p>
+<ol>
+<li>首先从原文中选取特定的句子，作为摘要的句子组成内容（content selecting）</li>
+<li>对选取的句子进行排序（Information Ordering）</li>
+<li>对句子进行调整和修改（Sentence realization）</li>
+</ol>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019154611084.png" class="" title="image-20211019154611084">
+<p>重点在于<strong>如何选择句子</strong></p>
+<ol>
+<li>基于算法对句子评分，选取评分高的句子作为候选摘要内容<ul>
+<li>根据关键词出现频率，如tf-idf</li>
+<li>句子在文章中出现的位置</li>
+</ul>
+</li>
+<li>基于图算法（句子视为节点，句子之间的相似度视为边）</li>
+</ol>
+<h4 id="摘要评价-ROUGE"><a href="#摘要评价-ROUGE" class="headerlink" title="摘要评价-ROUGE"></a>摘要评价-ROUGE</h4><img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019164507272.png" class="" title="image-20211019164507272">
+<p>ROUGE（Recall-Oriented Understudy for Gisting Evaluation）与BLUE类似，均基于n-gram共现评估生成文本与目标摘要文本的差距</p>
+<ol>
+<li>ROUGE在计算的过程中引入了召回率的概念，相较于NMT任务，摘要任务对召回率的重视程度更高</li>
+</ol>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019164852685.png" class="" title="image-20211019164852685">
+<p>一种ROUGE评分只针对一种n-gram语法</p>
+<ol>
+<li>ROUGE-1: unigram overlap</li>
+<li>ROUGE-2: bigram overlap</li>
+<li>ROUGE-L: LCS overlap</li>
+</ol>
+<h4 id="Neural-Summarization-（2015-）发展历史"><a href="#Neural-Summarization-（2015-）发展历史" class="headerlink" title="Neural Summarization （2015-）发展历史"></a>Neural Summarization （2015-）发展历史</h4><ol>
+<li><p>第一次使用seq2seq + attention实现单文档摘要</p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211019170212035.png" class="" title="image-20211019170212035">
+</li>
+<li><p>2015后出现的一系列解决方案</p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211020112720437.png" class="" title="image-20211020112720437">
+</li>
+</ol>
+<h4 id="Copy-Mechanisms：解决seq2seq局限于特征"><a href="#Copy-Mechanisms：解决seq2seq局限于特征" class="headerlink" title="Copy Mechanisms：解决seq2seq局限于特征"></a>Copy Mechanisms：解决seq2seq局限于特征</h4><p>由于seq2seq机制中decoder基于encoder输出特征进行生成，无法满足<strong>保留源语句中某些关键词</strong>的要求（虽然fluent，但不够imformative），通过Copy Mechanisms解决这个问题。</p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211020113937063.png" class="" title="image-20211020113937063">
+<p>Copy Mechanisms 通过attention机制，将input中的某些词或者某些句子，<strong>直接作为output中的内容输出</strong>，通过与seq2seq结合，更好的适应文档摘要问题</p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211020114155828.png" class="" title="image-20211020114155828">
+<p>几个复制机制的实现</p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211020114245710.png" class="" title="image-20211020114245710">
+<p>存在的问题（单词级别的复制机制）</p>
+<ol>
+<li>复制的度难以把握，容易退化成抽取算法</li>
+<li>复制时难以考虑整篇文章的信息，当文章过长时，复制效果不理想</li>
+<li>如何选择，没有一个确定的策略</li>
+</ol>
+<p><strong>Bottom up summarization</strong></p>
+<p>解决单词级别复制问题，将摘要过程分为两个阶段</p>
+<ol>
+<li>内容选择阶段: 使用标注模型，对原文章中的词进行标记是否需要</li>
+<li>摘要阶段：同样的seq2seq+attention摘要模型，只是对上一步标记的不需要词语进行掩码覆盖，不参与预测</li>
+</ol>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211023091146567.png" class="" title="image-20211023091146567">
+<h3 id="Dialogue-对话生成任务"><a href="#Dialogue-对话生成任务" class="headerlink" title="Dialogue 对话生成任务"></a>Dialogue 对话生成任务</h3><p>对话生成任务的范围较为广泛，从日常对话、智能客服到辩论等，主要包括任务型对话和社会对话两种</p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211023094731197.png" class="" title="image-20211023094731197">
+<h4 id="pre-neural"><a href="#pre-neural" class="headerlink" title="pre-neural"></a>pre-neural</h4><p>由于开放式文档问题难度较高，神经网络应用之前的系统往往使用模板式回答或者从一系列语料中寻找回答的方式，实现对话。</p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211023095226942.png" class="" title="image-20211023095226942">
+<h4 id="seq2seq-based-dialogue"><a href="#seq2seq-based-dialogue" class="headerlink" title="seq2seq-based dialogue"></a>seq2seq-based dialogue</h4><p>虽然很会人们就发现seq2seq模型可以应用于解决对话生成任务，但是目前随着应用的开展，发现存在一系列的问题</p>
+<ol>
+<li>回答宽泛（虽然给了答案，但是答案没什么用） Genericness</li>
+<li>回答与上下文不相关 Irrelevant</li>
+<li>不断地重复 Repetition</li>
+<li>缺乏上下文信息 （对话的上下文，对话的人等）</li>
+</ol>
+<p><strong>解决irrelevant问题</strong></p>
+<ol>
+<li>生成的一般回答，而不是想要的回答 （i don’t know）</li>
+<li>回答的主题与问题不相关</li>
+</ol>
+<p>传统NN模型的优化目标往往是最大化  $p(Target|Source)$ ，即给定目前问题下得到对应答案的条件概率；当前解决方案采用互信息MMI作为优化目标\</p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211023101005268.png" class="" title="image-20211023101005268">
+<p>在公式上体现为原条件概率减去了当前回答出现的概率（形式上理解为减去回答概率，对在预料中出现频率较高的通用回答进行了惩罚）</p>
+<p><strong>解决genericness问题</strong></p>
+<img src="/2021/11/21/cs224n-12.%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E7%94%9F%E6%88%90/image-20211023101625189.png" class="" title="image-20211023101625189">
+<p><strong>解决repetition问题</strong></p>
+<p>简单解决方案: 对于decoder输出的n-gram,禁止n-gram句子中存在相同词语。（简单而粗暴）</p>
+<p>复杂方案</p>
+<ol>
+<li>避免注意力机制计算时重复的计算相同背景词（从源头铲除相同词语）</li>
+<li>设置训练目标，减少重复出现</li>
+</ol>
+<h3 id="NLG-Evaluation"><a href="#NLG-Evaluation" class="headerlink" title="NLG Evaluation"></a>NLG Evaluation</h3><p>传统基于词覆盖的评价方式，例如BLUE、ROGUE等，并不适用于NLG任务（或者说无法真正反映一个NLG解决方案的好坏），既然无法找到一种衡量NLG任务好坏的方式，我们不如聚焦于生成结果的某一个方面</p>
+<ul>
+<li>流利性</li>
+<li>正确的风格</li>
+<li>多样性</li>
+<li>相关输入</li>
+<li>简单的长度和重复</li>
+<li>特定于任务的指标，如摘要的压缩率</li>
+</ul>
+<p>人类评估（省略）</p>
+<h3 id="NLG发展方向"><a href="#NLG发展方向" class="headerlink" title="NLG发展方向"></a>NLG发展方向</h3><ul>
+<li>将离散潜在变量纳入NLG（不同任务可能有不同的潜在特征）<ul>
+<li>可以帮助在真正需要它的任务中建模结构，例如讲故事，任务导向对话等</li>
+</ul>
+</li>
+<li>严格的从左到右生成的替代方案<ul>
+<li>并行生成，迭代细化，自上而下生成较长的文本</li>
+</ul>
+</li>
+<li>替代teacher forcing的模型训练方法<ul>
+<li>更全面的句子级别的目标函数（而不是单词级别）</li>
+</ul>
+</li>
+</ul>
+<p>目前NLG发展</p>
+<ul>
+<li>在NLP+深度学习的早期，社区主要将成功的机器翻译方法转移到NLG任务中。</li>
+<li>现在，越来越多的创新NLG技术出现，针对非NMT生成环境。</li>
+<li>越来越多（神经）NLG研讨会和竞赛，特别关注开放式NLG<ul>
+<li>NeuralGen workshop</li>
+<li>Storytelling workshop</li>
+<li>Alexa challenge</li>
+<li>ConvAI2 NeurIPS challenge</li>
+</ul>
+</li>
+<li>这些对于组织社区提高再现性、标准化评估特别有用</li>
+<li>最大障碍是评估</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/NLP%E7%90%86%E8%AE%BA/" rel="tag"><i class="fa fa-tag"></i> NLP理论</a>
+              <a href="/tags/cs224n/" rel="tag"><i class="fa fa-tag"></i> cs224n</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/11/21/lc869.%E9%87%8D%E6%96%B0%E6%8E%92%E5%BA%8F%E5%BE%97%E5%88%B02%E7%9A%84%E5%B9%82/" rel="prev" title="lc869.重新排序得到2的幂">
+      <i class="fa fa-chevron-left"></i> lc869.重新排序得到2的幂
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/11/21/%E5%89%8D%E7%BC%80%EF%BC%88%E5%AD%97%E5%85%B8%EF%BC%89%E6%A0%91%E6%80%BB%E7%BB%93/" rel="next" title="前缀（字典）树总结">
+      前缀（字典）树总结 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AE%B9%E5%9B%9E%E9%A1%BE"><span class="nav-number">1.</span> <span class="nav-text">内容回顾</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Beam-Search%EF%BC%9A%E4%B8%8D%E5%90%8CK%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">1.1.</span> <span class="nav-text">Beam Search：不同K的区别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Softmax-temperature-%E5%B8%A6%E6%B8%A9%E5%BA%A6%E7%B3%BB%E6%95%B0%E7%9A%84Softmax%E6%96%B9%E6%B3%95"><span class="nav-number">1.2.</span> <span class="nav-text">Softmax temperature: 带温度系数的Softmax方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.3.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NLG"><span class="nav-number">2.</span> <span class="nav-text">NLG</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E4%B9%8B%E5%89%8D%E7%9A%84NLG"><span class="nav-number">2.1.</span> <span class="nav-text">神经网络之前的NLG</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%91%98%E8%A6%81%E8%AF%84%E4%BB%B7-ROUGE"><span class="nav-number">2.2.</span> <span class="nav-text">摘要评价-ROUGE</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Neural-Summarization-%EF%BC%882015-%EF%BC%89%E5%8F%91%E5%B1%95%E5%8E%86%E5%8F%B2"><span class="nav-number">2.3.</span> <span class="nav-text">Neural Summarization （2015-）发展历史</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Copy-Mechanisms%EF%BC%9A%E8%A7%A3%E5%86%B3seq2seq%E5%B1%80%E9%99%90%E4%BA%8E%E7%89%B9%E5%BE%81"><span class="nav-number">2.4.</span> <span class="nav-text">Copy Mechanisms：解决seq2seq局限于特征</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dialogue-%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90%E4%BB%BB%E5%8A%A1"><span class="nav-number">3.</span> <span class="nav-text">Dialogue 对话生成任务</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#pre-neural"><span class="nav-number">3.1.</span> <span class="nav-text">pre-neural</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#seq2seq-based-dialogue"><span class="nav-number">3.2.</span> <span class="nav-text">seq2seq-based dialogue</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NLG-Evaluation"><span class="nav-number">4.</span> <span class="nav-text">NLG Evaluation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NLG%E5%8F%91%E5%B1%95%E6%96%B9%E5%90%91"><span class="nav-number">5.</span> <span class="nav-text">NLG发展方向</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yourname" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/zhihu.com/people/fu-hai-fei" title="zhihu → zhihu.com&#x2F;people&#x2F;fu-hai-fei"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : '42a770e75a8dc33cb804900156ec514c',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

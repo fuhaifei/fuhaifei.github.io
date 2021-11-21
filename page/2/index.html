@@ -167,6 +167,350 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/30/lc517.%E8%B6%85%E7%BA%A7%E6%B4%97%E8%A1%A3%E6%9C%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/09/30/lc517.%E8%B6%85%E7%BA%A7%E6%B4%97%E8%A1%A3%E6%9C%BA/" class="post-title-link" itemprop="url">lc517.超级洗衣机</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-09-30 19:37:37" itemprop="dateCreated datePublished" datetime="2021-09-30T19:37:37+08:00">2021-09-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-11-21 10:26:31" itemprop="dateModified" datetime="2021-11-21T10:26:31+08:00">2021-11-21</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">力扣刷题</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="517-超级洗衣机"><a href="#517-超级洗衣机" class="headerlink" title="517. 超级洗衣机"></a><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/super-washing-machines/">517. 超级洗衣机</a></h3><p>贪心的思路并不难，就是太难想到了</p>
+<h4 id="思路1：邻居平分法（我自己的思路）"><a href="#思路1：邻居平分法（我自己的思路）" class="headerlink" title="思路1：邻居平分法（我自己的思路）"></a>思路1：邻居平分法（我自己的思路）</h4><p>类似于最优解的区域法，针对每个洗衣机，将整个数组划分为左边右边两个子区域，计算左右两个区域的衣服总和，并定会存在总数小于或者大于 平均*区域数量 的区域，如果当前洗衣机衣服多，就将多余的衣服分给缺衣服的区域（给了邻居）</p>
+<ol>
+<li>每遍历一次所有洗衣机等价于一次移动</li>
+<li>最后一次遍历所有情况下划分的子区域，均满足 平均*区域数量 的性质</li>
+</ol>
+<p><strong>复杂度分析：</strong></p>
+<ol>
+<li>时间复杂度：每次平均都需要从头到尾遍历数组，共需要遍历结果次数的数组，<strong>时间复杂度为O(KN)</strong></li>
+<li>空间复杂度：额外开辟了一个存储前缀和的数组，<strong>空间复杂度为O(N)</strong></li>
+</ol>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/09/30/lc517.%E8%B6%85%E7%BA%A7%E6%B4%97%E8%A1%A3%E6%9C%BA/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/30/lc437.%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8CIII/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/09/30/lc437.%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8CIII/" class="post-title-link" itemprop="url">lc437.路径总和III</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-09-30 19:35:27 / 修改时间：19:36:58" itemprop="dateCreated datePublished" datetime="2021-09-30T19:35:27+08:00">2021-09-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">力扣刷题</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="437-路径总和-III"><a href="#437-路径总和-III" class="headerlink" title="437. 路径总和 III"></a><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/path-sum-iii/">437. 路径总和 III</a></h3><p>前后一共做了三次，每次都想不出来使用前缀和的方法。</p>
+<h4 id="思路1：DFS遍历"><a href="#思路1：DFS遍历" class="headerlink" title="思路1：DFS遍历"></a>思路1：DFS遍历</h4><p>先序遍历整个二叉树，遍历到某一结点后，以该节点为子树，查找当前子树中，是否存在一条从根节点出发的路径，满足路径和条件。</p>
+<p><strong>复杂度分析</strong>：</p>
+<ul>
+<li>时间复杂度：与DFS遍历不同的点，在于每到达一个节点都需要重新遍历子树，寻找备选最优解，<strong>时间复杂度为O(N^2)</strong></li>
+<li>空间复杂度：两次遍历不影响栈的深度，最大栈深度与DFS相同，<strong>空间复杂度为O(logN)</strong></li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/09/30/lc437.%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8CIII/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/30/cs224n-7.%E6%9C%BA%E5%99%A8%E9%97%AE%E7%AD%94/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/09/30/cs224n-7.%E6%9C%BA%E5%99%A8%E9%97%AE%E7%AD%94/" class="post-title-link" itemprop="url">cs224n-7.机器问答</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-09-30 19:29:32 / 修改时间：19:31:01" itemprop="dateCreated datePublished" datetime="2021-09-30T19:29:32+08:00">2021-09-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="Question-Answering"><a href="#Question-Answering" class="headerlink" title="Question Answering"></a>Question Answering</h3><p>相较于检索更进一步，给出一个问题，自动的找出这个问题的最合适答案，可以将这个问题划分为两个步骤</p>
+<ol>
+<li>找到包含问题答案的文档</li>
+<li>在文档中找到当前问题的答案（阅读理解 Reading Comprehension）</li>
+</ol>
+<p>如果一个机器理解了一段问题，机器应该能够提供问题的正确答案，且答案中不包含与问题无关的相关信息</p>
+<h3 id="SQuAD-Stanford-Question-Answering-Dataset"><a href="#SQuAD-Stanford-Question-Answering-Dataset" class="headerlink" title="SQuAD(Stanford Question Answering Dataset)"></a>SQuAD(Stanford Question Answering Dataset)</h3><p>每个问题对应一篇文章，答案是文章内的一段单词序列。</p>
+<img src="/2021/09/30/cs224n-7.%E6%9C%BA%E5%99%A8%E9%97%AE%E7%AD%94/image-20210926161057907.png" class="" title="image-20210926161057907">
+<p>为每个问题提供多个可选的标准答案</p>
+<img src="/2021/09/30/cs224n-7.%E6%9C%BA%E5%99%A8%E9%97%AE%E7%AD%94/image-20210926161326100.png" class="" title="image-20210926161326100">
+<h4 id="SQuAD如何评估（V1-1）"><a href="#SQuAD如何评估（V1-1）" class="headerlink" title="SQuAD如何评估（V1.1）"></a>SQuAD如何评估（V1.1）</h4><ul>
+<li>为每个问题提供三个标准答案</li>
+<li>使用两种评分机制<ol>
+<li>Exact match：按照字面意思理解，如果答案在三个标准答案中(1),不在标准答案中(0)</li>
+<li>F1-score：分别计算对于每个问题回答的F1-score(<strong>具体怎么算法不知道</strong>)，对整个数据集上求平均后得到结果</li>
+</ol>
+</li>
+<li>两种评分机制军忽略标点符号和无关的词汇（a,an,the）</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/09/30/cs224n-7.%E6%9C%BA%E5%99%A8%E9%97%AE%E7%AD%94/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/30/cs224n-6.%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/09/30/cs224n-6.%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91/" class="post-title-link" itemprop="url">cs224n-6.机器翻译</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-09-30 19:25:42 / 修改时间：19:29:04" itemprop="dateCreated datePublished" datetime="2021-09-30T19:25:42+08:00">2021-09-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="早期机器翻译"><a href="#早期机器翻译" class="headerlink" title="早期机器翻译"></a>早期机器翻译</h3><img src="/2021/09/30/cs224n-6.%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91/image-20210923165912958.png" class="" title="image-20210923165912958">
+<p>采用 单词对应词典的形式，存储在磁带上，翻译时通过查字典的形式，找到对应词组合成句子。</p>
+<h3 id="基于统计的机器翻译（Statistical-Machine-Translation-SMT）"><a href="#基于统计的机器翻译（Statistical-Machine-Translation-SMT）" class="headerlink" title="基于统计的机器翻译（Statistical Machine Translation SMT）"></a>基于统计的机器翻译（Statistical Machine Translation SMT）</h3><img src="/2021/09/30/cs224n-6.%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91/image-20210923165944670.png" class="" title="image-20210923165944670">
+<p>从概率的角度解决机器翻译问题， 首先语料中学习概率模型（不同语言单词之间的概率和语言内的语言模型），通过建立的概率模型实现翻译功能。</p>
+<img src="/2021/09/30/cs224n-6.%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91/image-20210923170157170.png" class="" title="image-20210923170157170">
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/09/30/cs224n-6.%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/15/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -651,347 +995,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/27/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/27/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/" class="post-title-link" itemprop="url">Docker基础概念</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-07-27 16:26:46 / 修改时间：16:37:17" itemprop="dateCreated datePublished" datetime="2021-07-27T16:26:46+08:00">2021-07-27</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%A1%86%E6%9E%B6-%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">框架/技术学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>主要包括三个基本核心概念：</p>
-<ul>
-<li><strong>镜像（image)</strong>：相当于一个静态的文件系统，类似于未安装的windows ios文件，相当于是一个未挂载的root文件系统</li>
-<li><strong>容器（container)</strong>：容器是镜像运行时的实体，可以启动、创建、停止以及删除。容器的实质是进程，但与直接在宿主执行的进程不同，容器进程运行于属于自己的独立的命名空间</li>
-<li><strong>仓库（Repository）</strong>：镜像中心，类似于maven的依赖包中心，用来保存镜像，最常使用的公共仓库是官方的Docker Hub</li>
-</ul>
-<p>基本架构（cs架构）:</p>
-<blockquote>
-<p>守护进程（daemon）是生存期长的一种进程，没有控制终端。它们常常在系统引导装入时启动，仅在系统关闭时才终止</p>
-</blockquote>
-<ul>
-<li><strong>Docker 客户端(Client)</strong>:与docker host中的守护进程进行通信，通过命令执行实际的操作（cs架构中的c）</li>
-<li><strong>Docker 主机(Host)</strong>:运行容器，存储镜像的机器</li>
-<li><strong>Docker Registry</strong>：一个 Docker Registry 中可以包含多个仓库（Repository）；每个仓库可以包含多个标签（Tag）；每个标签对应一个镜像。</li>
-</ul>
-<img src="/2021/07/27/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20210727162745322.png" class="" title="image-20210727162745322">
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/27/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/27/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/27/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/" class="post-title-link" itemprop="url">Dockerfile理解使用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-07-27 16:22:28 / 修改时间：16:35:31" itemprop="dateCreated datePublished" datetime="2021-07-27T16:22:28+08:00">2021-07-27</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%A1%86%E6%9E%B6-%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">框架/技术学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>docker file 包含一系列命令行，docker通过该文件组织生成镜像，一个docker file文件主要包括四部分：</p>
-<ol>
-<li>基础镜像信息</li>
-<li>维护者信息</li>
-<li>镜像操作指令</li>
-<li>容器启动时执行指令</li>
-</ol>
-<p>以一个dockerfile为例：<br><img src="/2021/07/27/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/image-20210618162710697.png" class="" title="image-20210618162710697.png"></p>
-<blockquote>
-<p>Dockerfile 的指令每执行一次都会在 docker 上新建一层。所以过多无意义的层，会造成镜像膨胀过大</p>
-</blockquote>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/27/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/21/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/21/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">优化算法学习总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-07-21 15:02:06 / 修改时间：15:14:25" itemprop="dateCreated datePublished" datetime="2021-07-21T15:02:06+08:00">2021-07-21</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="1-动量梯度下降"><a href="#1-动量梯度下降" class="headerlink" title="1. 动量梯度下降"></a>1. 动量梯度下降</h3><p>为了解决随机梯度梯度下降存在的震荡问题，通过添加动量，平滑动量变化。</p>
-<h4 id="什么是指数加权平均"><a href="#什么是指数加权平均" class="headerlink" title="什么是指数加权平均"></a>什么是指数加权平均</h4><p>当前步的函数值不仅取决于当前的输入，还取决于之前的函数值，公式如下</p>
-<script type="math/tex; mode=display">
-v_t = \beta v_{t-1}+(1-\beta)\theta_t</script><p>通过不断带入展开，可得只包含 <script type="math/tex">\theta</script> 的表达式为</p>
-<script type="math/tex; mode=display">
-v_t = (1-\beta)\theta_t + (1-\beta)\beta\theta_{t-1} + (1-\beta)\beta^2\theta_{t-2}+....+(1-\beta)\beta^n\theta_{t-n}+\beta^nv_{t-n}</script><img src="/2021/07/21/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20210720092013215.png" class="" title="image-20210720092013215">
-<p>由于 <script type="math/tex">(1-\frac{1}{n})^n</script> 在n趋向于无穷时等于 <script type="math/tex">e^{-1}</script>。当 <script type="math/tex">\beta</script> 趋向于1时，<script type="math/tex">\beta^{\frac{1}{1-\beta}} = (1-\frac{1}{n})^n</script> 同样等于 <script type="math/tex">e^{-1}</script>,如果将 <script type="math/tex">e^{-1}</script>看作一个可以忽略的数字，则展开式中含有阶数大于等于 <script type="math/tex">\theta^{\frac{1}{1-\theta}}</script> 的相可以忽略。</p>
-<ul>
-<li>当 <script type="math/tex">\beta = 0.98</script>​时，<script type="math/tex">\beta^{\frac{1}{1-\beta}} = \beta^{20}</script>​ ,所以所有系数包含<script type="math/tex">\beta^n</script>​ n&gt;=20的均省略，原式子等价于前20个<script type="math/tex">\theta</script>​的加权平均和，<strong>即当前梯度等于前20个梯度的加权平均和</strong>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/21/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/21/%E6%A0%91%E7%8A%B6DP%E6%95%B4%E7%90%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/21/%E6%A0%91%E7%8A%B6DP%E6%95%B4%E7%90%86/" class="post-title-link" itemprop="url">树状DP整理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-07-21 14:59:17 / 修改时间：15:21:25" itemprop="dateCreated datePublished" datetime="2021-07-21T14:59:17+08:00">2021-07-21</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">算法整理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="什么是树状DP"><a href="#什么是树状DP" class="headerlink" title="什么是树状DP"></a>什么是树状DP</h3><p>建立在 ”树“ 这一数据结构上的DP问题，难度介于线性dp和图dp之间，当前节点的状态可能取决于父亲节点或者孩子节点，即存在两种状态转移方向，树可能包括二叉树和多叉树。</p>
-<p>难点还是如何找到状态转移方程</p>
-<h4 id="主要题目类型"><a href="#主要题目类型" class="headerlink" title="主要题目类型"></a>主要题目类型</h4><ol>
-<li><p>最大独立子集合问题</p>
-<p>给一无向图，找出一个点集，使得任意两点之间都没有连边，这个点集就是独立集。而点最多的独立集，就是最大独立集，针对不问题，选取点的条件可能发生变化，但总体还是在限定条件下，选择最优的点集</p>
-</li>
-<li><p>最小点覆盖</p>
-</li>
-<li><p>最小支配集</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/21/%E6%A0%91%E7%8A%B6DP%E6%95%B4%E7%90%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1063,7 +1066,7 @@ v_t = (1-\beta)\theta_t + (1-\beta)\beta\theta_{t-1} + (1-\beta)\beta^2\theta_{t
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-count">35</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1076,7 +1079,7 @@ v_t = (1-\beta)\theta_t + (1-\beta)\beta\theta_{t-1} + (1-\beta)\beta^2\theta_{t
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-count">16</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
