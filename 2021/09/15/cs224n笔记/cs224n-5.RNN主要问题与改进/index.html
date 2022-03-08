@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="RNN梯度消失&#x2F;爆炸问题（vanishing&#x2F;exploding gradient problem）由于RNN对于不同时间步的输入使用同一个神经元，在反向传播计算梯度时，随着时间步的增加，会出现梯度爆炸和消失问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="cs224n-5.RNN主要问题与改进">
+<meta property="og:url" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="RNN梯度消失&#x2F;爆炸问题（vanishing&#x2F;exploding gradient problem）由于RNN对于不同时间步的输入使用同一个神经元，在反向传播计算梯度时，随着时间步的增加，会出现梯度爆炸和消失问题">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914151209756.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914152544786.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914153650599.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914154543524.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914154902059.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914161611434.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914162031478.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914162308396.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914163439128.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915191812848.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915194728672.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915195839882.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915200357516.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915200931271.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915201518821.png">
+<meta property="article:published_time" content="2021-09-15T13:25:40.000Z">
+<meta property="article:modified_time" content="2021-09-15T13:31:51.589Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="NLP理论">
+<meta property="article:tag" content="cs224n">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914151209756.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>cs224n-5.RNN主要问题与改进 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          cs224n-5.RNN主要问题与改进
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-09-15 21:25:40 / 修改时间：21:31:51" itemprop="dateCreated datePublished" datetime="2021-09-15T21:25:40+08:00">2021-09-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="RNN梯度消失-爆炸问题（vanishing-exploding-gradient-problem）"><a href="#RNN梯度消失-爆炸问题（vanishing-exploding-gradient-problem）" class="headerlink" title="RNN梯度消失/爆炸问题（vanishing/exploding gradient problem）"></a>RNN梯度消失/爆炸问题（vanishing/exploding gradient problem）</h3><p>由于RNN对于不同时间步的输入使用同一个神经元，在反向传播计算梯度时，随着时间步的增加，会出现梯度爆炸和消失问题</p>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914151209756.png" class="" title="image-20210914151209756">
+<span id="more"></span>
+<p>RNN时间步t计算公式为</p>
+<script type="math/tex; mode=display">
+S_t = \sigma(S_{t-1}W_s + X_tW_x+b_t) \\
+O_t = W_oS_t+b_o</script><p>反向传播的损失函数求导结果为</p>
+<script type="math/tex; mode=display">
+\frac{\partial L_t}{\partial W_x} = \sum_{k=0}^t \frac{\partial L_t}{\partial O_x}\frac{\partial O_t}{\partial S_t}(\prod_j^t \frac{\partial S_j}{\partial S_{j-1}})\frac{\partial O_k}{\partial W_x}</script><p>其中 $\frac{\partial s_j}{\partial S_{j-1}} = \sigma’ W_s$ (不考虑激活函数的情况下),由于累乘的性质，随着神经元系数W的累乘次数增加，如果$w$大于1，产生梯度爆炸问题；如果$w$小于，出现梯度消失问题。</p>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914152544786.png" class="" title="image-20210914152544786">
+<p>梯度消失问题导致 <strong>RNN难以捕捉长时间步距离中的有效信息</strong></p>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914153650599.png" class="" title="image-20210914153650599">
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914154543524.png" class="" title="image-20210914154543524">
+<h4 id="解决梯度爆炸问题"><a href="#解决梯度爆炸问题" class="headerlink" title="解决梯度爆炸问题"></a>解决梯度爆炸问题</h4><p>梯度剪切（clipping）</p>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914154902059.png" class="" title="image-20210914154902059">
+<h3 id="Long-Short-term-Memory-LSTM"><a href="#Long-Short-term-Memory-LSTM" class="headerlink" title="Long Short-term Memory(LSTM)"></a>Long Short-term Memory(LSTM)</h3><p>在原RNN每个时间步拥有一个隐藏状态 $h^{(t)}$ 的基础上，增加一个存储单元 $c^{(t)}$（cell state）存储RNN无法捕捉的长距离时间步信息</p>
+<ul>
+<li>LSTM能够从存储单元中删除、写入以及读取相关信息，是否执行这些操作由对应的控制门（gate）决定</li>
+<li>每个时间步gate值由当前时间步信息动态计算</li>
+</ul>
+<p>三种类型门的值均采用神经网络方式预测得到</p>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914161611434.png" class="" title="image-20210914161611434">
+<p><strong>基本计算流程：</strong></p>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914162031478.png" class="" title="image-20210914162031478">
+<ol>
+<li>首先根据上一时间步隐藏状态和当前输入，计算当前存储单元候选值</li>
+<li>根据<strong>遗忘门和输入门</strong>有选择的组合历史/当前存储单元计算值，获得当前存储单元值（忘记多少从前，留下多少现在）</li>
+<li>根据<strong>输出门</strong>，决定隐藏状态值</li>
+</ol>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914162308396.png" class="" title="image-20210914162308396">
+<h4 id="为何LSTM能够解决梯度消失问题"><a href="#为何LSTM能够解决梯度消失问题" class="headerlink" title="为何LSTM能够解决梯度消失问题"></a>为何LSTM能够解决梯度消失问题</h4><p>关注点不在于解决梯度消失或者梯度爆炸，在于解决由梯度消失带来的 <strong>长距离信息无法捕捉的问题</strong>（不解决因，而改善果），类似于resnet中的残差思路</p>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210914163439128.png" class="" title="image-20210914163439128">
+<h3 id="Gated-Recurrent-Units-GRU-降低了LSTM的复杂度"><a href="#Gated-Recurrent-Units-GRU-降低了LSTM的复杂度" class="headerlink" title="Gated Recurrent Units(GRU) - 降低了LSTM的复杂度"></a>Gated Recurrent Units(GRU) - 降低了LSTM的复杂度</h3><p>不使用cell存储单元，只采用们的思想控制历史隐藏状态以及当前隐藏状态对于结果的影响。、</p>
+<ol>
+<li>$u^t$ 更新门：控制当前生成当前隐藏状态时保留的历史状态和当前隐藏状态的比例</li>
+<li>$r^t$ 重置门：历史隐藏状态信息 流入 当前候选隐藏状态的量</li>
+</ol>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915191812848.png" class="" title="image-20210915191812848">
+<p>与LTSM应用效果区别不大，如果问题特别重视长距离信息的保存，默认使用LSTM</p>
+<h3 id="其他类型神经网络中同样存在梯度消失爆炸问题"><a href="#其他类型神经网络中同样存在梯度消失爆炸问题" class="headerlink" title="其他类型神经网络中同样存在梯度消失爆炸问题"></a>其他类型神经网络中同样存在梯度消失爆炸问题</h3><p>随着网络层数的不断增加，梯度消失/爆炸更容易出现，导致深层神经网络的训练难度更高，出现了几种特殊类型网络，解决此类问题</p>
+<ol>
+<li><p>resnet 残差网络</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/shine-lee/p/12363488.html">相比于让$F(x)$学习成恒等映射，让$F(x)$学习成0要更加容易——后者通过L2正则就可以轻松实现</a></p>
+</blockquote>
+<p>残差网络采用 shortcut-connection的思想，将几个layer成为block，假设每个block拟合函数为$F(x)$ ,目标函数为$H(x)$。传统网络思想通过不断训练用拟合函数$F(x)$映射目标函数$H(x)$，resnet将拟合目标修改为$H(x)-x$ ,在输出增加一个<strong>shortcut connection</strong>，直接将$x$ 加到拟合结果上，实现与传统网络相同的效果。</p>
+<p>也正是因为<strong>shortcut connection</strong>的存在，实现了长距离信息的保存</p>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915194728672.png" class="" title="image-20210915194728672">
+</li>
+<li><p>densenet（<strong>待详细了解</strong>）</p>
+<p>每一层的输入都包括前面所有层的输出</p>
+</li>
+</ol>
+<h3 id="双向RNN（bidirectional）"><a href="#双向RNN（bidirectional）" class="headerlink" title="双向RNN（bidirectional）"></a>双向RNN（bidirectional）</h3><p>为了解决单向RNN存在的句子歧义问题（I am terribly exciting 是难受 还是特别兴奋？），通过两个独立的RNN网络，分别正/逆输入句子，将两个网络相同词语获得的隐藏状态拼接，形成新的隐藏状态，输入到输入层获得输入结果。</p>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915195839882.png" class="" title="image-20210915195839882">
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915200357516.png" class="" title="image-20210915200357516">
+<h5 id="双向RNN的局限性"><a href="#双向RNN的局限性" class="headerlink" title="双向RNN的局限性"></a>双向RNN的局限性</h5><p>双向RNN只有在输入数据完整句子的情况下才能够使用，LM模型不适用。</p>
+<h3 id="多层RNN（multi-layer）"><a href="#多层RNN（multi-layer）" class="headerlink" title="多层RNN（multi-layer）"></a>多层RNN（multi-layer）</h3><p>多个RNN单元堆积在一起组成深度网络，类似于卷积网络的思想，通过增加网络的深度，实现从浅层特征学习=&gt;深层特征学习。</p>
+<img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915200931271.png" class="" title="image-20210915200931271">
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><img src="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-5.RNN%E4%B8%BB%E8%A6%81%E9%97%AE%E9%A2%98%E4%B8%8E%E6%94%B9%E8%BF%9B/image-20210915201518821.png" class="" title="image-20210915201518821">
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/NLP%E7%90%86%E8%AE%BA/" rel="tag"><i class="fa fa-tag"></i> NLP理论</a>
+              <a href="/tags/cs224n/" rel="tag"><i class="fa fa-tag"></i> cs224n</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/09/15/cs224n%E7%AC%94%E8%AE%B0/cs224n-4.%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%8ERNN%E5%BC%95%E5%85%A5/" rel="prev" title="cs224n-4.语言模型与RNN引入">
+      <i class="fa fa-chevron-left"></i> cs224n-4.语言模型与RNN引入
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/09/30/cs224n%E7%AC%94%E8%AE%B0/cs224n-6.%E6%9C%BA%E5%99%A8%E7%BF%BB%E8%AF%91/" rel="next" title="cs224n-6.机器翻译">
+      cs224n-6.机器翻译 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#RNN%E6%A2%AF%E5%BA%A6%E6%B6%88%E5%A4%B1-%E7%88%86%E7%82%B8%E9%97%AE%E9%A2%98%EF%BC%88vanishing-exploding-gradient-problem%EF%BC%89"><span class="nav-number">1.</span> <span class="nav-text">RNN梯度消失&#x2F;爆炸问题（vanishing&#x2F;exploding gradient problem）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%A2%AF%E5%BA%A6%E7%88%86%E7%82%B8%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.</span> <span class="nav-text">解决梯度爆炸问题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Long-Short-term-Memory-LSTM"><span class="nav-number">2.</span> <span class="nav-text">Long Short-term Memory(LSTM)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BD%95LSTM%E8%83%BD%E5%A4%9F%E8%A7%A3%E5%86%B3%E6%A2%AF%E5%BA%A6%E6%B6%88%E5%A4%B1%E9%97%AE%E9%A2%98"><span class="nav-number">2.1.</span> <span class="nav-text">为何LSTM能够解决梯度消失问题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Gated-Recurrent-Units-GRU-%E9%99%8D%E4%BD%8E%E4%BA%86LSTM%E7%9A%84%E5%A4%8D%E6%9D%82%E5%BA%A6"><span class="nav-number">3.</span> <span class="nav-text">Gated Recurrent Units(GRU) - 降低了LSTM的复杂度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E7%B1%BB%E5%9E%8B%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E4%B8%AD%E5%90%8C%E6%A0%B7%E5%AD%98%E5%9C%A8%E6%A2%AF%E5%BA%A6%E6%B6%88%E5%A4%B1%E7%88%86%E7%82%B8%E9%97%AE%E9%A2%98"><span class="nav-number">4.</span> <span class="nav-text">其他类型神经网络中同样存在梯度消失爆炸问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E5%90%91RNN%EF%BC%88bidirectional%EF%BC%89"><span class="nav-number">5.</span> <span class="nav-text">双向RNN（bidirectional）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%8F%8C%E5%90%91RNN%E7%9A%84%E5%B1%80%E9%99%90%E6%80%A7"><span class="nav-number">5.0.1.</span> <span class="nav-text">双向RNN的局限性</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E5%B1%82RNN%EF%BC%88multi-layer%EF%BC%89"><span class="nav-number">6.</span> <span class="nav-text">多层RNN（multi-layer）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">36</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yourname" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/zhihu.com/people/fu-hai-fei" title="zhihu → zhihu.com&#x2F;people&#x2F;fu-hai-fei"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : '8cdbd24b44605440a9762b8041e89d19',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
