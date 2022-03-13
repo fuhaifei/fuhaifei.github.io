@@ -167,7 +167,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/08/%E5%91%A8%E8%AE%B0(2022.3.6_%E5%BC%80%E5%AD%A6%E7%AC%AC%E4%B8%80%E5%91%A8)/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/13/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%871-resNet/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -181,7 +181,190 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/03/08/%E5%91%A8%E8%AE%B0(2022.3.6_%E5%BC%80%E5%AD%A6%E7%AC%AC%E4%B8%80%E5%91%A8)/" class="post-title-link" itemprop="url">周记[2022.3.6开学第一周]</a>
+            <a href="/2022/03/13/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%871-resNet/" class="post-title-link" itemprop="url">读论文1-resNet</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-03-13 17:55:23 / 修改时间：17:58:38" itemprop="dateCreated datePublished" datetime="2022-03-13T17:55:23+08:00">2022-03-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AF%BB%E8%AE%BA%E6%96%87/" itemprop="url" rel="index"><span itemprop="name">读论文</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="ResNet"><a href="#ResNet" class="headerlink" title="ResNet"></a>ResNet</h2><blockquote>
+<p>论文地址 ：<a target="_blank" rel="noopener" href="http://cn.arxiv.org/pdf/1512.03385.pdf">Deep Residual Learning for Image Recognition</a></p>
+</blockquote>
+<p>针对深度神经网络难以训练的问题，ResNet提出了一种特殊的网络结构-残差，有效的解决了深度网络的退化问题，降低了深度网络学习难度</p>
+<h3 id="论文结构"><a href="#论文结构" class="headerlink" title="论文结构"></a>论文结构</h3><ol>
+<li><p>摘要 abstract</p>
+<p>按照<strong>问题-&gt;解决方案-&gt;实验效果</strong>的逻辑，首先提出问题：“深度神经网络难以训练”，引出解决方案-residual net，最后列举在不同数据上的卓越效果（ImageNet，COCO，CIFAR），证明解决方案的有效性</p>
+</li>
+<li><p>介绍 intro</p>
+<p>与摘要的逻辑相同，逻辑非常严密（ps:太丝滑了）</p>
+<ol>
+<li>为什么要用深度网络？ 因为深度网络有助于捕捉特征，提升任务效果</li>
+<li>增加网络深度又会出现<strong>两个主要问题</strong>：一是梯度爆炸/消失，二是深度网络的退化问题</li>
+<li>梯度爆炸可以通过 <strong>normalized initialization and intermediate normalization layers</strong> 解决</li>
+<li>网络退化如何解决？引出了本文的残差机制-residual</li>
+<li>最后又展示了一轮不同数据上的实验效果</li>
+</ol>
+</li>
+<li><p>相关工作 related work</p>
+<p>没细看。。</p>
+</li>
+<li><p>算法描述 Deep Residual Learning</p>
+<p><strong>残差机制-&gt;网络架构设计-&gt;网络实现</strong></p>
+<ol>
+<li><p>提出了深度网络之所以会出现退化,是因为 <strong>难以学习直接映射</strong>（只是形式上的理解，没有给出公式证明），很自然引出了残差机制的设计</p>
+<blockquote>
+<p>might have difficulties in approximating identity mappings by multiple nonlinear layers.</p>
+</blockquote>
+</li>
+<li><p>为了方便对比残差机制是否真的有效，设计了<strong>Plain Networks</strong>和<strong>Residual Networks</strong>两种架构</p>
+</li>
+</ol>
+</li>
+<li><p>实验 Experiments</p>
+<p>列举了从 ImageNet 到CIFAR10再到PASCAL and MS COCO三个数据集上不同任务的实验效果</p>
+<ol>
+<li><p>首先对比在ImageNet数据集上34层Plain network和18层效果，证明深层网络确实出现了退化现象，并且排除了是梯度消失造成的可能</p>
+<blockquote>
+<p> We conjecture that the deep plain nets may have <strong>exponentially low convergence rates</strong>, which impact the reducing of the training error</p>
+</blockquote>
+</li>
+<li><p>然后对比34层和18层Residual Networks效果,证明残差确实能够解决深层网络退化问题,并且能够在训练初期加速网络收敛速度</p>
+<blockquote>
+<p>This indicates that the <strong>degradation problem is well addressed</strong> in this setting and we manage to obtain accuracy gains from increased depth</p>
+</blockquote>
+</li>
+<li><p>继续对比了 <strong>直接映射 和 投影映射</strong> 两种不同残差计算方式，是否影响残差发挥作用，得到结论：单纯的直接映射残差机制即可解决退化问题，投影映射效果优于直接映射，但是计算量增加较大</p>
+</li>
+<li><p>之后提出了一种<strong>Deeper Bottleneck Architectures</strong>，在ImageNet上探索残差机制在更深层网络上的效果</p>
+<img src="/2022/03/13/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%871-resNet/image-20220309093015669.png" class="" title="image-20220309093015669">
+</li>
+<li><p>在小数据集CIFAR-10上验证：<strong>当学习任务足够简单，并不需要过深网络时，深度网络中的残差映射会近似于直接映射</strong>（加了残差块的深层网络 <strong>等价于</strong> 浅层网络+多个直接映射层）</p>
+<blockquote>
+<p>the residual functions might be generally closer to zero than the non-residual functions.</p>
+</blockquote>
+</li>
+<li><p>最后秀了一波在目标检测任务上的优秀成果</p>
+</li>
+</ol>
+</li>
+<li><p>总结 summarize</p>
+<p>因为CVPR的页数限制没有总结（？）</p>
+</li>
+</ol>
+<h3 id="残差机制-residual"><a href="#残差机制-residual" class="headerlink" title="残差机制-residual"></a>残差机制-residual</h3><img src="/2022/03/13/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%871-resNet/image-20220309093814713.png" class="" title="image-20220309093814713">
+<p>文章中分别提出了两种残差映射公式，其中第一种为 “Identity Mapping”，直接映射公式如下</p>
+<script type="math/tex; mode=display">
+y=F(x,\{W_i\}) +x  \tag{1}</script><p>其中 $F(x,\{W_i\})$ 代表残差块内从X到残差的映射（如图2为中间带ReLU激活函数的两个权重层）,直接映射要求输入输出的唯独相同，可以直接叠加</p>
+<p>第二种为 “linear projection”，将输入投影到与输出相同维度，方便叠加</p>
+<script type="math/tex; mode=display">
+y=F(x,\{W_i\}) +W_s x  \tag{2}</script><ul>
+<li>论文中已通过实验证明， “Identity Mapping”即可解决深度网络的退化问题</li>
+<li>虽然 “linear projection”效果略优于 “Identity Mapping”，但投影操作增加了计算量</li>
+</ul>
+<h3 id="网络结构设计"><a href="#网络结构设计" class="headerlink" title="网络结构设计"></a>网络结构设计</h3><p>两个基本设计原则</p>
+<ol>
+<li>当特征图大小缩小一半（$224<em>224-&gt;112</em>112$），通道数翻一倍（$64-&gt;128$）</li>
+<li>当特征图大小不变时，通道数保持不变</li>
+</ol>
+<p>网络组成结构如图</p>
+<ul>
+<li>每个中括号内为一个残差块，每一个例如$conv2_x，conv3_x$ 的卷积层包含多个残差块</li>
+<li>跨越不同卷积层时特征图缩小一般，通道数扩大一倍</li>
+<li>例如18层网络的结构为<ol>
+<li>首先通过 $7<em>7$ 输出通道为64的卷积层+ $3</em>3$的最大池化层</li>
+<li>进入第$conv2_x$卷积层，包括两个残差块，每个残差块内包含两个$3<em>3</em>64$ 的卷积层</li>
+<li>进入第$conv2_x$卷积层，同样包括两个残差块，由于第一个残差块输入为$56<em>56$ 输出为$28</em>28$ 需要使用投影残差计算，其余无差异，其中投影残差作者对比了两种不同的选择<ul>
+<li>通过padding升维度，避免投影计算（A)</li>
+<li>1*1卷积核，类似于全连接层(B）</li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+<img src="/2022/03/13/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%871-resNet/image-20220309150217483.png" class="" title="image-20220309150217483">
+<p><strong>Deeper Bottleneck Architectures</strong></p>
+<p>针对ImageNet设计深层网络时，为了降低计算复杂度，设计了一种Bottleneck block</p>
+<ul>
+<li>与普通残差块不同在于 包含三个卷积层: $1<em>1$ + $3</em>3$ + $1<em>1$,其中 $1</em>1$ 负责升维和降维</li>
+<li>上图中34层和50层，虽然增加了16层，但是使用Bottleneck block的50层网络计算量增加不大</li>
+</ul>
+<img src="/2022/03/13/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%871-resNet/image-20220309152918557.png" class="" title="image-20220309152918557">
+<p><strong>训练超参数</strong></p>
+<ol>
+<li>使用SGD，256 mini-batch，迭代训练$6*10^4$ 次</li>
+<li>初始学习率为0.1，每当错误率达到稳定，学习率缩小10倍</li>
+<li>weight decay:0.0001,momentum:0.9,不使用dropout</li>
+<li>每个卷积层之后，激活层之前，添加BN层</li>
+</ol>
+<h3 id="Pytorch-代码实现"><a href="#Pytorch-代码实现" class="headerlink" title="Pytorch 代码实现"></a>Pytorch 代码实现</h3><p>基础残差块：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BasicBlock</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    expansion: <span class="built_in">int</span> = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params"></span></span></span><br><span class="line"><span class="params"><span class="function">        self,</span></span></span><br><span class="line"><span class="params"><span class="function">        inplanes: <span class="built_in">int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        planes: <span class="built_in">int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        stride: <span class="built_in">int</span> = <span class="number">1</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        downsample: <span class="type">Optional</span>[nn.Module] = <span class="literal">None</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        groups: <span class="built_in">int</span> = <span class="number">1</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        base_width: <span class="built_in">int</span> = <span class="number">64</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        dilation: <span class="built_in">int</span> = <span class="number">1</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        norm_layer: <span class="type">Optional</span>[<span class="type">Callable</span>[..., nn.Module]] = <span class="literal">None</span></span></span></span><br><span class="line"><span class="params"><span class="function">    </span>) -&gt; <span class="literal">None</span>:</span></span><br><span class="line">        <span class="built_in">super</span>(BasicBlock, self).__init__()</span><br><span class="line">        <span class="keyword">if</span> norm_layer <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            norm_layer = nn.BatchNorm2d</span><br><span class="line">        <span class="keyword">if</span> groups != <span class="number">1</span> <span class="keyword">or</span> base_width != <span class="number">64</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">&#x27;BasicBlock only supports groups=1 and base_width=64&#x27;</span>)</span><br><span class="line">        <span class="keyword">if</span> dilation &gt; <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">raise</span> NotImplementedError(<span class="string">&quot;Dilation &gt; 1 not supported in BasicBlock&quot;</span>)</span><br><span class="line">        <span class="comment"># Both self.conv1 and self.downsample layers downsample the input when stride != 1</span></span><br><span class="line">        <span class="comment"># 第一个卷积层传入 输入通道，输出通道，步长</span></span><br><span class="line">        self.conv1 = conv3x3(inplanes, planes, stride)</span><br><span class="line">        <span class="comment"># 卷积层后+batchnorm层</span></span><br><span class="line">        self.bn1 = norm_layer(planes)</span><br><span class="line">        <span class="comment"># relu激活函数</span></span><br><span class="line">        self.relu = nn.ReLU(inplace=<span class="literal">True</span>)</span><br><span class="line">        self.conv2 = conv3x3(planes, planes)</span><br><span class="line">        self.bn2 = norm_layer(planes)</span><br><span class="line">        self.downsample = downsample</span><br><span class="line">        self.stride = stride</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, x: Tensor</span>) -&gt; Tensor:</span></span><br><span class="line">        identity = x</span><br><span class="line"></span><br><span class="line">        out = self.conv1(x)</span><br><span class="line">        out = self.bn1(out)</span><br><span class="line">        out = self.relu(out)</span><br><span class="line"></span><br><span class="line">        out = self.conv2(out)</span><br><span class="line">        out = self.bn2(out)</span><br><span class="line">		<span class="comment"># 若输入与输出不相同，使用投影映射，也就是残差公式2</span></span><br><span class="line">        <span class="keyword">if</span> self.downsample <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            identity = self.downsample(x)</span><br><span class="line">		<span class="comment"># 残差计算+ReLU激活函数</span></span><br><span class="line">        out += identity</span><br><span class="line">        out = self.relu(out)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> out</span><br></pre></td></tr></table></figure>
+<p>投影残差函数初始化(就是简单的$1*1$卷积核加batchnorm）:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> stride != <span class="number">1</span> <span class="keyword">or</span> self.inplanes != planes * block.expansion:</span><br><span class="line">    downsample = nn.Sequential(</span><br><span class="line">        conv1x1(self.inplanes, planes * block.expansion, stride),</span><br><span class="line">        norm_layer(planes * block.expansion),</span><br><span class="line">    )</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>Bottleneck块</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, x: Tensor</span>) -&gt; Tensor:</span></span><br><span class="line">       identity = x</span><br><span class="line">       <span class="comment"># 1*1</span></span><br><span class="line">       out = self.conv1(x)</span><br><span class="line">       out = self.bn1(out)</span><br><span class="line">       out = self.relu(out)</span><br><span class="line">	<span class="comment"># 3*3</span></span><br><span class="line">       out = self.conv2(out)</span><br><span class="line">       out = self.bn2(out)</span><br><span class="line">       out = self.relu(out)</span><br><span class="line">	<span class="comment"># 1*1</span></span><br><span class="line">       out = self.conv3(out)</span><br><span class="line">       out = self.bn3(out)</span><br><span class="line">       </span><br><span class="line">       <span class="keyword">if</span> self.downsample <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">           identity = self.downsample(x)</span><br><span class="line"></span><br><span class="line">       out += identity</span><br><span class="line">       out = self.relu(out)</span><br><span class="line"></span><br><span class="line">       <span class="keyword">return</span> out</span><br></pre></td></tr></table></figure>
+<p>resnet网络结构</p>
+<img src="/2022/03/13/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%871-resNet/image-20220309154506166.png" class="" title="image-20220309154506166">
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/08/%E5%91%A8%E8%AE%B0/2022%E4%B8%8A%E5%AD%A6%E6%9C%9F/%E5%91%A8%E8%AE%B0(2022.3.6_%E5%BC%80%E5%AD%A6%E7%AC%AC%E4%B8%80%E5%91%A8)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/03/08/%E5%91%A8%E8%AE%B0/2022%E4%B8%8A%E5%AD%A6%E6%9C%9F/%E5%91%A8%E8%AE%B0(2022.3.6_%E5%BC%80%E5%AD%A6%E7%AC%AC%E4%B8%80%E5%91%A8)/" class="post-title-link" itemprop="url">周记[2022.3.6开学第一周]</a>
         </h2>
 
         <div class="post-meta">
@@ -218,7 +401,7 @@
           不知道密码就别看了。
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/03/08/%E5%91%A8%E8%AE%B0(2022.3.6_%E5%BC%80%E5%AD%A6%E7%AC%AC%E4%B8%80%E5%91%A8)/#more" rel="contents">
+              <a class="btn" href="/2022/03/08/%E5%91%A8%E8%AE%B0/2022%E4%B8%8A%E5%AD%A6%E6%9C%9F/%E5%91%A8%E8%AE%B0(2022.3.6_%E5%BC%80%E5%AD%A6%E7%AC%AC%E4%B8%80%E5%91%A8)/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -939,101 +1122,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-1.%E5%AD%A6%E4%BB%80%E4%B9%88/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-1.%E5%AD%A6%E4%BB%80%E4%B9%88/" class="post-title-link" itemprop="url">实用ML-1.学什么</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-03-08 18:31:42 / 修改时间：19:08:42" itemprop="dateCreated datePublished" datetime="2022-03-08T18:31:42+08:00">2022-03-08</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="学什么"><a href="#学什么" class="headerlink" title="学什么"></a>学什么</h3><iframe src="//player.bilibili.com/player.html?aid=675507034&bvid=BV13U4y1N7Uo&cid=409501228&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
-
-<p>主要是从机器学习的工作流出发，每个阶段主要的工作和工业界流行的技术和概念</p>
-<img src="/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-1.%E5%AD%A6%E4%BB%80%E4%B9%88/image-20220224095954652.png" class="" title="image-20220224095954652">
-<p>主要包括四个学习模块：</p>
-<ol>
-<li><strong>数据</strong> 数据获取、存储、清洗</li>
-<li><strong>模型</strong> 训练、迁移、多模态</li>
-<li><strong>部署</strong></li>
-<li><strong>监控</strong> 可视化</li>
-</ol>
-<h3 id="学习计划"><a href="#学习计划" class="headerlink" title="学习计划"></a>学习计划</h3><p>基本学习计划：</p>
-<ol>
-<li>数据模块<ul>
-<li>一天一个视频，慢慢学</li>
-</ul>
-</li>
-<li>模型模块<ul>
-<li>机器学习、深度学习模块部分，快速过一遍</li>
-<li>模型验证，调优部分慢慢学，基础较差</li>
-</ul>
-</li>
-<li>部署 + 监控部分<ul>
-<li>慢慢学</li>
-</ul>
-</li>
-</ol>
-<p>大概一共30多个视频，三周内学完（无意外的情况下），<strong>deadline 3-15</strong></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1105,20 +1193,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">45</span>
+          <span class="site-state-item-count">46</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-count">18</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
