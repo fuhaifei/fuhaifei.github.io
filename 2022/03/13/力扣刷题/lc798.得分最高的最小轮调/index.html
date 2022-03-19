@@ -31,22 +31,20 @@
     var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="学什么   主要是从机器学习的工作流出发，每个阶段主要的工作和工业界流行的技术和概念  主要包括四个学习模块：  数据 数据获取、存储、清洗 模型 训练、迁移、多模态 部署 监控 可视化  学习计划基本学习计划：  数据模块 一天一个视频，慢慢学   模型模块 机器学习、深度学习模块部分，快速过一遍 模型验证，调优部分慢慢学，基础较差   部署 + 监控部分 慢慢学    大概一共30多个视频，三">
+  <meta name="description" content="798.得分最高的最小轮调第一次写一点思路都没有，扣了半天最终放弃，直奔题解，发现题目主要有两个难点  从轮调位置角度考虑转换到每个元素位置考虑 我的思路一直局限在从选k出发，如何计算出每个k位置的分数？怎么找到一种贪心或者动态规状态传递的方式 没有从元素的角度出发，某个元素满足小于等于index时，k一定在某个范围内，所有元素决定的k的范围交集次数最多的就是最优解（表达不出来这种思维的转变）">
 <meta property="og:type" content="article">
-<meta property="og:title" content="实用ML-1.学什么">
-<meta property="og:url" content="https://fuhaifei.github.io/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-1.%E5%AD%A6%E4%BB%80%E4%B9%88/index.html">
+<meta property="og:title" content="lc798.得分最高的最小轮调">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/03/13/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/lc798.%E5%BE%97%E5%88%86%E6%9C%80%E9%AB%98%E7%9A%84%E6%9C%80%E5%B0%8F%E8%BD%AE%E8%B0%83/index.html">
 <meta property="og:site_name" content="光与影的个人博客">
-<meta property="og:description" content="学什么   主要是从机器学习的工作流出发，每个阶段主要的工作和工业界流行的技术和概念  主要包括四个学习模块：  数据 数据获取、存储、清洗 模型 训练、迁移、多模态 部署 监控 可视化  学习计划基本学习计划：  数据模块 一天一个视频，慢慢学   模型模块 机器学习、深度学习模块部分，快速过一遍 模型验证，调优部分慢慢学，基础较差   部署 + 监控部分 慢慢学    大概一共30多个视频，三">
+<meta property="og:description" content="798.得分最高的最小轮调第一次写一点思路都没有，扣了半天最终放弃，直奔题解，发现题目主要有两个难点  从轮调位置角度考虑转换到每个元素位置考虑 我的思路一直局限在从选k出发，如何计算出每个k位置的分数？怎么找到一种贪心或者动态规状态传递的方式 没有从元素的角度出发，某个元素满足小于等于index时，k一定在某个范围内，所有元素决定的k的范围交集次数最多的就是最优解（表达不出来这种思维的转变）">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-1.%E5%AD%A6%E4%BB%80%E4%B9%88/image-20220224095954652.png">
-<meta property="article:published_time" content="2022-03-08T10:31:42.000Z">
-<meta property="article:modified_time" content="2022-03-08T11:08:42.099Z">
+<meta property="article:published_time" content="2022-03-13T10:23:59.000Z">
+<meta property="article:modified_time" content="2022-03-13T10:28:27.322Z">
 <meta property="article:author" content="NEU-FHF">
-<meta property="article:tag" content="实用机器学习">
+<meta property="article:tag" content="其他">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fuhaifei.github.io/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-1.%E5%AD%A6%E4%BB%80%E4%B9%88/image-20220224095954652.png">
 
-<link rel="canonical" href="https://fuhaifei.github.io/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-1.%E5%AD%A6%E4%BB%80%E4%B9%88/">
+<link rel="canonical" href="https://fuhaifei.github.io/2022/03/13/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/lc798.%E5%BE%97%E5%88%86%E6%9C%80%E9%AB%98%E7%9A%84%E6%9C%80%E5%B0%8F%E8%BD%AE%E8%B0%83/">
 
 
 <script id="page-configurations">
@@ -59,7 +57,7 @@
   };
 </script>
 
-  <title>实用ML-1.学什么 | 光与影的个人博客</title>
+  <title>lc798.得分最高的最小轮调 | 光与影的个人博客</title>
   
 
 
@@ -175,7 +173,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-1.%E5%AD%A6%E4%BB%80%E4%B9%88/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/13/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/lc798.%E5%BE%97%E5%88%86%E6%9C%80%E9%AB%98%E7%9A%84%E6%9C%80%E5%B0%8F%E8%BD%AE%E8%B0%83/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -188,7 +186,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          实用ML-1.学什么
+          lc798.得分最高的最小轮调
         </h1>
 
         <div class="post-meta">
@@ -199,7 +197,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-03-08 18:31:42 / 修改时间：19:08:42" itemprop="dateCreated datePublished" datetime="2022-03-08T18:31:42+08:00">2022-03-08</time>
+              <time title="创建时间：2022-03-13 18:23:59 / 修改时间：18:28:27" itemprop="dateCreated datePublished" datetime="2022-03-13T18:23:59+08:00">2022-03-13</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -207,7 +205,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                  <a href="/categories/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">力扣刷题</span></a>
                 </span>
             </span>
 
@@ -222,34 +220,70 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h3 id="学什么"><a href="#学什么" class="headerlink" title="学什么"></a>学什么</h3><iframe src="//player.bilibili.com/player.html?aid=675507034&bvid=BV13U4y1N7Uo&cid=409501228&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
-
-<p>主要是从机器学习的工作流出发，每个阶段主要的工作和工业界流行的技术和概念</p>
-<img src="/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-1.%E5%AD%A6%E4%BB%80%E4%B9%88/image-20220224095954652.png" class="" title="image-20220224095954652">
-<p>主要包括四个学习模块：</p>
+        <h2 id="798-得分最高的最小轮调"><a href="#798-得分最高的最小轮调" class="headerlink" title="798.得分最高的最小轮调"></a><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/smallest-rotation-with-highest-score/">798.得分最高的最小轮调</a></h2><p>第一次写一点思路都没有，扣了半天最终放弃，直奔题解，发现题目主要有两个难点</p>
 <ol>
-<li><strong>数据</strong> 数据获取、存储、清洗</li>
-<li><strong>模型</strong> 训练、迁移、多模态</li>
-<li><strong>部署</strong></li>
-<li><strong>监控</strong> 可视化</li>
-</ol>
-<h3 id="学习计划"><a href="#学习计划" class="headerlink" title="学习计划"></a>学习计划</h3><p>基本学习计划：</p>
-<ol>
-<li>数据模块<ul>
-<li>一天一个视频，慢慢学</li>
+<li>从轮调位置角度考虑转换到每个元素位置考虑<ul>
+<li>我的思路一直局限在从选k出发，如何计算出每个k位置的分数？怎么找到一种贪心或者动态规状态传递的方式</li>
+<li>没有从元素的角度出发，某个元素满足小于等于index时，k一定在某个范围内，所有元素决定的k的范围交集次数最多的就是最优解（表达不出来这种思维的转变）</li>
 </ul>
 </li>
-<li>模型模块<ul>
-<li>机器学习、深度学习模块部分，快速过一遍</li>
-<li>模型验证，调优部分慢慢学，基础较差</li>
-</ul>
-</li>
-<li>部署 + 监控部分<ul>
-<li>慢慢学</li>
+<li>如何记录最大交集次数？<ul>
+<li>看完一半题解就想到创建一个数组，每计算出一个k的范围，就将范围内记录全部加一</li>
+<li>题解提供的差分数组思路”针不错”</li>
 </ul>
 </li>
 </ol>
-<p>大概一共30多个视频，三周内学完（无意外的情况下），<strong>deadline 3-15</strong></p>
+<span id="more"></span>
+<p>如何<strong>计算k的范围</strong>，以index=i处元素为例分情况讨论（基本思路：轮调等价于数组开头一部分元素拼接到数组末尾或者末尾一部分元素拼接到数组开头）</p>
+<ol>
+<li><p>$i &lt; nums[i]$ 即元素值大于索引，必须增大元素索引才能满足条件</p>
+<ul>
+<li>左边至少增加 $nums[i] - i$ ，也就意味着 轮调位置k必须在当前元素后面，且k<strong>后边元素个数</strong>必须大于等于当前元素左边至少要增加的元素,可得公式为 $ nums.length - k &gt;= nums[i] - i$ ，得到k的范围为<script type="math/tex; mode=display">
+k \in [i+ 1, nums.length - nums[i] +i]</script></li>
+</ul>
+</li>
+<li><p>$i &gt;= nums[i]$ 即索引值大于等于元素值，由于已经满足条件，可以如条件继续在左边增加元素（k在当前位置右边），或者从左边删掉一部分元素（k在当前位置左边）</p>
+<ul>
+<li><p>左边增加元素个数任意（k在当前位置右边），即k大于i时始终成立</p>
+<script type="math/tex; mode=display">
+k \in [i + 1, nums.length - 1]</script></li>
+<li><p>左边删除一定数量元素，即最多$ i - nums[i]$，</p>
+<script type="math/tex; mode=display">
+k \in [0, i - nums[i]]</script></li>
+</ul>
+</li>
+</ol>
+<ul>
+<li>最终第二种情况k范围为<script type="math/tex; mode=display">
+k \in [0, i - nums[i]] \cup [i + 1, nums.length - 1]</script></li>
+</ul>
+<p>差分数组理解：</p>
+<ol>
+<li>差分数组元素定义为：<strong>differ[i] = nums[i] - nums[i - 1]</strong>，实际代表原数组的与前一个位置元素的差（可以理解为每个元素的参考都是前一个元素）</li>
+<li>若要将原数组中<strong>某个区间内元素统一加某个值</strong>，在开始加 $differ[start] + number$，在结束后一个位置减  $differ[end + 1] - number$ </li>
+</ol>
+<p>如何更新差分数组：</p>
+<ol>
+<li><p>只需要执行两种操作，<strong>区间的左边界 + 1，区间的右边界右边-1</strong></p>
+</li>
+<li><p>两种情况的differ数组更新情况</p>
+<ol>
+<li>$i &lt; nums[i]$ <ul>
+<li>differ[i + 1] + 1，differ[nums.length-nums[i] + i + 1] - 1</li>
+</ul>
+</li>
+<li><p>$i &gt;= nums[i]$ </p>
+<ul>
+<li>differ[i + 1] + 1,右边界越界，不需要记录</li>
+<li>differ[0] + 1, differ[i - nums[i] + 1] - 1</li>
+</ul>
+</li>
+<li><p>$ (nums.length + i - nums[i]) % nums.length$ 可以等价与两个右边界情况</p>
+</li>
+</ol>
+</li>
+</ol>
+<h4 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">bestRotation</span><span class="params">(<span class="keyword">int</span>[] nums)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span>[] differ = <span class="keyword">new</span> <span class="keyword">int</span>[nums.length + <span class="number">1</span>];</span><br><span class="line">        <span class="keyword">int</span> tempLow;</span><br><span class="line">        <span class="keyword">int</span> tempHigh;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; nums.length;i++)&#123;</span><br><span class="line">            tempLow = i + <span class="number">1</span>;</span><br><span class="line">            <span class="comment">// 精髓</span></span><br><span class="line">            tempHigh = (nums.length + i - nums[i]) % nums.length;</span><br><span class="line">            differ[tempLow]++;</span><br><span class="line">            differ[tempHigh + <span class="number">1</span>]--;</span><br><span class="line">            <span class="comment">//左右双开区间</span></span><br><span class="line">            <span class="keyword">if</span>(nums[i] &lt;= i)&#123;</span><br><span class="line">                differ[<span class="number">0</span>]++;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt; differ.length;i++)&#123;</span><br><span class="line">            differ[i] += differ[i - <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> score = differ[<span class="number">0</span>];</span><br><span class="line">        <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt; differ.length;i++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(differ[i] &gt; score)&#123;</span><br><span class="line">                result = i;</span><br><span class="line">                score = differ[i];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
     </div>
 
@@ -260,7 +294,7 @@
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" rel="tag"><i class="fa fa-tag"></i> 实用机器学习</a>
+              <a href="/tags/%E5%85%B6%E4%BB%96/" rel="tag"><i class="fa fa-tag"></i> 其他</a>
           </div>
 
         
@@ -269,12 +303,12 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2021/11/21/%E5%91%A8%E8%AE%B0/%E5%91%A8%E8%AE%B02/" rel="prev" title="周记2(11.22-10.28)">
-      <i class="fa fa-chevron-left"></i> 周记2(11.22-10.28)
+    <a href="/2022/03/13/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%871-resNet/" rel="prev" title="读论文1-resNet">
+      <i class="fa fa-chevron-left"></i> 读论文1-resNet
     </a></div>
       <div class="post-nav-item">
-    <a href="/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML_2.%E6%95%B0%E6%8D%AE%E8%8E%B7%E5%8F%96/" rel="next" title="实用ML_2.数据获取">
-      实用ML_2.数据获取 <i class="fa fa-chevron-right"></i>
+    <a href="/2022/03/13/%E5%91%A8%E8%AE%B0/2022%E4%B8%8A%E5%AD%A6%E6%9C%9F/%E5%91%A8%E8%AE%B0(2022.3.13)/" rel="next" title="周记(2022.3.13)">
+      周记(2022.3.13) <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -335,7 +369,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%A6%E4%BB%80%E4%B9%88"><span class="nav-number">1.</span> <span class="nav-text">学什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%A6%E4%B9%A0%E8%AE%A1%E5%88%92"><span class="nav-number">2.</span> <span class="nav-text">学习计划</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#798-%E5%BE%97%E5%88%86%E6%9C%80%E9%AB%98%E7%9A%84%E6%9C%80%E5%B0%8F%E8%BD%AE%E8%B0%83"><span class="nav-number">1.</span> <span class="nav-text">798.得分最高的最小轮调</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81"><span class="nav-number">1.0.1.</span> <span class="nav-text">代码</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -541,7 +575,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'MyBlogComment',
       owner       : 'fuhaifei',
       admin       : ['fuhaifei'],
-      id          : 'ae16b7a2dfedff0249408e23ed4c03a0',
+      id          : '995b80d9d5981a7193fd5b6e2be1eaf6',
         language: 'zh-CN',
       distractionFreeMode: true
     });
