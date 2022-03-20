@@ -34,24 +34,24 @@
   <meta name="description" content="Transformer 论文地址：Attention Is All You Need  本文提出一个区别于传统RNN、CNN的基于attention机制的网络架构-transformer，在具备RNN捕捉序列特征能力的基础上，实现了并行计算，降低了计算成本（看论文名字就知道作者对论文内容非常自信） 论文结构总结下来发现这篇论文没讲故事，就是单纯的讲自己的工作，非常的简洁  摘要 abstract">
 <meta property="og:type" content="article">
 <meta property="og:title" content="读论文2-transformer">
-<meta property="og:url" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/index.html">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/index.html">
 <meta property="og:site_name" content="光与影的个人博客">
 <meta property="og:description" content="Transformer 论文地址：Attention Is All You Need  本文提出一个区别于传统RNN、CNN的基于attention机制的网络架构-transformer，在具备RNN捕捉序列特征能力的基础上，实现了并行计算，降低了计算成本（看论文名字就知道作者对论文内容非常自信） 论文结构总结下来发现这篇论文没讲故事，就是单纯的讲自己的工作，非常的简洁  摘要 abstract">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314104109242.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314104956244.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314105426864.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314145009609.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314150054771.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314150919745.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314104109242.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314104956244.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314105426864.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314145009609.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314150054771.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314150919745.png">
 <meta property="article:published_time" content="2022-03-20T11:52:22.000Z">
-<meta property="article:modified_time" content="2022-03-20T11:54:57.069Z">
+<meta property="article:modified_time" content="2022-03-20T12:25:47.169Z">
 <meta property="article:author" content="NEU-FHF">
 <meta property="article:tag" content="transformer">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314104109242.png">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314104109242.png">
 
-<link rel="canonical" href="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/">
+<link rel="canonical" href="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/">
 
 
 <script id="page-configurations">
@@ -180,7 +180,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -204,7 +204,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-03-20 19:52:22 / 修改时间：19:54:57" itemprop="dateCreated datePublished" datetime="2022-03-20T19:52:22+08:00">2022-03-20</time>
+              <time title="创建时间：2022-03-20 19:52:22 / 修改时间：20:25:47" itemprop="dateCreated datePublished" datetime="2022-03-20T19:52:22+08:00">2022-03-20</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -277,15 +277,15 @@
 </li>
 </ol>
 <h3 id="模型结构"><a href="#模型结构" class="headerlink" title="模型结构"></a>模型结构</h3><p>整体架构图如下，标准的encoder-decoder架构，encoder和decoder均为多个相同层的堆叠，其中encoder6层、decoder6层，共12层。</p>
-<img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314104109242.png" class="" title="image-20220314104109242">
+<img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314104109242.png" class="" title="image-20220314104109242">
 <p>其他机制不再赘述，之前的<a href="https://fuhaifei.github.io/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-11.Transformers/">博客</a>总结过，简单总结一下几个新理解</p>
-<h4 id="Scaled-Dot-Product-Attention"><a href="#Scaled-Dot-Product-Attention" class="headerlink" title="Scaled Dot-Product Attention"></a>Scaled Dot-Product Attention</h4><img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314104956244.png" class="" title="image-20220314104956244">
+<h4 id="Scaled-Dot-Product-Attention"><a href="#Scaled-Dot-Product-Attention" class="headerlink" title="Scaled Dot-Product Attention"></a>Scaled Dot-Product Attention</h4><img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314104956244.png" class="" title="image-20220314104956244">
 <p><strong>为什么要Scale？</strong></p>
 <blockquote>
 <p>We suspect that for large values of dk, the dot products grow large in magnitude, pushing the softmax function into regions where it has extremely small gradients[4]. To counteract this effect, we scale the dot products by $\frac{1}{\sqrt d_k}$</p>
 </blockquote>
 <p>在计算注意力分数时，QK向量相乘后，要除以输入向量维度的平方根，此论文中给出的解释，当输入维度 $d_k$ 较大时，QK向量会变得相对较大，导致softmax函数落在图像两边（如下图），导致梯度过小（梯度消失），通过除以$\sqrt d_k$ 避免此问题的出现</p>
-<img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314105426864.png" class="" title="image-20220314105426864">
+<img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314105426864.png" class="" title="image-20220314105426864">
 <p><strong>encoder-decoder attention 的输入是什么</strong></p>
 <blockquote>
 <p>the queries come from the previous decoder layer,and the memory keys and values come from the output of the encoder.</p>
@@ -296,7 +296,7 @@
 <h4 id="embedding"><a href="#embedding" class="headerlink" title="embedding"></a>embedding</h4><p><strong>为什么embedding层在+pos encoding前要乘以 $\sqrt d_k$?</strong></p>
 <p>随着输入维度的增加，嵌入向量的每个位置的数字会变小（总和接近于一），而pos encoding的大小不变，为了保持嵌入向量和pos encoding的相对大小关系保持不变，乘以 $\sqrt d_k$。</p>
 <h3 id="why-self-attention"><a href="#why-self-attention" class="headerlink" title="why self-attention?"></a>why self-attention?</h3><p>原文中通过对比自注意力机制、卷积层、循环神经网络的计算复杂度、顺序计算量(是否可并行计算)、最大序列特征捕捉计算次数三个指标，证明自注意力机制在计算量上的优势</p>
-<img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314145009609.png" class="" title="image-20220314145009609">
+<img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314145009609.png" class="" title="image-20220314145009609">
 <p>Complexity per Layer</p>
 <ol>
 <li>self-Attenion的主要计算量在 Q和V相乘，两个均为 $n<em>d$维度矩阵，相乘复杂度为 $O(n^2</em>d)$</li>
@@ -316,7 +316,7 @@
 <li><p>三个参数 $\beta_1=0.9,\beta_2=0.98,\epsilon=10^{-9}$</p>
 </li>
 <li><p>学习率如下，当训练步数小于warmup步数时，取 $step_num*warmup_steps^{-1.5}$,其中warmup取4000步</p>
-<img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314150054771.png" class="" title="image-20220314150054771">
+<img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314150054771.png" class="" title="image-20220314150054771">
 </li>
 </ol>
 <p><strong>dropout</strong></p>
@@ -327,7 +327,7 @@
 </ol>
 <p><strong>label smoothing</strong></p>
 <p>训练时增加了标签平滑，参数值为 $\epsilon_{ls} = 0.1$ </p>
-<img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314150919745.png" class="" title="image-20220314150919745">
+<img src="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%872-transformer/image-20220314150919745.png" class="" title="image-20220314150919745">
     </div>
 
     
@@ -346,11 +346,11 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/03/13/%E5%91%A8%E8%AE%B0/2022%E4%B8%8A%E5%AD%A6%E6%9C%9F/%E5%91%A8%E8%AE%B0(2022.3.13)/" rel="prev" title="周记(2022.3.13)">
-      <i class="fa fa-chevron-left"></i> 周记(2022.3.13)
+    <a href="/2022/03/13/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/lc798.%E5%BE%97%E5%88%86%E6%9C%80%E9%AB%98%E7%9A%84%E6%9C%80%E5%B0%8F%E8%BD%AE%E8%B0%83/" rel="prev" title="lc798.得分最高的最小轮调">
+      <i class="fa fa-chevron-left"></i> lc798.得分最高的最小轮调
     </a></div>
       <div class="post-nav-item">
-    <a href="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%873-BERT/" rel="next" title="读论文3-BERT">
+    <a href="/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%873-BERT/" rel="next" title="读论文3-BERT">
       读论文3-BERT <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
@@ -428,7 +428,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">51</span>
+          <span class="site-state-item-count">46</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -441,7 +441,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-count">19</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -618,7 +618,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'MyBlogComment',
       owner       : 'fuhaifei',
       admin       : ['fuhaifei'],
-      id          : '25c83a9f460eeae27a124108d13f5c68',
+      id          : '3c108dcd2781e308739e28f3da263300',
         language: 'zh-CN',
       distractionFreeMode: true
     });
