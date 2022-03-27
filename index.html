@@ -167,6 +167,189 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/27/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/BPE&wordpiece/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/03/27/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/BPE&wordpiece/" class="post-title-link" itemprop="url">Subword分词:BPE&word-piece</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-03-27 20:21:06 / 修改时间：20:24:45" itemprop="dateCreated datePublished" datetime="2022-03-27T20:21:06+08:00">2022-03-27</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Subword分词-BPE-amp-word-piece"><a href="#Subword分词-BPE-amp-word-piece" class="headerlink" title="Subword分词:BPE&amp;word-piece"></a>Subword分词:BPE&amp;word-piece</h2><p>在读transforme论文时，论文中在两个NMT任务中分别使用了两种编码算法byte pair encoding和word-piece，似乎子词嵌入模型是解决OOV问题不二选择，稍微了解一下</p>
+<h3 id="BPE"><a href="#BPE" class="headerlink" title="BPE"></a>BPE</h3><p>为了解决NMT中的OOV问题，基于子词模型（sub-word）以及Byte pair encoding思想提出了BPE算法，解决了词表大小压缩问题</p>
+<h4 id="Byte-pair-encoding"><a href="#Byte-pair-encoding" class="headerlink" title="Byte pair encoding"></a>Byte pair encoding</h4><p>一种简单的数据压缩算法，寻找byte串中重复出现多次的byte对(pair of consecutive bytes)，使用串中未出现过的byte替代，直到byte串中不存在重复多次的byte串。</p>
+<p>wekipedia的例子：</p>
+<img src="/2022/03/27/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/BPE&wordpiece/image-20220315101051756.png" class="" title="image-20220315101051756">
+<p>BPE算法与原Byte pair encoding算法完全一致，只是运行在character层级上，论文中思路主要为</p>
+<ul>
+<li>初始词表为所有单词拆分的字母+ 特殊的单词结束符（a special end-of word symbol ‘·’）</li>
+<li>重复遍历使用频率最高的pair替换<ul>
+<li>如  (‘A’, ‘B’) 用  ‘AB’ 替换（一个词替代两个词）</li>
+<li>replace each occurrence of the most frequent pair (‘A’, ‘B’) with a new symbol ‘AB’.</li>
+</ul>
+</li>
+<li>重复迭代直到满足要求</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> re, collections</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_stats</span>(<span class="params">vocab</span>):</span></span><br><span class="line">    pairs = collections.defaultdict(<span class="built_in">int</span>)</span><br><span class="line">    <span class="keyword">for</span> word, freq <span class="keyword">in</span> vocab.items():</span><br><span class="line">        symbols = word.split()</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(symbols) - <span class="number">1</span>):</span><br><span class="line">            pairs[symbols[i], symbols[i + <span class="number">1</span>]] += freq</span><br><span class="line">    <span class="keyword">return</span> pairs</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">merge_vocab</span>(<span class="params">pair, v_in</span>):</span></span><br><span class="line">    v_out = &#123;&#125;</span><br><span class="line">    bigram = re.escape(<span class="string">&#x27; &#x27;</span>.join(pair))</span><br><span class="line">    p = re.<span class="built_in">compile</span>(<span class="string">r&#x27;(?&lt;!\S)&#x27;</span> + bigram + <span class="string">r&#x27;(?!\S)&#x27;</span>)</span><br><span class="line">    <span class="keyword">for</span> word <span class="keyword">in</span> v_in:</span><br><span class="line">        w_out = p.sub(<span class="string">&#x27;&#x27;</span>.join(pair), word)</span><br><span class="line">        v_out[w_out] = v_in[word]</span><br><span class="line">    <span class="keyword">return</span> v_out</span><br><span class="line">vocab = &#123;<span class="string">&#x27;l o w &lt;/w&gt;&#x27;</span>: <span class="number">5</span>, <span class="string">&#x27;l o w e r &lt;/w&gt;&#x27;</span>: <span class="number">2</span>,</span><br><span class="line">         <span class="string">&#x27;n e w e s t &lt;/w&gt;&#x27;</span>: <span class="number">6</span>, <span class="string">&#x27;w i d e s t &lt;/w&gt;&#x27;</span>: <span class="number">3</span>&#125;</span><br><span class="line">num_merges = <span class="number">10</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(num_merges):</span><br><span class="line">    pairs = get_stats(vocab)</span><br><span class="line">    //寻找出现次数最多的pair对</span><br><span class="line">    best = <span class="built_in">max</span>(pairs, key=pairs.get)</span><br><span class="line">    vocab = merge_vocab(best, vocab)</span><br><span class="line">    <span class="built_in">print</span>(best)</span><br></pre></td></tr></table></figure>
+<h4 id="joint-BPE"><a href="#joint-BPE" class="headerlink" title="joint BPE"></a>joint BPE</h4><p>NMT需要输入源语言、输出目标语言，因此需要构建两个分别包括两种语言的词表，论文中提出了两种类型的BPE</p>
+<ul>
+<li>源语言与目标语言分别运行BPE算法，构建子词词表</li>
+<li>源语言与目标语言合并在一起，共建一个BPE词表（joint BPE）</li>
+</ul>
+<p>两种方法优略</p>
+<ol>
+<li>第一种方法，确保两种语言词表中都只包含出现过的子词，不会存在另一种语言的子词干扰，保证了词表的大小</li>
+<li>第二种方法，确保了基于统计切词在两种语言上运行的一致性，相同的词切分方式保持一致（比如说相同的人名）</li>
+</ol>
+<p>没细看实验</p>
+<img src="/2022/03/27/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/BPE&wordpiece/image-20220315112028772.png" class="" title="image-20220315112028772">
+<h3 id="wordpiece"><a href="#wordpiece" class="headerlink" title="wordpiece"></a>wordpiece</h3><p>方法来自于论文：<a target="_blank" rel="noopener" href="http://ieeexplore.ieee.org/document/6289079">Japanese and Korean voice search</a>， 该方法的主要思路与BPE基本相同，只是每次不再按照频率的大小选取词对，而是选择能够使得语言模型最大似然增加（increases the likelihood），算法基本流程如下（贪心思路）：</p>
+<ol>
+<li>首先以字符为单位在语料集上构建词表</li>
+<li>使用词表+语料训练一个语言模型</li>
+<li>遍历词表，选取字符对（word unit pair）,使用字符对替换的词表+语料再训练一个语言模型，最终选择使得<strong>语言模型最大似然最大</strong>的字符对作为<strong>此轮迭代选择的字符对</strong>，更新词表</li>
+<li>重2，3直到词表大小满足预期要求</li>
+</ol>
+<p>每次迭代都需要遍历整个词表，假设词表大小为k，能够找的 word unit pair 个数为 $k^2$, 也就需要训练 $k^2$ 个语言模型，计算复杂度多得离谱，因此原论文提出了几个加速方法</p>
+<ol>
+<li><p>每次选择字符对，只选择训练语料中已经存在(字面意思理解就是 在语料中相邻的 word unit)</p>
+</li>
+<li><p>只选择那些很有可能成为最优字符对的进行比较（不太懂如何判断最有可能）</p>
+</li>
+<li><p>c和d没太理解</p>
+<img src="/2022/03/27/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/BPE&wordpiece/image-20220316085911584.png" class="" title="image-20220316085911584"></li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/27/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/lc2212.%E5%B0%84%E7%AE%AD%E6%AF%94%E8%B5%9B%E4%B8%AD%E7%9A%84%E6%9C%80%E5%A4%A7%E6%AF%94%E8%B5%9B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/03/27/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/lc2212.%E5%B0%84%E7%AE%AD%E6%AF%94%E8%B5%9B%E4%B8%AD%E7%9A%84%E6%9C%80%E5%A4%A7%E6%AF%94%E8%B5%9B/" class="post-title-link" itemprop="url">lc2212.射箭比赛中的最大比赛</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-03-27 20:15:26 / 修改时间：20:17:38" itemprop="dateCreated datePublished" datetime="2022-03-27T20:15:26+08:00">2022-03-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/" itemprop="url" rel="index"><span itemprop="name">力扣刷题</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="2212-射箭比赛中的最大得分"><a href="#2212-射箭比赛中的最大得分" class="headerlink" title="2212. 射箭比赛中的最大得分"></a><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/maximum-points-in-an-archery-competition/">2212. 射箭比赛中的最大得分</a></h3><p>打周赛遇到的一道非常典型的0-1背包问题，但是因为太久没写过背包问题，写了40分钟才写出来，再温习一遍。</p>
+<h4 id="什么是0-1背包？"><a href="#什么是0-1背包？" class="headerlink" title="什么是0-1背包？"></a>什么是0-1背包？</h4><p>一共有N个物品，每个物品有对应的重量weight[i] 和价值value[i]，给定一个固定容量W的背包，问能够放入背包的最大价值是多少？非常经典又相对简单的动态规划问题，关键还是在于定义状态以及状态转移公式。</p>
+<p>贪心的角度出发，假设我选取某个物品后，新的贪心目标变为 在剩余物品和空间的条件下，选取最大价值的物品，因此父问题到子问题的转化可以定义为：（按照从左到右一个一个选的思路）</p>
+<ul>
+<li><strong>父问题</strong>：是否选取第i个物品，使得总价值最大</li>
+<li><strong>子问题</strong>：父问题 <strong>选 / 不选 </strong>第i个物品， 背包剩余 <strong>W-w[i] / W</strong>空间，如何在前i-1物品中合适选取使得子问题价值最大</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/03/27/%E5%8A%9B%E6%89%A3%E5%88%B7%E9%A2%98/lc2212.%E5%B0%84%E7%AE%AD%E6%AF%94%E8%B5%9B%E4%B8%AD%E7%9A%84%E6%9C%80%E5%A4%A7%E6%AF%94%E8%B5%9B/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/20/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%873-BERT/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -903,175 +1086,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-5.%E5%81%8F%E5%B7%AE%E4%B8%8E%E6%96%B9%E5%B7%AE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-5.%E5%81%8F%E5%B7%AE%E4%B8%8E%E6%96%B9%E5%B7%AE/" class="post-title-link" itemprop="url">实用ML-5.偏差与方差</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-03-08 18:34:23 / 修改时间：19:07:46" itemprop="dateCreated datePublished" datetime="2022-03-08T18:34:23+08:00">2022-03-08</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="Bias-amp-Variance"><a href="#Bias-amp-Variance" class="headerlink" title="Bias &amp; Variance"></a>Bias &amp; Variance</h2><p><strong>bias(偏差)</strong>：模型对于样本的拟合程度，模型输出结果与样本真实结果之间的差距，通过增加模型复杂程度，增加训练轮数，可以实现bias的降低，但可能会出现过拟合问题（high variance）</p>
-<p><strong>variance(方差)</strong>：模型预测结果的稳定性，通过简化模型，可以实现variance的降低 计算公式为 $E[(\hat y - E(\hat y)) ^ 2]$</p>
-<img src="/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-5.%E5%81%8F%E5%B7%AE%E4%B8%8E%E6%96%B9%E5%B7%AE/image-20220301152126220.png" class="" title="image-20220301152126220">
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML-5.%E5%81%8F%E5%B7%AE%E4%B8%8E%E6%96%B9%E5%B7%AE/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML_4.%E6%A8%A1%E5%9E%8B%E9%AA%8C%E8%AF%81/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML_4.%E6%A8%A1%E5%9E%8B%E9%AA%8C%E8%AF%81/" class="post-title-link" itemprop="url">实用ML_4.模型验证</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-03-08 18:33:59 / 修改时间：19:09:50" itemprop="dateCreated datePublished" datetime="2022-03-08T18:33:59+08:00">2022-03-08</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="模型验证（Validation）"><a href="#模型验证（Validation）" class="headerlink" title="模型验证（Validation）"></a>模型验证（Validation）</h2><h3 id="验证（validation）集与测试（test）集"><a href="#验证（validation）集与测试（test）集" class="headerlink" title="验证（validation）集与测试（test）集"></a>验证（validation）集与测试（test）集</h3><p>验证集往往是从训练集中划分出的一部分数据，用来验证模型泛化能力，可以使用多次；测试集是单独的一系列数据，在模型训练完成后，衡量模型效果，一般只使用一次</p>
-<h3 id="如何生成验证集"><a href="#如何生成验证集" class="headerlink" title="如何生成验证集"></a>如何生成验证集</h3><h4 id="随机划分"><a href="#随机划分" class="headerlink" title="随机划分"></a>随机划分</h4><img src="/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML_4.%E6%A8%A1%E5%9E%8B%E9%AA%8C%E8%AF%81/image-20220301142501284.png" class="" title="image-20220301142501284">
-<h4 id="特殊情况"><a href="#特殊情况" class="headerlink" title="特殊情况"></a>特殊情况</h4><p>某些情况下，训练数据可能不适合采用随机划分的方式验证集合，如</p>
-<ol>
-<li>具有序列关系的数据-股价、房子销售<ul>
-<li>验证集数据应在训练集后，避免模型训练使用到了验证集的未来信息，导致模型在验证集上的表现较好</li>
-</ul>
-</li>
-<li>训练数据由不同组，每个组有多个样本-同一个人的多个照片<ul>
-<li>以组为单位进行随即划分</li>
-<li>一百组照片，选70个人训练，30个人验证</li>
-</ul>
-</li>
-<li>类别不均衡数据<ul>
-<li>对于较小类更多的采样</li>
-</ul>
-</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/03/08/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E7%94%A8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/%E5%AE%9E%E7%94%A8ML_4.%E6%A8%A1%E5%9E%8B%E9%AA%8C%E8%AF%81/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1143,7 +1157,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">46</span>
+          <span class="site-state-item-count">48</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1156,7 +1170,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-count">21</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
