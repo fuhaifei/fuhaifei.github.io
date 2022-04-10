@@ -3255,4 +3255,85 @@ k \in [0, i - nums[i]] \cup [i + 1, nums.length - 1]</script></li>
 <h4 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h4><p>GPT3文章太长，我只粗略地读了一遍，总体思路还是企图证明大规模预训练语言模型，在下游任务中，即使没有经过预训练，也能实现不错的效果，相较于前两篇论文没有太多新的东西</p>
 ]]></content>
   </entry>
+  <entry>
+    <title>树状数组整理</title>
+    <url>/2022/04/10/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84%E6%95%B4%E7%90%86/</url>
+    <content><![CDATA[<h2 id="树状数组（Binary-indexed-tree）"><a href="#树状数组（Binary-indexed-tree）" class="headerlink" title="树状数组（Binary indexed tree）"></a>树状数组（Binary indexed tree）</h2><blockquote>
+<p>A <strong>Fenwick tree</strong> or <strong>binary indexed tree</strong> is a data structure that can efficiently update elements and calculate <a href="https://en.wikipedia.org/wiki/Prefix_sum">prefix sums</a> in a table of numbers.</p>
+<p>来自Wikipedia</p>
+</blockquote>
+<p>树状数组是一种求解前缀和问题的简单数据结构，能够在<strong>O(logn)</strong>的时间复杂度内解决区间求和问题，主要支持两种操作</p>
+<ol>
+<li><strong>单点修改</strong></li>
+<li><strong>区间操作</strong></li>
+</ol>
+<span id="more"></span>
+<h3 id="主要思路"><a href="#主要思路" class="headerlink" title="主要思路"></a>主要思路</h3><p>类比<strong>任何数</strong>均可以拆分为<strong>有限个不同2的幂次</strong>的求和，原论文作者认为<strong>一串序列</strong>的求和同样可以拆分为<strong>有限个不同长度为2的幂次的序列</strong>的和。在数字的拆分中，其二进制表示中1的个数即为不同2的幂次，例如 “10”，“12”</p>
+<script type="math/tex; mode=display">
+10 -> 1010 = 1000 + 0010\\
+14 -> 1110 = 1000 + 0100 + 0010</script><p>自然想到一个问题：如何快速的找到<strong>任意数的不同二次幂的组合</strong>？引出了<strong>lowbit思路</strong>:</p>
+<ol>
+<li><p>通过<strong>原码与补码求逻辑与运算</strong>，求得目标数字的<strong>最右边的一个1</strong></p>
+<script type="math/tex; mode=display">
+lowbit(x) = (x)\&(-x)</script></li>
+<li><p>原数字减去lowbit，获得少了一位1的数字</p>
+<script type="math/tex; mode=display">
+x_i = x_{i-1} - lowbit(x_{i-1})</script></li>
+<li><p>重复操作，直到 $x_i = 0$ </p>
+</li>
+</ol>
+<p>重复此过程每一步计算得到的 $lowbit(x_i)$ 即为原数字的不同2的幂次拆分，以14为例:</p>
+<script type="math/tex; mode=display">
+lowbit(14) = 0010 \\
+\downarrow \\
+lowbit(14 - 0010 = 12) = 0100\\
+\downarrow \\
+lowbit(12 - 0100 = 8) = 1000 \\
+\downarrow \\
+lowbit(0 - 1000 = 0) = 0000</script><h4 id="如何将对应拆分思路迁移到前缀和？"><a href="#如何将对应拆分思路迁移到前缀和？" class="headerlink" title="如何将对应拆分思路迁移到前缀和？"></a>如何将对应拆分思路迁移到前缀和？</h4><p>不妨用 $C[i]$ 表示 目标数组$f[1]…f[i]$的前缀和，通过$lowerbit$操作，我们可以快速找到<strong>任意区间长度</strong> 对应的<strong>二次幂区间长度的组合</strong>。</p>
+<p>问题是我们如何设计存储方式，提前存储这些二次幂区间长度的区间和？观察14转化为组合的过程，对应到区间表达形式为:</p>
+<script type="math/tex; mode=display">
+(0,14] = (12, 14] + (8, 12] + (0, 8] \\
+\updownarrow \\
+(0,14] = (14 - lowbit(14), 14] + (12 - lowbit(12), 12] + (8 - lowbit(8), 8] \\
+\updownarrow \\
+(0,1110] = (1100, 1110] + (1000, 1100] + (0000, 1000]\\</script><p>可以得到每个区间右边界可以由上个区间右边界减去lobit得到，而区间的长度等于当前区间右边界的lowbit（<strong>拆分区间的递推关系</strong>），自然可以想到，将区间$(i - lowbit(i),i]$的和存储到 <strong>index = i</strong>的位置</p>
+<ul>
+<li>因此定义$tree$数组，对于<strong>任意$tree[i]$，其存储范围为 $(i-lowbit(i),i]$区间的和</strong>，如下：</li>
+</ul>
+<script type="math/tex; mode=display">
+tree[i] = \sum^i_{j=i-lowbit(i) + 1}f[j]</script><p>任意前缀和 $C[i]$计算，按照上述拆分过程，可以转化为不断的减去最右边一的过程</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">for(int index = i;index &gt; 0;index -= lowbit(index)):</span><br><span class="line">	//index -= lowbit(index) 就是类似于14拆分过程中的找所有2次幂过程</span><br><span class="line">	C[i] += tree[index]</span><br></pre></td></tr></table></figure>
+<h4 id="如何支持单点修改"><a href="#如何支持单点修改" class="headerlink" title="如何支持单点修改"></a>如何支持单点修改</h4><p>若修改 $f[i]$，需要修改所有包含$f[i]$ 的 $tree[index]$, 我们要找到所有包含当前元素的区间，假设 $tree[idx]$ 包含 $f[i]$，则 $i$一定满足:</p>
+<script type="math/tex; mode=display">
+idx - lowbit(idx) < i <= idx</script><p>来自博客<a href="http://duanple.blog.163.com/blog/static/7097176720081131113145832/"><strong>Binary indexed tree-树状数组</strong> </a>的形象解释</p>
+<img src="/2022/04/10/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84%E6%95%B4%E7%90%86/image-20220405190706777.png" class="" title="image-20220405190706777">
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><h4 id="lowbit-函数"><a href="#lowbit-函数" class="headerlink" title="lowbit()函数"></a>lowbit()函数</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">lowbit</span><span class="params">(<span class="keyword">int</span> x)</span></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> x &amp; -x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="求前缀和"><a href="#求前缀和" class="headerlink" title="求前缀和"></a>求前缀和</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">//预先处理好的子区间和数组</span></span><br><span class="line"><span class="keyword">int</span> tree[maxIndex]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">query</span><span class="params">(<span class="keyword">int</span> index)</span></span>&#123;</span><br><span class="line">	<span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">for</span>(;index &gt; <span class="number">0</span>;index++)&#123;</span><br><span class="line">		result += tree[index];</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="更新方法"><a href="#更新方法" class="headerlink" title="更新方法"></a>更新方法</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">//预先处理好的子区间和数组</span></span><br><span class="line"><span class="keyword">int</span> tree[maxIndex]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">update</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">int</span> val)</span></span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> pos = index; pos &lt; maxIndex; pos += lowbit(pos))</span><br><span class="line">        <span class="comment">//以加法为例</span></span><br><span class="line">        tree[pos] += x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="初始化树状数组"><a href="#初始化树状数组" class="headerlink" title="初始化树状数组"></a>初始化树状数组</h4><p>wekipedia上的一个从数组[1,2,3,4,5]构建树状数组的过程：</p>
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/BITDemo.gif/220px-BITDemo.gif" alt="BITDemo.gif"></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> tree[maxIndex]</span><br><span class="line"><span class="comment">//待求和数组</span></span><br><span class="line"><span class="keyword">int</span> aim[maxIndex]</span><br><span class="line"><span class="comment">//1.调用update方法（复杂度O(nlogn)）</span></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt; maxIndex;i++)&#123;</span><br><span class="line">    update(i, aim[i]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//2.前缀和法(tree[i] = preSum[i] - preSum[i - lowbit(i)])</span></span><br><span class="line"><span class="comment">// 	复杂度O(n)</span></span><br><span class="line"><span class="keyword">int</span> preSum[maxIndex];</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt; maxIndex;i++)&#123;</span><br><span class="line">    preSum[i] = preSum[i - <span class="number">1</span>] + aim[i];</span><br><span class="line">    tree[i] = preSum[i] - preSum[i - lowbit(i)];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="模板题目"><a href="#模板题目" class="headerlink" title="模板题目"></a>模板题目</h3><ol>
+<li><p><a href="https://www.luogu.com.cn/problem/P3374">luogu P3374 :树状数组1</a></p>
+<ul>
+<li>使用scanner做输入会出现三个测试用例TLE<strong>（坑爹）</strong></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">P3374</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span>[] binaryIndexTree;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    * 单点修改函数</span></span><br><span class="line"><span class="comment">    *   +number</span></span><br><span class="line"><span class="comment">    * */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">update</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">int</span> number)</span></span>&#123;</span><br><span class="line">        <span class="comment">//实际index从1开始</span></span><br><span class="line">        <span class="keyword">for</span>(;index &lt; binaryIndexTree.length;index += lowBit(index))&#123;</span><br><span class="line">            binaryIndexTree[index] += number;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    * 前缀和查询</span></span><br><span class="line"><span class="comment">    * */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">query</span><span class="params">(<span class="keyword">int</span> index)</span></span>&#123;</span><br><span class="line">        <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span>(;index &gt; <span class="number">0</span>;index -= lowBit(index))&#123;</span><br><span class="line">            result += binaryIndexTree[index];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    * 计算lowBit</span></span><br><span class="line"><span class="comment">    * */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">lowBit</span><span class="params">(<span class="keyword">int</span> number)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> number &amp; -number;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        Input in = <span class="keyword">new</span> Input();</span><br><span class="line">        <span class="keyword">int</span> n = in.nextInt();</span><br><span class="line">        <span class="keyword">int</span> m = in.nextInt();</span><br><span class="line">        <span class="comment">//初始化树状数组</span></span><br><span class="line">        binaryIndexTree = <span class="keyword">new</span> <span class="keyword">int</span>[n + <span class="number">1</span>];</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt;= n;i++)&#123;</span><br><span class="line">            update(i, in.nextInt());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//执行 单点修改和区间查询操作</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; m;i++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(in.nextInt() == <span class="number">1</span>)&#123;</span><br><span class="line">                update(in.nextInt(), in.nextInt());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span>&#123;</span><br><span class="line">                <span class="keyword">int</span> left = in.nextInt() - <span class="number">1</span>;</span><br><span class="line">                <span class="keyword">int</span> right = in.nextInt();</span><br><span class="line">                System.out.println(query(right) - query(left));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Input</span> </span>&#123;</span><br><span class="line">        StreamTokenizer in = <span class="keyword">new</span> StreamTokenizer(<span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(System.in)));</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">nextInt</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">            in.nextToken();</span><br><span class="line">            <span class="keyword">return</span> (<span class="keyword">int</span>)in.nval;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<img src="/2022/04/10/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84%E6%95%B4%E7%90%86/image-20220410203627508.png" class="" title="image-20220410203627508">
+</li>
+</ol>
+<h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><ol>
+<li><a href="https://zh.wikipedia.org/wiki/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84">wikipidia：树状数组</a></li>
+<li><a href="http://duanple.blog.163.com/blog/static/7097176720081131113145832/">博客：Binary indexed tree-树状数组</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/93795692">博客：算法学习笔记(2) : 树状数组</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>算法整理</category>
+      </categories>
+      <tags>
+        <tag>树状数组</tag>
+      </tags>
+  </entry>
 </search>
