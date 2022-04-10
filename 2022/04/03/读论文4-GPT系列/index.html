@@ -28,7 +28,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
   <meta name="description" content="GPTGPT作为NLP预训练语言模型的基石之一，从gpt1,gpt2到gpt3，不断扩大模型规模，将问题从fine-tuning拓展到zero-shot,试图解决更基础，但是更困难的无监督学习问题，三篇论文中的模型结构相同，不同的是试图解决的问题。 GPT1 Improving Language Understanding by Generative Pre-Training  要解决的问题NLP">
@@ -38,27 +38,27 @@
 <meta property="og:site_name" content="光与影的个人博客">
 <meta property="og:description" content="GPTGPT作为NLP预训练语言模型的基石之一，从gpt1,gpt2到gpt3，不断扩大模型规模，将问题从fine-tuning拓展到zero-shot,试图解决更基础，但是更困难的无监督学习问题，三篇论文中的模型结构相同，不同的是试图解决的问题。 GPT1 Improving Language Understanding by Generative Pre-Training  要解决的问题NLP">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328083725904.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328084046552.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328084332027.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328084506127.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328084857519.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328101903526.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328143447270.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328143917773.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328144755337.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328151023322.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328151832377.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220329154323252.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220329154359207.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220329154433953.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220329154640571.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220329154729495.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328083725904.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084046552.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084332027.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084506127.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084857519.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328101903526.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328143447270.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328143917773.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328144755337.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328151023322.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328151832377.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154323252.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154359207.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154433953.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154640571.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154729495.png">
 <meta property="article:published_time" content="2022-04-03T11:10:41.000Z">
-<meta property="article:modified_time" content="2022-04-03T11:12:14.895Z">
+<meta property="article:modified_time" content="2022-04-10T06:36:22.419Z">
 <meta property="article:author" content="NEU-FHF">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/读论文4-GPT系列/image-20220328083725904.png">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328083725904.png">
 
 <link rel="canonical" href="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/">
 
@@ -132,6 +132,7 @@
 
   <div class="site-nav-right">
     <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
     </div>
   </div>
 </div>
@@ -161,11 +162,38 @@
     <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
 
   </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
   </ul>
 </nav>
 
 
 
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
 
 </div>
     </header>
@@ -211,12 +239,25 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-04-03 19:10:41 / 修改时间：19:12:14" itemprop="dateCreated datePublished" datetime="2022-04-03T19:10:41+08:00">2022-04-03</time>
+              <time title="创建时间：2022-04-03 19:10:41" itemprop="dateCreated datePublished" datetime="2022-04-03T19:10:41+08:00">2022-04-03</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-10 14:36:22" itemprop="dateModified" datetime="2022-04-10T14:36:22+08:00">2022-04-10</time>
+              </span>
 
           
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
 
         </div>
       </header>
@@ -240,16 +281,16 @@
 <span id="more"></span>
 <p><strong>预训练</strong></p>
 <p>预训练使用无标签语料作为输入，以语言模型的最大似然函数为训练目标（给定前n-1个token，预测第n个token的条件概率）</p>
-<p><img src="读论文4-GPT系列\image-20220328083725904.png" alt="image-20220328083725904"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328083725904.png" class="" title="image-20220328083725904">
 <p>模型使用transformer-decoder结构，最后一层通过softmax计算预测词的概率</p>
-<p><img src="读论文4-GPT系列\image-20220328084046552.png" alt="image-20220328084046552"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084046552.png" class="" title="image-20220328084046552">
 <p><strong>下游任务-fine tuning</strong></p>
 <p>fine-tuning 使用下游任务的有标签语料，增加一个全连接sfotmax输出层，预测对应标签，损失函数为所有训练数据的log最大似然</p>
-<p><img src="读论文4-GPT系列\image-20220328084332027.png" alt="image-20220328084332027"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084332027.png" class="" title="image-20220328084332027">
 <p>另外增加了一个辅助训练目标，在下游任务上训练语言模型，使用两个损失函数求和作为<strong>最终的训练目标</strong>（$\lambda$ 为控制辅助训练目标对结果影响程度的参数）</p>
-<p><img src="读论文4-GPT系列\image-20220328084506127.png" alt="image-20220328084506127"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084506127.png" class="" title="image-20220328084506127">
 <p>针对不任务，仅仅使用softmax预测概率无法满足任务要求（如句子相似度衡量，需要输入两个句子，判断两个句子之间的相似度），gpt针对不同任务设计了不同类型的输入（<strong>Task-specific input transformations</strong>）</p>
-<p><img src="读论文4-GPT系列\image-20220328084857519.png" alt="image-20220328084857519"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084857519.png" class="" title="image-20220328084857519">
 <h4 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h4><p>模型细节</p>
 <ol>
 <li>12层的transformer-decoder，768隐藏层维度+12注意力头数，去掉了与encoder输出共同计算的注意力层（或者说<strong>使用 masked Multi Self Attention的encoder</strong>）</li>
@@ -311,18 +352,18 @@
 <li><p>本文认为网络文本信息量巨大，包括各种下游任务中需要的数据信息，使用大量网络文本训练，能够使得模型学到不同任务的信息（multi task learning）</p>
 </li>
 <li><p>本文构造了一个WebText数据集，作者举了一些包含下游任务(NMT)数据的例子</p>
-<p><img src="读论文4-GPT系列\image-20220328101903526.png" alt="image-20220328101903526"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328101903526.png" class="" title="image-20220328101903526">
 </li>
 </ul>
 </li>
 </ol>
 <p><strong>如何不调整模型参数或者架构，就能适应下游任务</strong></p>
 <p>延续了GPT中的一些思路，通过修改输入表达方式，实现对下游任务的适应，以从英文到法文的机器翻译任务为例，在输入源句子的同时，以”english sentence = french sentence”为条件合并输入模型（文中成为 task hint）</p>
-<p><img src="读论文4-GPT系列\image-20220328143447270.png" alt="image-20220328143447270"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328143447270.png" class="" title="image-20220328143447270">
 <p>在摘要任务中，论文尝试剔除了这种 <strong>”task hint“</strong>，发现任务指标下降了6.4个点，作者认为这证明了 使用自然语言提示模型针对任务改变的可行性</p>
-<p><img src="读论文4-GPT系列\image-20220328143917773.png" alt="image-20220328143917773"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328143917773.png" class="" title="image-20220328143917773">
 <h4 id="顺带探讨的问题"><a href="#顺带探讨的问题" class="headerlink" title="顺带探讨的问题"></a>顺带探讨的问题</h4><p>在研究论文主要问题时，还顺带提了一下<strong>数据污染</strong>问题，即训练数据集和测试数据集之间重叠的问题，作者推荐在构建划分新的NLP数据训练集和测试集时，使用基于n-gram重叠的方法验证是否存在该问题</p>
-<p><img src="读论文4-GPT系列\image-20220328144755337.png" alt="image-20220328144755337"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328144755337.png" class="" title="image-20220328144755337">
 <h4 id="实现细节-1"><a href="#实现细节-1" class="headerlink" title="实现细节"></a>实现细节</h4><p>模型细节</p>
 <ol>
 <li><p>使用<strong>BPE构建子词字典</strong>，为了避免无意义单词出现（”dog.“,”dog?”），限制不同类型字符共同出现，<strong>字典大小为 50257</strong></p>
@@ -331,7 +372,7 @@
 <ul>
 <li>图片来自 <a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2002.04745v2.pdf">On Layer Normalization in the Transformer Architecture</a></li>
 </ul>
-<p><img src="读论文4-GPT系列\image-20220328151023322.png" alt="image-20220328151023322"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328151023322.png" class="" title="image-20220328151023322">
 </li>
 </ol>
 <p>训练细节</p>
@@ -339,7 +380,7 @@
 <li><p>batchsize=512，seq_length=1024</p>
 </li>
 <li><p>共有四个模型大小，最小的和gpt一一致，第二个与bert_large一致，最大的为GPT2</p>
-<p><img src="读论文4-GPT系列\image-20220328151832377.png" alt="image-20220328151832377"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328151832377.png" class="" title="image-20220328151832377">
 </li>
 </ol>
 <h4 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h4><p>本文使用更大的模型尝试证明语言模型在zero-shot上的可行性，在许多任务上取得不错的成绩。</p>
@@ -350,25 +391,25 @@
 <li><p>一个任务提示</p>
 </li>
 <li><p>几个任务样例（prompt）</p>
-<p><img src="读论文4-GPT系列\image-20220329154323252.png" alt="image-20220329154323252"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154323252.png" class="" title="image-20220329154323252">
 </li>
 </ul>
 </li>
 <li><p>One-shot</p>
 <ul>
 <li><p>只给一个任务提示</p>
-<p><img src="读论文4-GPT系列\image-20220329154359207.png" alt="image-20220329154359207"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154359207.png" class="" title="image-20220329154359207">
 </li>
 </ul>
 </li>
 <li><p>Zero-shot 完全不给任务提示，只告诉任务是什么</p>
-<p><img src="读论文4-GPT系列\image-20220329154433953.png" alt="image-20220329154433953"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154433953.png" class="" title="image-20220329154433953">
 </li>
 </ol>
 <p>GPT3将模型规模增大到原来的1000倍</p>
-<p><img src="读论文4-GPT系列\image-20220329154640571.png" alt="image-20220329154640571"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154640571.png" class="" title="image-20220329154640571">
 <p>又构建了一个集合以往各种文本数据的巨大数据集</p>
-<p><img src="读论文4-GPT系列\image-20220329154729495.png" alt="image-20220329154729495"></p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154729495.png" class="" title="image-20220329154729495">
 <h4 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h4><p>GPT3文章太长，我只粗略地读了一遍，总体思路还是企图证明大规模预训练语言模型，在下游任务中，即使没有经过预训练，也能实现不错的效果，相较于前两篇论文没有太多新的东西</p>
 
     </div>
@@ -538,6 +579,32 @@
   </div>
 
         
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
 
 
 
@@ -571,6 +638,10 @@
   
 
 
+
+
+  
+<script src="/js/local-search.js"></script>
 
 
 
