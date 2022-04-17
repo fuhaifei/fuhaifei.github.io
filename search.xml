@@ -18,154 +18,6 @@
       </categories>
   </entry>
   <entry>
-    <title>读论文4-GPT系列</title>
-    <url>/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/</url>
-    <content><![CDATA[<h2 id="GPT"><a href="#GPT" class="headerlink" title="GPT"></a>GPT</h2><p>GPT作为NLP预训练语言模型的基石之一，从gpt1,gpt2到gpt3，不断扩大模型规模，将问题从fine-tuning拓展到zero-shot,试图解决更基础，但是更困难的无监督学习问题，三篇论文中的模型结构相同，不同的是试图解决的问题。</p>
-<h3 id="GPT1"><a href="#GPT1" class="headerlink" title="GPT1"></a>GPT1</h3><blockquote>
-<p><a href="https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf">Improving Language Understanding by Generative Pre-Training</a></p>
-</blockquote>
-<h4 id="要解决的问题"><a href="#要解决的问题" class="headerlink" title="要解决的问题"></a>要解决的问题</h4><p>NLP中有监督训练数据较少，存在大量的无标签文本数据，如何使用这些数据解决NLP领域中各类问题？GPT提出了 <strong>自监督预训练+fine tuning</strong> 的方式，主要解决两个问题</p>
-<ol>
-<li>预训练的<strong>训练目标是什么</strong>？损失函数是什么？</li>
-<li>预训练得到的特征表示<strong>如何迁移</strong>到下游任务中？</li>
-</ol>
-<h4 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h4><p>使用语言模型作为预训练的目标，在下游任务上做有监督的fine tuning</p>
-<span id="more"></span>
-<p><strong>预训练</strong></p>
-<p>预训练使用无标签语料作为输入，以语言模型的最大似然函数为训练目标（给定前n-1个token，预测第n个token的条件概率）</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328083725904.png" class="" title="image-20220328083725904">
-<p>模型使用transformer-decoder结构，最后一层通过softmax计算预测词的概率</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084046552.png" class="" title="image-20220328084046552">
-<p><strong>下游任务-fine tuning</strong></p>
-<p>fine-tuning 使用下游任务的有标签语料，增加一个全连接sfotmax输出层，预测对应标签，损失函数为所有训练数据的log最大似然</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084332027.png" class="" title="image-20220328084332027">
-<p>另外增加了一个辅助训练目标，在下游任务上训练语言模型，使用两个损失函数求和作为<strong>最终的训练目标</strong>（$\lambda$ 为控制辅助训练目标对结果影响程度的参数）</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084506127.png" class="" title="image-20220328084506127">
-<p>针对不任务，仅仅使用softmax预测概率无法满足任务要求（如句子相似度衡量，需要输入两个句子，判断两个句子之间的相似度），gpt针对不同任务设计了不同类型的输入（<strong>Task-specific input transformations</strong>）</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084857519.png" class="" title="image-20220328084857519">
-<h4 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h4><p>模型细节</p>
-<ol>
-<li>12层的transformer-decoder，768隐藏层维度+12注意力头数，去掉了与encoder输出共同计算的注意力层（或者说<strong>使用 masked Multi Self Attention的encoder</strong>）</li>
-<li>使用GLUE作为激活函数</li>
-<li>使用 bytepair encoding (BPE) 词典，包含4000词</li>
-<li>使用<strong>模型学习position encoding</strong>，而不是transformer论文中的三角函数计算</li>
-</ol>
-<p>训练细节</p>
-<ol>
-<li>训练数据集为 BooksCorpus dataset（contains over 7,000 unique unpublished books）</li>
-<li>预训练：优化器为Adam，最大学习率为 $2.5*10^{-4}$，dropout=0.1，在batchsize=64,seq_length=512的条件下，训练100个epoch</li>
-<li>微调：lr = 6.25e-5 , batchsize = 32, dropout = 0.1，训练3个epoch</li>
-</ol>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要针对两个问题提出了解决方案，并在不同NLP上验证，得到了不错的效果</p>
-<ol>
-<li><p>预训练的<strong>训练目标是什么</strong>？</p>
-<p>使用<strong>语言模型</strong>作为与训练目标（predict next token）</p>
-</li>
-<li><p>预训练得到的特征表示<strong>如何迁移</strong>到下游任务中？</p>
-<p><strong>Task-specific input transformations + softmax predict层</strong> 在下游任务微调</p>
-</li>
-</ol>
-<h3 id="GPT2"><a href="#GPT2" class="headerlink" title="GPT2"></a>GPT2</h3><blockquote>
-<p><a href="https://d4mucfpksywv.cloudfront.net/better-language-models/language-models.pdf">Language Models are Unsupervised Multitask Learners</a></p>
-</blockquote>
-<p>在BERT刷榜之后，GPT2带着更大的模型、更多的训练数据卷土重来，不再将关注点聚焦于 预训练+微调，转而研究语言模型在无监督多任务学习上的可能性</p>
-<h4 id="要解决的问题-1"><a href="#要解决的问题-1" class="headerlink" title="要解决的问题"></a>要解决的问题</h4><p>论文中提出目前NLP领域主流的 <strong>预训练+微调</strong> 存在问题，即该方法仍需要监督学习，需要下游任务的大量有标签训练数据。本文将NLP的一般任务和特定任务定义为两种条件分布</p>
-<ol>
-<li>一般任务为 $p(output|input)$ 给定输入，对应输出的条件分布</li>
-<li>特定任务  $p(output|input,task)$ 在特定任务上，输出不仅取决于输入，还取决于任务类型</li>
-</ol>
-<p>传统的预训练+fine-tuning方式</p>
-<ol>
-<li>预训练即模拟 $p(output|input)$条件分布</li>
-<li>fine-tuning 通过在不同任务上<strong>调整模型架构、参数</strong>等，模拟  $p(output|input,task)$条件分布</li>
-</ol>
-<p>gpt2想要<strong>避免监督学习过程</strong>，即不在下游任务上做微调，引出了两个问题</p>
-<ol>
-<li>如何预训练能使得预训练过程中学到下游任务的信息？（原文中的句子：<strong>the global minimum of the unsupervised objective</strong><br><strong>is also the global minimum of the supervised objective.</strong> 全局非监督的收敛 等价于 全局监督学习的收敛）<ul>
-<li>举个例子：像人学英语一样，背单词+看文章看看多了，就算从来没刷过题，题目也能做得效果不错</li>
-</ul>
-</li>
-<li>如何<strong>不调整模型参数或者架构</strong>，<strong>实现从  $p(output|input)$ 到  $p(output|input,task)$</strong> 转变，以适应下游任务？</li>
-</ol>
-<h4 id="解决方案-1"><a href="#解决方案-1" class="headerlink" title="解决方案"></a>解决方案</h4><p>基本思路和GPT1区别不大，预训练语言模型+下游任务输入调整，不进行微调训练，个人觉得他的第二章Approach 前面关于理论来源的部分写的非常好，我读完感觉非常科学（也可能是我知识比较薄，看不出问题），分问题阐述一遍</p>
-<p><strong>如何预训练能使得预训练过程中学到下游任务的信息</strong></p>
-<blockquote>
-<p>Preliminary experiments confirmed that sufficiently large <strong>language models are able to perform multitask learning</strong> in this toy-ish setup but learning is much slower than in explicitly supervised approaches.</p>
-</blockquote>
-<p>从两个角度解决该问题：</p>
-<ol>
-<li><p><strong>训练具备多任务学习能力的模型</strong>：语言模型 </p>
-<ul>
-<li>通过论文证明，语言模型具备多任务学习的能力，缺点是训练速度较慢</li>
-</ul>
-</li>
-<li><p><strong>输入包含多任务信息的数据</strong>：WebText 数据集</p>
-<ul>
-<li><p>本文认为网络文本信息量巨大，包括各种下游任务中需要的数据信息，使用大量网络文本训练，能够使得模型学到不同任务的信息（multi task learning）</p>
-</li>
-<li><p>本文构造了一个WebText数据集，作者举了一些包含下游任务(NMT)数据的例子</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328101903526.png" class="" title="image-20220328101903526">
-</li>
-</ul>
-</li>
-</ol>
-<p><strong>如何不调整模型参数或者架构，就能适应下游任务</strong></p>
-<p>延续了GPT中的一些思路，通过修改输入表达方式，实现对下游任务的适应，以从英文到法文的机器翻译任务为例，在输入源句子的同时，以”english sentence = french sentence”为条件合并输入模型（文中成为 task hint）</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328143447270.png" class="" title="image-20220328143447270">
-<p>在摘要任务中，论文尝试剔除了这种 <strong>”task hint“</strong>，发现任务指标下降了6.4个点，作者认为这证明了 使用自然语言提示模型针对任务改变的可行性</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328143917773.png" class="" title="image-20220328143917773">
-<h4 id="顺带探讨的问题"><a href="#顺带探讨的问题" class="headerlink" title="顺带探讨的问题"></a>顺带探讨的问题</h4><p>在研究论文主要问题时，还顺带提了一下<strong>数据污染</strong>问题，即训练数据集和测试数据集之间重叠的问题，作者推荐在构建划分新的NLP数据训练集和测试集时，使用基于n-gram重叠的方法验证是否存在该问题</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328144755337.png" class="" title="image-20220328144755337">
-<h4 id="实现细节-1"><a href="#实现细节-1" class="headerlink" title="实现细节"></a>实现细节</h4><p>模型细节</p>
-<ol>
-<li><p>使用<strong>BPE构建子词字典</strong>，为了避免无意义单词出现（”dog.“,”dog?”），限制不同类型字符共同出现，<strong>字典大小为 50257</strong></p>
-</li>
-<li><p>将transformer檐式结构结构中的 Post-LN 修改为了 Pre-LN(即把layer normalization移动到每个子层的前面，输入做归一化，输出不做)</p>
-<ul>
-<li>图片来自 <a href="https://arxiv.org/pdf/2002.04745v2.pdf">On Layer Normalization in the Transformer Architecture</a></li>
-</ul>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328151023322.png" class="" title="image-20220328151023322">
-</li>
-</ol>
-<p>训练细节</p>
-<ol>
-<li><p>batchsize=512，seq_length=1024</p>
-</li>
-<li><p>共有四个模型大小，最小的和gpt一一致，第二个与bert_large一致，最大的为GPT2</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328151832377.png" class="" title="image-20220328151832377">
-</li>
-</ol>
-<h4 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h4><p>本文使用更大的模型尝试证明语言模型在zero-shot上的可行性，在许多任务上取得不错的成绩。</p>
-<h3 id="GPT3"><a href="#GPT3" class="headerlink" title="GPT3"></a>GPT3</h3><p>GPT3是对GPT2在zero shot learning上的进一步推进，GPT2效果没有达到预期，就在GPT3上继续增加模型和训练数据规模，提升效果，在完全预训练模型上继续推广，提出了三种将预训练应用到下游任务的非预训练方式（所谓的 <strong>in-context learning</strong>）</p>
-<ol>
-<li><p>Few-Shot 解决下游任务时，在输入中提供几个任务样例</p>
-<ul>
-<li><p>一个任务提示</p>
-</li>
-<li><p>几个任务样例（prompt）</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154323252.png" class="" title="image-20220329154323252">
-</li>
-</ul>
-</li>
-<li><p>One-shot</p>
-<ul>
-<li><p>只给一个任务提示</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154359207.png" class="" title="image-20220329154359207">
-</li>
-</ul>
-</li>
-<li><p>Zero-shot 完全不给任务提示，只告诉任务是什么</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154433953.png" class="" title="image-20220329154433953">
-</li>
-</ol>
-<p>GPT3将模型规模增大到原来的1000倍</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154640571.png" class="" title="image-20220329154640571">
-<p>又构建了一个集合以往各种文本数据的巨大数据集</p>
-<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154729495.png" class="" title="image-20220329154729495">
-<h4 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h4><p>GPT3文章太长，我只粗略地读了一遍，总体思路还是企图证明大规模预训练语言模型，在下游任务中，即使没有经过预训练，也能实现不错的效果，相较于前两篇论文没有太多新的东西</p>
-]]></content>
-  </entry>
-  <entry>
     <title>DataLoaders和DataSets使用总结</title>
     <url>/2021/07/09/DL%E7%BC%96%E7%A8%8B/DataLoaders%E5%92%8CDataSets%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/</url>
     <content><![CDATA[<h1 id="DataLoaders和DataSets使用总结"><a href="#DataLoaders和DataSets使用总结" class="headerlink" title="DataLoaders和DataSets使用总结"></a>DataLoaders和DataSets使用总结</h1><p>通过 <code>torch.utils.data.Dataset</code>类定义数据集，通过<code>torch.utils.data.DataLoader</code>与<code>Dataset</code>配合定义数据加载方式</p>
@@ -1083,11 +935,11 @@ dp[i][j] = max(dp[i][j], dp[u][i - k - 1] + dp[v][k] + weight[i][v])</script><p>
 <li><strong>单点修改</strong></li>
 <li><strong>区间操作</strong></li>
 </ol>
-<span id="more"></span>
 <h3 id="主要思路"><a href="#主要思路" class="headerlink" title="主要思路"></a>主要思路</h3><p>类比<strong>任何数</strong>均可以拆分为<strong>有限个不同2的幂次</strong>的求和，原论文作者认为<strong>一串序列</strong>的求和同样可以拆分为<strong>有限个不同长度为2的幂次的序列</strong>的和。在数字的拆分中，其二进制表示中1的个数即为不同2的幂次，例如 “10”，“12”</p>
 <script type="math/tex; mode=display">
 10 -> 1010 = 1000 + 0010\\
-14 -> 1110 = 1000 + 0100 + 0010</script><p>自然想到一个问题：如何快速的找到<strong>任意数的不同二次幂的组合</strong>？引出了<strong>lowbit思路</strong>:</p>
+14 -> 1110 = 1000 + 0100 + 0010</script><span id="more"></span>
+<p>自然想到一个问题：如何快速的找到<strong>任意数的不同二次幂的组合</strong>？引出了<strong>lowbit思路</strong>:</p>
 <ol>
 <li><p>通过<strong>原码与补码求逻辑与运算</strong>，求得目标数字的<strong>最右边的一个1</strong></p>
 <script type="math/tex; mode=display">
@@ -1131,18 +983,29 @@ idx - lowbit(idx) < i <= idx</script><p>来自博客<a href="http://duanple.blog
 <p><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/BITDemo.gif/220px-BITDemo.gif" alt="BITDemo.gif"></p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> tree[maxIndex]</span><br><span class="line"><span class="comment">//待求和数组</span></span><br><span class="line"><span class="keyword">int</span> aim[maxIndex]</span><br><span class="line"><span class="comment">//1.调用update方法（复杂度O(nlogn)）</span></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt; maxIndex;i++)&#123;</span><br><span class="line">    update(i, aim[i]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//2.前缀和法(tree[i] = preSum[i] - preSum[i - lowbit(i)])</span></span><br><span class="line"><span class="comment">// 	复杂度O(n)</span></span><br><span class="line"><span class="keyword">int</span> preSum[maxIndex];</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt; maxIndex;i++)&#123;</span><br><span class="line">    preSum[i] = preSum[i - <span class="number">1</span>] + aim[i];</span><br><span class="line">    tree[i] = preSum[i] - preSum[i - lowbit(i)];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="模板题目"><a href="#模板题目" class="headerlink" title="模板题目"></a>模板题目</h3><ol>
-<li><p><a href="https://www.luogu.com.cn/problem/P3374">luogu P3374 :树状数组1</a></p>
-<ul>
+<li><a href="https://www.luogu.com.cn/problem/P3374">luogu P3374 :树状数组1</a><ul>
 <li>使用scanner做输入会出现三个测试用例TLE<strong>（坑爹）</strong></li>
 </ul>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">P3374</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span>[] binaryIndexTree;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    * 单点修改函数</span></span><br><span class="line"><span class="comment">    *   +number</span></span><br><span class="line"><span class="comment">    * */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">update</span><span class="params">(<span class="keyword">int</span> index, <span class="keyword">int</span> number)</span></span>&#123;</span><br><span class="line">        <span class="comment">//实际index从1开始</span></span><br><span class="line">        <span class="keyword">for</span>(;index &lt; binaryIndexTree.length;index += lowBit(index))&#123;</span><br><span class="line">            binaryIndexTree[index] += number;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    * 前缀和查询</span></span><br><span class="line"><span class="comment">    * */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">query</span><span class="params">(<span class="keyword">int</span> index)</span></span>&#123;</span><br><span class="line">        <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span>(;index &gt; <span class="number">0</span>;index -= lowBit(index))&#123;</span><br><span class="line">            result += binaryIndexTree[index];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    * 计算lowBit</span></span><br><span class="line"><span class="comment">    * */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">lowBit</span><span class="params">(<span class="keyword">int</span> number)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> number &amp; -number;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        Input in = <span class="keyword">new</span> Input();</span><br><span class="line">        <span class="keyword">int</span> n = in.nextInt();</span><br><span class="line">        <span class="keyword">int</span> m = in.nextInt();</span><br><span class="line">        <span class="comment">//初始化树状数组</span></span><br><span class="line">        binaryIndexTree = <span class="keyword">new</span> <span class="keyword">int</span>[n + <span class="number">1</span>];</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>;i &lt;= n;i++)&#123;</span><br><span class="line">            update(i, in.nextInt());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//执行 单点修改和区间查询操作</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; m;i++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(in.nextInt() == <span class="number">1</span>)&#123;</span><br><span class="line">                update(in.nextInt(), in.nextInt());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span>&#123;</span><br><span class="line">                <span class="keyword">int</span> left = in.nextInt() - <span class="number">1</span>;</span><br><span class="line">                <span class="keyword">int</span> right = in.nextInt();</span><br><span class="line">                System.out.println(query(right) - query(left));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Input</span> </span>&#123;</span><br><span class="line">        StreamTokenizer in = <span class="keyword">new</span> StreamTokenizer(<span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(System.in)));</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">nextInt</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">            in.nextToken();</span><br><span class="line">            <span class="keyword">return</span> (<span class="keyword">int</span>)in.nval;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<img src="/2022/04/10/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84%E6%95%B4%E7%90%86/image-20220410203627508.png" class="" title="image-20220410203627508">
+</li>
+<li><a href="https://www.luogu.com.cn/problem/P3368">luogu P3368 :树状数组2</a><ul>
+<li>通过<strong>差分</strong>的思路，将树状数组支持的操作变为<ul>
+<li><strong>单点修改-&gt;区间修改</strong></li>
+<li><strong>区间查询-&gt;单点查询</strong></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="https://www.luogu.com.cn/problem/P2880">luogu P2880 ：牛飞盘比赛</a><ul>
+<li>树状数组维护值从 <strong>区间和</strong> 变为 <strong>区间内最值</strong></li>
+<li>update操作变为最大值更新，查询操作递归完成</li>
+</ul>
 </li>
 </ol>
 <h4 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h4><ol>
 <li><a href="https://zh.wikipedia.org/wiki/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84">wikipidia：树状数组</a></li>
 <li><a href="http://duanple.blog.163.com/blog/static/7097176720081131113145832/">博客：Binary indexed tree-树状数组</a></li>
 <li><a href="https://zhuanlan.zhihu.com/p/93795692">博客：算法学习笔记(2) : 树状数组</a></li>
+<li><a href="https://www.luogu.com.cn/training/3079">树状数组模板题</a></li>
 </ol>
 ]]></content>
       <categories>
@@ -3334,6 +3197,422 @@ BLUE=\frac{\sum_{n-gram \sub references}\sum_{n-gram \sub candidate \\ \& \\ n-g
       <tags>
         <tag>NLP理论</tag>
         <tag>分词算法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>读论文4-GPT系列</title>
+    <url>/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/</url>
+    <content><![CDATA[<h2 id="GPT"><a href="#GPT" class="headerlink" title="GPT"></a>GPT</h2><p>GPT作为NLP预训练语言模型的基石之一，从gpt1,gpt2到gpt3，不断扩大模型规模，将问题从fine-tuning拓展到zero-shot,试图解决更基础，但是更困难的无监督学习问题，三篇论文中的模型结构相同，不同的是试图解决的问题。</p>
+<h3 id="GPT1"><a href="#GPT1" class="headerlink" title="GPT1"></a>GPT1</h3><blockquote>
+<p><a href="https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf">Improving Language Understanding by Generative Pre-Training</a></p>
+</blockquote>
+<h4 id="要解决的问题"><a href="#要解决的问题" class="headerlink" title="要解决的问题"></a>要解决的问题</h4><p>NLP中有监督训练数据较少，存在大量的无标签文本数据，如何使用这些数据解决NLP领域中各类问题？GPT提出了 <strong>自监督预训练+fine tuning</strong> 的方式，主要解决两个问题</p>
+<ol>
+<li>预训练的<strong>训练目标是什么</strong>？损失函数是什么？</li>
+<li>预训练得到的特征表示<strong>如何迁移</strong>到下游任务中？</li>
+</ol>
+<h4 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h4><p>使用语言模型作为预训练的目标，在下游任务上做有监督的fine tuning</p>
+<span id="more"></span>
+<p><strong>预训练</strong></p>
+<p>预训练使用无标签语料作为输入，以语言模型的最大似然函数为训练目标（给定前n-1个token，预测第n个token的条件概率）</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328083725904.png" class="" title="image-20220328083725904">
+<p>模型使用transformer-decoder结构，最后一层通过softmax计算预测词的概率</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084046552.png" class="" title="image-20220328084046552">
+<p><strong>下游任务-fine tuning</strong></p>
+<p>fine-tuning 使用下游任务的有标签语料，增加一个全连接sfotmax输出层，预测对应标签，损失函数为所有训练数据的log最大似然</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084332027.png" class="" title="image-20220328084332027">
+<p>另外增加了一个辅助训练目标，在下游任务上训练语言模型，使用两个损失函数求和作为<strong>最终的训练目标</strong>（$\lambda$ 为控制辅助训练目标对结果影响程度的参数）</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084506127.png" class="" title="image-20220328084506127">
+<p>针对不任务，仅仅使用softmax预测概率无法满足任务要求（如句子相似度衡量，需要输入两个句子，判断两个句子之间的相似度），gpt针对不同任务设计了不同类型的输入（<strong>Task-specific input transformations</strong>）</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328084857519.png" class="" title="image-20220328084857519">
+<h4 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h4><p>模型细节</p>
+<ol>
+<li>12层的transformer-decoder，768隐藏层维度+12注意力头数，去掉了与encoder输出共同计算的注意力层（或者说<strong>使用 masked Multi Self Attention的encoder</strong>）</li>
+<li>使用GLUE作为激活函数</li>
+<li>使用 bytepair encoding (BPE) 词典，包含4000词</li>
+<li>使用<strong>模型学习position encoding</strong>，而不是transformer论文中的三角函数计算</li>
+</ol>
+<p>训练细节</p>
+<ol>
+<li>训练数据集为 BooksCorpus dataset（contains over 7,000 unique unpublished books）</li>
+<li>预训练：优化器为Adam，最大学习率为 $2.5*10^{-4}$，dropout=0.1，在batchsize=64,seq_length=512的条件下，训练100个epoch</li>
+<li>微调：lr = 6.25e-5 , batchsize = 32, dropout = 0.1，训练3个epoch</li>
+</ol>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要针对两个问题提出了解决方案，并在不同NLP上验证，得到了不错的效果</p>
+<ol>
+<li><p>预训练的<strong>训练目标是什么</strong>？</p>
+<p>使用<strong>语言模型</strong>作为与训练目标（predict next token）</p>
+</li>
+<li><p>预训练得到的特征表示<strong>如何迁移</strong>到下游任务中？</p>
+<p><strong>Task-specific input transformations + softmax predict层</strong> 在下游任务微调</p>
+</li>
+</ol>
+<h3 id="GPT2"><a href="#GPT2" class="headerlink" title="GPT2"></a>GPT2</h3><blockquote>
+<p><a href="https://d4mucfpksywv.cloudfront.net/better-language-models/language-models.pdf">Language Models are Unsupervised Multitask Learners</a></p>
+</blockquote>
+<p>在BERT刷榜之后，GPT2带着更大的模型、更多的训练数据卷土重来，不再将关注点聚焦于 预训练+微调，转而研究语言模型在无监督多任务学习上的可能性</p>
+<h4 id="要解决的问题-1"><a href="#要解决的问题-1" class="headerlink" title="要解决的问题"></a>要解决的问题</h4><p>论文中提出目前NLP领域主流的 <strong>预训练+微调</strong> 存在问题，即该方法仍需要监督学习，需要下游任务的大量有标签训练数据。本文将NLP的一般任务和特定任务定义为两种条件分布</p>
+<ol>
+<li>一般任务为 $p(output|input)$ 给定输入，对应输出的条件分布</li>
+<li>特定任务  $p(output|input,task)$ 在特定任务上，输出不仅取决于输入，还取决于任务类型</li>
+</ol>
+<p>传统的预训练+fine-tuning方式</p>
+<ol>
+<li>预训练即模拟 $p(output|input)$条件分布</li>
+<li>fine-tuning 通过在不同任务上<strong>调整模型架构、参数</strong>等，模拟  $p(output|input,task)$条件分布</li>
+</ol>
+<p>gpt2想要<strong>避免监督学习过程</strong>，即不在下游任务上做微调，引出了两个问题</p>
+<ol>
+<li>如何预训练能使得预训练过程中学到下游任务的信息？（原文中的句子：<strong>the global minimum of the unsupervised objective</strong><br><strong>is also the global minimum of the supervised objective.</strong> 全局非监督的收敛 等价于 全局监督学习的收敛）<ul>
+<li>举个例子：像人学英语一样，背单词+看文章看看多了，就算从来没刷过题，题目也能做得效果不错</li>
+</ul>
+</li>
+<li>如何<strong>不调整模型参数或者架构</strong>，<strong>实现从  $p(output|input)$ 到  $p(output|input,task)$</strong> 转变，以适应下游任务？</li>
+</ol>
+<h4 id="解决方案-1"><a href="#解决方案-1" class="headerlink" title="解决方案"></a>解决方案</h4><p>基本思路和GPT1区别不大，预训练语言模型+下游任务输入调整，不进行微调训练，个人觉得他的第二章Approach 前面关于理论来源的部分写的非常好，我读完感觉非常科学（也可能是我知识比较薄，看不出问题），分问题阐述一遍</p>
+<p><strong>如何预训练能使得预训练过程中学到下游任务的信息</strong></p>
+<blockquote>
+<p>Preliminary experiments confirmed that sufficiently large <strong>language models are able to perform multitask learning</strong> in this toy-ish setup but learning is much slower than in explicitly supervised approaches.</p>
+</blockquote>
+<p>从两个角度解决该问题：</p>
+<ol>
+<li><p><strong>训练具备多任务学习能力的模型</strong>：语言模型 </p>
+<ul>
+<li>通过论文证明，语言模型具备多任务学习的能力，缺点是训练速度较慢</li>
+</ul>
+</li>
+<li><p><strong>输入包含多任务信息的数据</strong>：WebText 数据集</p>
+<ul>
+<li><p>本文认为网络文本信息量巨大，包括各种下游任务中需要的数据信息，使用大量网络文本训练，能够使得模型学到不同任务的信息（multi task learning）</p>
+</li>
+<li><p>本文构造了一个WebText数据集，作者举了一些包含下游任务(NMT)数据的例子</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328101903526.png" class="" title="image-20220328101903526">
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>如何不调整模型参数或者架构，就能适应下游任务</strong></p>
+<p>延续了GPT中的一些思路，通过修改输入表达方式，实现对下游任务的适应，以从英文到法文的机器翻译任务为例，在输入源句子的同时，以”english sentence = french sentence”为条件合并输入模型（文中成为 task hint）</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328143447270.png" class="" title="image-20220328143447270">
+<p>在摘要任务中，论文尝试剔除了这种 <strong>”task hint“</strong>，发现任务指标下降了6.4个点，作者认为这证明了 使用自然语言提示模型针对任务改变的可行性</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328143917773.png" class="" title="image-20220328143917773">
+<h4 id="顺带探讨的问题"><a href="#顺带探讨的问题" class="headerlink" title="顺带探讨的问题"></a>顺带探讨的问题</h4><p>在研究论文主要问题时，还顺带提了一下<strong>数据污染</strong>问题，即训练数据集和测试数据集之间重叠的问题，作者推荐在构建划分新的NLP数据训练集和测试集时，使用基于n-gram重叠的方法验证是否存在该问题</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328144755337.png" class="" title="image-20220328144755337">
+<h4 id="实现细节-1"><a href="#实现细节-1" class="headerlink" title="实现细节"></a>实现细节</h4><p>模型细节</p>
+<ol>
+<li><p>使用<strong>BPE构建子词字典</strong>，为了避免无意义单词出现（”dog.“,”dog?”），限制不同类型字符共同出现，<strong>字典大小为 50257</strong></p>
+</li>
+<li><p>将transformer檐式结构结构中的 Post-LN 修改为了 Pre-LN(即把layer normalization移动到每个子层的前面，输入做归一化，输出不做)</p>
+<ul>
+<li>图片来自 <a href="https://arxiv.org/pdf/2002.04745v2.pdf">On Layer Normalization in the Transformer Architecture</a></li>
+</ul>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328151023322.png" class="" title="image-20220328151023322">
+</li>
+</ol>
+<p>训练细节</p>
+<ol>
+<li><p>batchsize=512，seq_length=1024</p>
+</li>
+<li><p>共有四个模型大小，最小的和gpt一一致，第二个与bert_large一致，最大的为GPT2</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220328151832377.png" class="" title="image-20220328151832377">
+</li>
+</ol>
+<h4 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h4><p>本文使用更大的模型尝试证明语言模型在zero-shot上的可行性，在许多任务上取得不错的成绩。</p>
+<h3 id="GPT3"><a href="#GPT3" class="headerlink" title="GPT3"></a>GPT3</h3><p>GPT3是对GPT2在zero shot learning上的进一步推进，GPT2效果没有达到预期，就在GPT3上继续增加模型和训练数据规模，提升效果，在完全预训练模型上继续推广，提出了三种将预训练应用到下游任务的非预训练方式（所谓的 <strong>in-context learning</strong>）</p>
+<ol>
+<li><p>Few-Shot 解决下游任务时，在输入中提供几个任务样例</p>
+<ul>
+<li><p>一个任务提示</p>
+</li>
+<li><p>几个任务样例（prompt）</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154323252.png" class="" title="image-20220329154323252">
+</li>
+</ul>
+</li>
+<li><p>One-shot</p>
+<ul>
+<li><p>只给一个任务提示</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154359207.png" class="" title="image-20220329154359207">
+</li>
+</ul>
+</li>
+<li><p>Zero-shot 完全不给任务提示，只告诉任务是什么</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154433953.png" class="" title="image-20220329154433953">
+</li>
+</ol>
+<p>GPT3将模型规模增大到原来的1000倍</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154640571.png" class="" title="image-20220329154640571">
+<p>又构建了一个集合以往各种文本数据的巨大数据集</p>
+<img src="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/image-20220329154729495.png" class="" title="image-20220329154729495">
+<h4 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h4><p>GPT3文章太长，我只粗略地读了一遍，总体思路还是企图证明大规模预训练语言模型，在下游任务中，即使没有经过预训练，也能实现不错的效果，相较于前两篇论文没有太多新的东西</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>基于统计的文档语义表示</title>
+    <url>/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/</url>
+    <content><![CDATA[<h2 id="基于统计的文档语义表示"><a href="#基于统计的文档语义表示" class="headerlink" title="基于统计的文档语义表示"></a>基于统计的文档语义表示</h2><p>在深度学习模型到来之前，通常使用统计学方法获得表示的文档语义的特征向量，主要方法包括</p>
+<ol>
+<li>TF-IDF</li>
+<li>基于SVD分解的LSA（潜在语义索引/分析 Latent Semantic Indexing/Analysis）</li>
+<li>LDiA 隐形迪利克雷分布</li>
+</ol>
+<p>其中前两种分布理解较为简单，LDiA涉及比较多的概率分布知识</p>
+<h3 id="TF-IDF"><a href="#TF-IDF" class="headerlink" title="TF-IDF"></a>TF-IDF</h3><p><strong>t</strong>erm <strong>f</strong>requency–<strong>i</strong>nverse <strong>d</strong>ocument <strong>f</strong>requency，用以评估一字词对于一个文件集或一个语料库中的其中一份文件的重要程度。字词的重要性随着它在文件中出现的次数成正比增加（TF），但同时会随着它在语料库中出现的频率成反比下降（IDF）</p>
+<span id="more"></span>
+<p><strong>TF</strong></p>
+<p>term frequency，给定一个词，当前词在当前文件出现的频率（通常需要除文档长度），计算公式如下</p>
+<script type="math/tex; mode=display">
+tf_{ij}= \frac{n_{j}}{n_i}</script><p><strong>IDF</strong></p>
+<p>inverse document frequency，给定一个词，IDF值为文档库中总文档数除以包含该词的文档数</p>
+<script type="math/tex; mode=display">
+idf = log\frac{n_{total}}{n_{contains}}</script><p>将两个值相即为当前文档中该词的TF-IDF值，计算文档在词表上所有词的TF-IDF值，即可获得<strong>相较于词袋向量更加稠密但维度相同</strong>的文档特征向量,TF-IDF作为语义特征向量还存在着一些问题</p>
+<ol>
+<li>无法解决不同拼写但意思相近的词，TF-IDF计算是会将其看作不同的特征</li>
+<li>TF-IDF特征向量的维度还是过大，计算量大且在样本量小（维度与样本数量接近）的时候，容易出现过拟合</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 快速计算TFIDF值，问题是处理不了中文</span></span><br><span class="line">sklearn.feature_extraction.text.TfidfVectorizer</span><br><span class="line"><span class="comment"># 将词频矩阵快速转化为IDF值（中文只能用这个了）</span></span><br><span class="line">sklearn.feature_extraction.text.TfidfTransformer</span><br></pre></td></tr></table></figure>
+<h3 id="LSA-潜在语义分析"><a href="#LSA-潜在语义分析" class="headerlink" title="LSA 潜在语义分析"></a>LSA 潜在语义分析</h3><p>LSA实际上就是SVD矩阵分解应用到NLP领域中换的一个名字，结合SVD和PCA对别进行理解</p>
+<h4 id="SVD"><a href="#SVD" class="headerlink" title="SVD"></a>SVD</h4><p>常用的针对非方阵矩阵的一种分解方法</p>
+<img src="/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/image-20220411100221445.png" class="" title="image-20220411100221445">
+<p>其中矩阵 U和V满足:</p>
+<img src="/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/image-20220411100348208.png" class="" title="image-20220411100348208">
+<p>迁移到NLP领域中,使用截断的SVD分解（取前p大的奇异值）,定义为所谓的<strong>潜在语义主题</strong></p>
+<ul>
+<li>矩阵$M_{m<em>n}$为 **词 </em>文档** 的特征向量矩阵，每一列均为一篇文档的特征向量</li>
+<li>矩阵 $U_{m<em>p}$ 为 **词 </em> 潜在语义主题** 的关系矩阵</li>
+<li>矩阵 $V_{n<em>p}$ 为 **文档 </em> 潜在语义主题** 的关系矩阵</li>
+</ul>
+<p>通过矩阵分解，获得了文档的潜在语义主题表示，实现了<strong>文档特征向量的降维</strong>（从词维度降低到定义的主题维度）</p>
+<h4 id="PCA"><a href="#PCA" class="headerlink" title="PCA"></a><strong>PCA</strong></h4><p>Principal Component Analysis，从降维的角度出发，发现PCA与SVD都是在做类似于矩阵分解的操作，实现降维的目的。PCA出发点为找到对$X$的一种降维方法$Y=WX$，使得损失的信息量最少，如何实现这个目标？</p>
+<ol>
+<li>降维后某个特征（或者说维度）的方差最大（组内多样化）</li>
+<li>不同特征之间的协方差为0（组间相关性尽量小）</li>
+</ol>
+<p>根据降维要求和方差大小，舍弃较小方差特征，保留较大方差特征，实现降维。</p>
+<ul>
+<li>如何转化为数学问题求解？引出了<strong>协方差矩阵</strong>，上述两个目标即为将协方差矩阵相似对角化过程（非对角线元素（协方差）转化为0，对角线元素（方差）转化为特征值）</li>
+<li>如何快速找到目标矩阵 $X$ 的协方差矩阵？当$X$不同特征内归一化处理后，$XX^T$即为协方差矩阵</li>
+</ul>
+<p>最终转化为求解 $XX^T$的特征向量矩阵 $W$</p>
+<h4 id="PCA-VS-SVD"><a href="#PCA-VS-SVD" class="headerlink" title="PCA VS SVD"></a>PCA VS SVD</h4><p>经过分析两者均最终转化为了 $XX^T$的特征向量矩阵的求解过程，两者在计算上实际等价，不同点在于</p>
+<ol>
+<li>PCA目的为降维，SVD目的为分解</li>
+<li>PCA只能应用于方阵，SVD均可</li>
+<li>PCA需要对数据进行中心化处理</li>
+</ol>
+<p>sklearn中的PCA实际上就是用SVD方法求解的</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 截断SVD</span></span><br><span class="line">sklearn.decomposition.TruncatedSVD([n_components, ...])</span><br><span class="line"><span class="comment"># PCA</span></span><br><span class="line">sklearn.decomposition.PCA([n_components, copy, ...])</span><br><span class="line"><span class="comment"># 增量PCA 解决数量过大内存不足问题的近似PCA</span></span><br><span class="line">sklearn.decomposition.IncrementalPCA([n_components, ...])</span><br><span class="line"><span class="comment"># 稀疏PCA</span></span><br><span class="line">sklearn.decomposition.SparsePCA</span><br></pre></td></tr></table></figure>
+<h3 id="LDiA"><a href="#LDiA" class="headerlink" title="LDiA"></a>LDiA</h3><p>Latent Dirichlet allocation 隐含迪利克雷分布，即它认为一篇文档是由一组词构成的一个集合，词与词之间没有顺序以及先后的关系。一篇文档可以包含多个主题，文档中每一个词都由其中的一个主题生成。过程涉及到两个分布关系</p>
+<ol>
+<li>文档的主题<strong>分布</strong></li>
+<li>每个主题的词<strong>分布</strong></li>
+</ol>
+<p>LDiA假设这两个分布均满足多项式分布，其中多项式参数个数为主题个数和词个数，在此假设下，我们已知<strong>数据+分布</strong>，<strong>如何求出目标分布的参数</strong>？LDiA假设主题分布和词分布的<strong>先验分布均为Dirichlet分布</strong>，即</p>
+<img src="/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/image-20220411153017543.png" class="" title="image-20220411153017543">
+<ol>
+<li>文档主题多项式分布参数 $p_1,p_2,p_3….p_n$满足Dirichlet分布（$p_i$ 为某文档中 $topic_i$ 出现的概率）</li>
+<li>主题词多项分布 $p_1,p_2,p_3….p_n$满足Dirichlet分布（$p_i$ 即为某主题中 $word_i$ 出现的概率）</li>
+</ol>
+<p>常用方法有下面两种，不太清楚是否与贝叶斯估计有关系（<strong>不深入了解了，浪费时间也没必要</strong>）</p>
+<ol>
+<li>EM算法</li>
+<li>Gibbs Sampling算法</li>
+</ol>
+<h4 id="想到了上学期学的贝叶斯估计求未知参数"><a href="#想到了上学期学的贝叶斯估计求未知参数" class="headerlink" title="想到了上学期学的贝叶斯估计求未知参数"></a>想到了上学期学的贝叶斯估计求未知参数</h4><p>我想到了数理统计里的贝叶斯估计，通过先验分布和后验分布，可以得到参数关于样本的概率分布，公式如下(应用数理统计-孙荣恒)</p>
+<script type="math/tex; mode=display">
+h(y|x_1,...,x_n) = \frac{\pi(y)f(x_1,...,x_n|y)}{g(x1,...,x_n)}\propto\pi(y)f(x_1,...,x_n|y)</script><p>其中 $y$ 后验分布中的未知参数，$\pi(y)$ 为先验分布（LDiA中的Dirichlet分布），$f(x_1,…,x_n|y)$ 为后验分布（LDiA中的多项式分布），得到未知参数关于实验数据（输入文档）的分布后，采取特定方法即可求得未知参数的估计值</p>
+<h4 id="简单总结"><a href="#简单总结" class="headerlink" title="简单总结"></a>简单总结</h4><img src="/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/image-20220411154536747.png" class="" title="image-20220411154536747">
+<p>根据上述分析，我们可以得到LDA<strong>输入有两个超参数</strong></p>
+<ol>
+<li><strong>文档-主题</strong>先验Dirichlet分布的参数</li>
+<li><strong>主题-词</strong>先验Dirichlet分布的参数</li>
+</ol>
+<p>LDA实际在求解的参数为</p>
+<ol>
+<li><strong>文档-主题</strong>多项式分布的参数</li>
+<li><strong>主题-词</strong> 多项式分布的参数</li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a href="https://zh.wikipedia.org/wiki/Tf-idf">tf-idf</a></li>
+<li><a href="https://zh.wikipedia.org/wiki/%E5%A5%87%E5%BC%82%E5%80%BC%E5%88%86%E8%A7%A3">奇异值分解</a></li>
+<li><a href="https://zh.wikipedia.org/wiki/%E9%9A%90%E5%90%AB%E7%8B%84%E5%88%A9%E5%85%8B%E9%9B%B7%E5%88%86%E5%B8%83">隐含狄利克雷分布</a></li>
+<li><a href="https://www.cnblogs.com/yifanrensheng/p/13143970.html">NLP-04 隐含狄利克雷分布(LDA)</a></li>
+<li>应用数理统计-孙荣恒</li>
+</ol>
+]]></content>
+      <categories>
+        <category>ML/DL理论学习</category>
+      </categories>
+      <tags>
+        <tag>NLP理论</tag>
+        <tag>LDA</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>GFS论文总结</title>
+    <url>/2022/04/17/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<h3 id="GFS"><a href="#GFS" class="headerlink" title="GFS"></a>GFS</h3><blockquote>
+<p>论文地址：<a href="https://research.google/pubs/pub51/">The Google File System</a></p>
+</blockquote>
+<p>google file system，入门大数据必读三篇文章之一，最近懒得看视频，小研究一波这篇论文，读完发现这种系统论文要比人工智能论文难读一些，涉及的技术比较多，粗浅的总结一下。</p>
+<h4 id="论文结构"><a href="#论文结构" class="headerlink" title="论文结构"></a>论文结构</h4><p><del>论文结构有点像我的毕业论文</del>，首先从系统的结构出发，描述系统架构、组成等,从静态角度了解系统组成，然后从动态系统交互出发，描述系统交互，主要数据和操作流，最后单独两章描述mater节点的主要职责以及系统如何实现fault tolerance.</p>
+<ol>
+<li><p>intro 介绍</p>
+<p>没讲很多背景，直接讲GFS这套解决方案与以往的GFS不同点，解决不同问题：</p>
+<ol>
+<li>分布式系统中组件经常失效（norm rather than exception）</li>
+<li>按照以往的标准，目前文件大小都很大</li>
+<li>目前对文件操作主要是添加和顺序读</li>
+<li>面向应用设计GFS，增加了整个系统的灵活性</li>
+</ol>
+</li>
+<li><p>DESIGN OVERVIEW </p>
+<p>系统的组成+一致性模型，基本讲明白了系统怎么实现的文件系统功能</p>
+</li>
+<li><p>SYSTEM INTERACTIONS</p>
+<p>描述了系统与client读写文件的交互流程，在这过程中如何保证GFS特性（从使用的角度，描述系统）</p>
+</li>
+<li><p>MASTER OPERATION</p>
+<p>阐述master节点的职责，client与GFS交互中不直接相关的操作（从管理的角度）</p>
+</li>
+<li><p>FAULT TOLERANCE AND DIAGNOSIS</p>
+<p>阐述容错机制（从策略角度）</p>
+</li>
+<li><p>MEASUREMENTS + EXPERIENCES + RELATED WORK + CONCLUSIONS</p>
+<p>实验验证+经验总结+相关工作+总结</p>
+</li>
+</ol>
+<span id="more"></span>
+<h4 id="前提假设"><a href="#前提假设" class="headerlink" title="前提假设"></a>前提假设</h4><p>论文中说了GFS的设计是<strong>文件系统API</strong>和<strong>服务于应用</strong>的co-designing（需求来源于生活）， 对其解决的问题做了一定的假设和限定：</p>
+<ol>
+<li>分布式系统构建于便宜、容易出错的硬件上</li>
+<li>系统存储一定数量的大文件（GB级别）</li>
+<li>系统将要面临的读操作主要为大量的顺序读和少量随机读</li>
+<li>系统面临的写操作主要为大量顺序添加操作，但也支持随机写</li>
+<li>系统必须高效支持多客户端并发append写操作</li>
+<li>重要性：高带宽&gt;低延时</li>
+</ol>
+<p>从前提假设中，我们就能得到GFS设计目标中的重点</p>
+<ol>
+<li><strong>重点</strong>：为<strong>多客户端</strong>的<strong>大文件存储</strong>以及<strong>顺序读+追加写</strong>提供<strong>高稳定高带宽</strong>服务</li>
+<li><strong>相对而言不重要的</strong>（系统支持，但不一定效率高）：随机读+随机写+低延时</li>
+</ol>
+<h4 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h4><p>单管理节点（master）+多存储节点（chunk server）+多客户端（client）架构</p>
+<ol>
+<li>master节点职责<ul>
+<li><strong>管理文件系统的元数据</strong>，包括访问控制信息，文件命名空间，文件到存储块的映射，存储块到存储节点的映射</li>
+<li><strong>进行系统管理活动</strong>，包括存储块释放，垃圾回收，不同存储节点上存储块的迁移、复制，定时获取chunk server状态</li>
+</ul>
+</li>
+<li>chunk server节点职责<ul>
+<li>存储文件存储块（chunk）</li>
+<li>通过HeartBeat消息，告知master节点自身状态</li>
+<li>与client进行文件操作交互</li>
+</ul>
+</li>
+<li>client主要操作<ul>
+<li>与master节点进行元数据操作（获取文件存储的chunkserver等）</li>
+<li>与chunk server进行文件操作（文件实际读写）</li>
+</ul>
+</li>
+</ol>
+<img src="/2022/04/17/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220413194306905.png" class="" title="image-20220413194306905">
+<h4 id="几个主要概念"><a href="#几个主要概念" class="headerlink" title="几个主要概念"></a>几个主要概念</h4><h5 id="Metadata"><a href="#Metadata" class="headerlink" title="Metadata"></a>Metadata</h5><blockquote>
+<p>The master stores three major types of metadata: the file and chunk namespaces, the mapping from files to chunks, and the locations of each chunk’s replicas</p>
+</blockquote>
+<p>文件系统的元数据，存储在master节点的<strong>内存中</strong>（论文里不断强调这一点，为了方便master扫描，执行一些列管理操作，主要包括三种类型</p>
+<ol>
+<li>文件和文件块的命名空间信息（前缀压缩减少空间占用）</li>
+<li>文件到文件块的映射</li>
+<li>文件块的存储位置<ul>
+<li>master节点在每次启动时，向chunk server请求其拥有的chunk信息，初始化文件块存储位置信息</li>
+<li>并通过不断的Heatbeat Message 保证chunk信息不过时。（某种程度的低耦合）</li>
+</ul>
+</li>
+<li>operation Log 操作记录</li>
+</ol>
+<h5 id="Operation-Log"><a href="#Operation-Log" class="headerlink" title="Operation Log"></a>Operation Log</h5><p>记录系统操作、作为系统逻辑时间的最重要的元数据</p>
+<ul>
+<li>operation log持久存储，多处备份，每次操作只有真正的记录到Operation Log中时，才会对客户端可见</li>
+<li>operation log大小超过一定程度时，系统创建checkpoint，将当前operation log存储到本地</li>
+<li>以compact B-tree的形式存储checkpoint，方便快速读取和加载</li>
+<li>checkpoint的创建与切换新 operation log file并行进行</li>
+</ul>
+<h5 id="atomically-at-least-once"><a href="#atomically-at-least-once" class="headerlink" title="atomically at least once"></a>atomically at least once</h5><p>追加写操作保证”原子性“，我理解的是：真实追加写入的offset相较于client发出请求offset不一定一致，但是我保证所有副本最后在追加的offeset一定相同，并将这个offset返回给客户端。</p>
+<p>举个例子，例如向A,B,C三个chunk server的同一文件的副本追加文件，<strong>A，B写入成功，C写入失败</strong>，GFS并不会单独重新在C上追加，而是在C上补充空白（insert padding or record duplicates in between.），使得三个文件的偏移量相同，重新写入ABC。</p>
+<p>这样做会导致文件中出现<strong>无效数据</strong>，但是论文中说这些数据和用户数据相比<strong>微不足道</strong>（are typically dwarfed by the amount of user data）</p>
+<h5 id="一致性模型中的consistent-和-defined"><a href="#一致性模型中的consistent-和-defined" class="headerlink" title="一致性模型中的consistent 和 defined"></a>一致性模型中的consistent 和 defined</h5><p>两者定义</p>
+<ul>
+<li><p>consistent 指所有的client看到相同的数据，即所有副本均相同</p>
+</li>
+<li><p>defined 指看到自己操作对于数据的改变 = 期望中的改变</p>
+</li>
+</ul>
+<p>成功和失败的操作定义为：</p>
+<ul>
+<li>成功：可能会导致操作后<strong>undefined</strong>(无法预期操作的结果)，但数据仍为<strong>consistent</strong></li>
+<li>失败：导致unconsistent，即不同数据备份不一致</li>
+</ul>
+<h5 id="Leases-and-Mutation-Order"><a href="#Leases-and-Mutation-Order" class="headerlink" title="Leases and Mutation Order"></a>Leases and Mutation Order</h5><p>lease用来记录对于一份文件多个并发操作的执行顺序，由master节点选取其中chunk server一个作为primary lease决定执行顺序，所有文件副本均按照primary lease操作顺序执行</p>
+<ul>
+<li>每个lease 60秒失效</li>
+<li>在与master节点的Heartbeat中primary的授权信息（These extension requests and grants are piggybacked on the HeartBeat messages regularly exchanged between the master and all chunk server）</li>
+</ul>
+<h4 id="系统交互"><a href="#系统交互" class="headerlink" title="系统交互"></a>系统交互</h4><img src="/2022/04/17/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220415142928379.png" class="" title="image-20220415142928379">
+<p>以写流程流程为例，涉及client、Master、Chunk server之间的交互</p>
+<ol>
+<li>Client 向 Master请求写入文件的Chunk Server地址（包括备份的Chunk Server）</li>
+<li>Master 返回给Client请求的Chunk Server地址，Client拿到地址后，将写入文件发送到所有目标Chunk Server中（不是<strong>分发</strong>，而是<strong>链式传输</strong>，论文中称“decoupling the data flow from the control flow”，提高了系统performance）</li>
+<li>所有接收文件的Chunk Server确认接收完成后，client向被选为primary lease的Chunk Server发送写请求，由改Chunk Server确定包括该请求在内的其他并发请求的执行顺序，通知其他Replica Chunk Server，包括自在内按照该顺序执行操作（forwards the write request to all secondary replicas）</li>
+<li>Replica Chunk Server向Primary Chunk Server返回执行完成确认，Primary Chunk Server向Client返回执行完成确认。</li>
+</ol>
+<p>一旦其中有一步失败，即向Client汇报失败，由Client自己进行处理（重试操作）</p>
+<h4 id="几个主要操作（策略）"><a href="#几个主要操作（策略）" class="headerlink" title="几个主要操作（策略）"></a>几个主要操作（策略）</h4><h5 id="Data-Flow-数据传输"><a href="#Data-Flow-数据传输" class="headerlink" title="Data Flow-数据传输"></a>Data Flow-数据传输</h5><p>在Client向多个备份Chunk Server传输文件时，并不是采取传统的一个Client对多个Server的集中发送的方式，而是采取<strong>链式传输</strong></p>
+<ol>
+<li>Client首先选取最近(<strong>IP地址上的近</strong>)的Chunk Server传输文件</li>
+<li>该Chunk Server再选取离他最近的未传输过文件的ChunkServer传输文件</li>
+<li>重复传输，直到所有待传输Chunk Server获得文件</li>
+</ol>
+<h5 id="Atomic-Record-Appends"><a href="#Atomic-Record-Appends" class="headerlink" title="Atomic Record Appends"></a>Atomic Record Appends</h5><p>传统基于offset的写入，同一个区域的并发写入操作是无法序列化的（需要严格同步机制），针对record append操作，GFS舍弃了由应用输入offset的机制，应用只需要写入数据，由GFS写入后，向应用返回offset，其中一致性保证 <strong>atomically at least once</strong> </p>
+<ul>
+<li>若添加的文件使得chunk大小超出了最大限制，Primary Chunk Server会在填充当前Chunk剩余空间，创建新Chunk存储添加的文件内容</li>
+<li>GFS限制写入文件大小小于Chunk块大小的四分之一，避免padding导致的碎片问题过于严重</li>
+</ul>
+<h5 id="Namespace-Management-and-Locking"><a href="#Namespace-Management-and-Locking" class="headerlink" title="Namespace Management and Locking"></a>Namespace Management and Locking</h5><p><del>说实话没理解并不是很深刻</del>， GFS为系统中的每个路径前缀均设置了读写锁</p>
+<ol>
+<li><p>读操作需要获取叶子节点所有前缀read-lock</p>
+</li>
+<li><p>写操作只需要叶子节点路径write-lock(因为目录并不是实际的数据结构，不需要修改目录，只需修改文件)</p>
+<img src="/2022/04/17/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220415152805791.png" class="" title="image-20220415152805791">
+</li>
+</ol>
+<h5 id="Snapshot"><a href="#Snapshot" class="headerlink" title="Snapshot"></a>Snapshot</h5><p>系统快照，快速保存文件系统状态，其主要步骤为</p>
+<ol>
+<li>master首先撤下快照涉及文件的primary lease(避免在快照过程中文件上发生操作)</li>
+<li>master将log record 操作记录存储到磁盘中</li>
+<li>快照完成后，master接收到来自client对快照文件访问的新请求（通过操作记录数大小判断）时，延迟返回结果，创建一个与原Chunk相同的新Chunk供Client访问（懒备份）</li>
+</ol>
+<p>这一过程对于Cilent来说是无感的</p>
+<h5 id="Garbage-Collection"><a href="#Garbage-Collection" class="headerlink" title="Garbage Collection"></a>Garbage Collection</h5><p>当删除一个文件时，GFS并直接回收文件占用资源，而是将文件名修改为hidden状态，待日后删除，基本流程</p>
+<ol>
+<li>删除文件，master结点记录删除操作，在chunk中将文件修改为hidden状态</li>
+<li>master扫描到hidden状态文件，删除meta数据中关于hidden文件信息</li>
+<li>chunk server与master 的Heatbeat message交换中，发现master已没有了这部分信息，<strong>chunk server回收空间</strong></li>
+</ol>
+<p>同样通过Garbage Collection回收stale Replica</p>
+<h5 id="Data-Integrity"><a href="#Data-Integrity" class="headerlink" title="Data Integrity"></a>Data Integrity</h5><p>checksum+chunk version number机制保证数据正确性和及时性（up-to-date）</p>
+<ol>
+<li>每次读操作时，cunkserver验证本机数据check sum是否正确，不正确返回失败</li>
+<li>为每个副本维护一个版本号，操作递增，当版本号不同时，由master在Garbage Collection回收过期副本</li>
+</ol>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>按照自己的理解对GFS论文简单的理解了一下，感觉有些东西理解的还不是很透彻，慢慢深入了解</p>
+]]></content>
+      <categories>
+        <category>大数据理论</category>
+      </categories>
+      <tags>
+        <tag>GFS</tag>
+        <tag>大数据</tag>
       </tags>
   </entry>
 </search>
