@@ -3449,8 +3449,91 @@ h(y|x_1,...,x_n) = \frac{\pi(y)f(x_1,...,x_n|y)}{g(x1,...,x_n)}\propto\pi(y)f(x_
       </tags>
   </entry>
   <entry>
+    <title>Mapreduce论文总结</title>
+    <url>/2022/04/24/Mapreduce%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<h3 id="Mapreduce"><a href="#Mapreduce" class="headerlink" title="Mapreduce"></a>Mapreduce</h3><blockquote>
+<p>论文地址: <a href="https://pdos.csail.mit.edu/6.824/papers/mapreduce.pdf">MapReduce: Simplified Data Processing on Large Clusters</a></p>
+</blockquote>
+<p>Mapreduce分布式编程模型，理解起来比较简单，主要总结一下模型+实现细节</p>
+<h4 id="编程模型"><a href="#编程模型" class="headerlink" title="编程模型"></a>编程模型</h4><p>将任务划分为Map和Reduce两个阶段由用户实现，每个阶段输入输出key-value对（形象理解可以看论文中的例子）</p>
+<img src="/2022/04/24/Mapreduce%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220420082702737.png" class="" title="image-20220420082702737">
+<ol>
+<li>Map 输入key-value，经过处理输出新的中间 key-value对，由MapReduce执行程序，将相同<strong>中间key</strong>聚集发送给某一个reduce执行程序</li>
+<li>Reduce 输入一个中间key和key对应的value列表，reduce执行具体聚集操作后，获得最终的输出key-value</li>
+</ol>
+<span id="more"></span>
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>基本执行流程包括</p>
+<ol>
+<li>将输入文件划分为m份（16-64mb），对应m个map任务。在集群上启动多份应用程序</li>
+<li>其中一个master程序，将map任务和reduce任务分配给空闲的worker(不同的worker可能是一台机器)</li>
+<li>map任务程序首先执行，读取对应的文件块，将输出中间键值对缓存在内存中</li>
+<li>每隔一段时间，map worker将缓存中的中间键值对存储到本地磁盘（根据key-&gt;reduce的映射进行partition）。这些中间键值对的地址，将传给master worker,供reduce worker远程读取</li>
+<li>reduce worker由master唤醒后，通过RPC读取映射到本reduce worker的中间键值对输出</li>
+<li>当属于某个reduce worker的中间键值对读取完成后，按照中间键值排序，对不同的key分组处理，也就是所谓的reduce输入key-value list</li>
+<li>所有reduce程序完成后，结束mapreduce过程</li>
+</ol>
+<p>总结一下，就是map-&gt;partition-&gt;sort-&gt;reduce</p>
+<img src="/2022/04/24/Mapreduce%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220420083217188.png" class="" title="image-20220420083217188">
+<h4 id="容错"><a href="#容错" class="headerlink" title="容错"></a>容错</h4><p>为map和reduce任务定义了执行状态存储在master结点中，通过状态实现容错，每个任务的状态为</p>
+<ol>
+<li>idle 等待处理</li>
+<li>in-progress 处理中</li>
+<li>completed 处理完成</li>
+</ol>
+<p>master定期ping所有执行或者执行过任务的worker，若worker失效，将worker上执行过的所有任务（in-progress或者completed）状态设置为idle，等待分配给其他worker处理。</p>
+<ul>
+<li>若mapreduce任务执行在类似GFS的文件系统上，则complete类型任务不需要重新执行，因为输出文件不仅仅存储在失效的worker上</li>
+<li>每当一个map任务重新执行后，需要通知所有的reduce任务该map任务的新执行</li>
+</ul>
+<h4 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h4><ol>
+<li>map任务分配任务时遵循“靠近输入文件的原则”，首先考虑分配在包含输入文件的机器上，其次考虑靠近存储文件的机器上（移动计算比移动数据更有效）</li>
+<li>用一些backup worker，替代拖后腿的worker，提升系统效率下限</li>
+<li>map和reduce任务数量M和R要比机器数量大得多，以更好地负载均衡（每个workerp平均一个任务都分不到，谈何负载均衡?）和恢复错误（没太理解？）</li>
+</ol>
+<h4 id="问题思考"><a href="#问题思考" class="headerlink" title="问题思考"></a>问题思考</h4><ol>
+<li><p>如何把map任务的输出分配给R个reduce worker（<strong>partition</strong>）</p>
+<ul>
+<li><p>原则：相同key必须分配到同一个reduce worker</p>
+</li>
+<li><p>最简单方式就是使用key的哈希值进行映射</p>
+<img src="/2022/04/24/Mapreduce%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220420092210098.png" class="" title="image-20220420092210098">
+</li>
+</ul>
+</li>
+<li><p>既然有了partition，为什么要combiner?</p>
+<ul>
+<li>相同key值的key-value对可能很多(例如wordcount)，通过网络传播对带宽压力较大，</li>
+<li>在map端先进行<strong>一部分的reduce操作</strong>，合并重复key，也能一定程度减轻reduce的计算压力</li>
+</ul>
+</li>
+<li><p>直觉上为什么mapreduce能解决分布式计算问题？</p>
+<p>从程序角度看，不管的单机还是分布式，其本质都是<strong>程序读取输入-&gt;程序计算-&gt;程序输出结果</strong>，我要实现分布式程序，无非要实现 <strong>分布计算 = 单机计算</strong></p>
+<ol>
+<li><strong>程序输入：</strong> 分布式文件存储在不同机器上，自然而然能够想到<strong>多个map程序读取文件</strong>的操作</li>
+<li><strong>程序计算：</strong>难点在于分布式读入文件，我如何实现等价于单机计算的效果？我觉得这就reduce设计巧妙地地方，<strong>文件的分块不等于计算的逻辑分块</strong>，通过map—&gt;reduce程序的计算，实际上将<strong>文件的分块映射到计算的逻辑分块</strong></li>
+<li><strong>程序输出：</strong> reduce输出实际逻辑子问题的输出-&gt;实际问题的输出（这一点我还没想明白，类似于归并排序 reudce制作到了归没有做并）</li>
+</ol>
+<p>以wordcount为例，讲一下我的理解</p>
+<ol>
+<li><strong>文件分块：</strong>整个文本文件-&gt;子文本文件块 （<strong>问题数据规模上分布</strong>）</li>
+<li><strong>计算逻辑分块</strong>：统计每个不同字的字数-&gt;单独统计每个字的字数（<strong>问题逻辑规模上分布</strong>）</li>
+</ol>
+<p>map解决每个文本文件内字数的统计，reduce解决每个字字数统计</p>
+</li>
+</ol>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>mapreduce只看理论理解还是太表面，还是需要写代码实战，学到了继续深化吧</p>
+]]></content>
+      <categories>
+        <category>大数据理论</category>
+      </categories>
+      <tags>
+        <tag>分布式</tag>
+        <tag>mapreduce</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>GFS论文总结</title>
-    <url>/2022/04/17/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/</url>
+    <url>/2022/04/17/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%9B%B8%E5%85%B3/%E7%90%86%E8%AE%BA%E6%80%BB%E7%BB%93/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/</url>
     <content><![CDATA[<h3 id="GFS"><a href="#GFS" class="headerlink" title="GFS"></a>GFS</h3><blockquote>
 <p>论文地址：<a href="https://research.google/pubs/pub51/">The Google File System</a></p>
 </blockquote>
@@ -3516,7 +3599,7 @@ h(y|x_1,...,x_n) = \frac{\pi(y)f(x_1,...,x_n|y)}{g(x1,...,x_n)}\propto\pi(y)f(x_
 </ul>
 </li>
 </ol>
-<img src="/2022/04/17/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220413194306905.png" class="" title="image-20220413194306905">
+<img src="/2022/04/17/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%9B%B8%E5%85%B3/%E7%90%86%E8%AE%BA%E6%80%BB%E7%BB%93/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220413194306905.png" class="" title="image-20220413194306905">
 <h4 id="几个主要概念"><a href="#几个主要概念" class="headerlink" title="几个主要概念"></a>几个主要概念</h4><h5 id="Metadata"><a href="#Metadata" class="headerlink" title="Metadata"></a>Metadata</h5><blockquote>
 <p>The master stores three major types of metadata: the file and chunk namespaces, the mapping from files to chunks, and the locations of each chunk’s replicas</p>
 </blockquote>
@@ -3558,7 +3641,7 @@ h(y|x_1,...,x_n) = \frac{\pi(y)f(x_1,...,x_n|y)}{g(x1,...,x_n)}\propto\pi(y)f(x_
 <li>每个lease 60秒失效</li>
 <li>在与master节点的Heartbeat中primary的授权信息（These extension requests and grants are piggybacked on the HeartBeat messages regularly exchanged between the master and all chunk server）</li>
 </ul>
-<h4 id="系统交互"><a href="#系统交互" class="headerlink" title="系统交互"></a>系统交互</h4><img src="/2022/04/17/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220415142928379.png" class="" title="image-20220415142928379">
+<h4 id="系统交互"><a href="#系统交互" class="headerlink" title="系统交互"></a>系统交互</h4><img src="/2022/04/17/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%9B%B8%E5%85%B3/%E7%90%86%E8%AE%BA%E6%80%BB%E7%BB%93/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220415142928379.png" class="" title="image-20220415142928379">
 <p>以写流程流程为例，涉及client、Master、Chunk server之间的交互</p>
 <ol>
 <li>Client 向 Master请求写入文件的Chunk Server地址（包括备份的Chunk Server）</li>
@@ -3583,7 +3666,7 @@ h(y|x_1,...,x_n) = \frac{\pi(y)f(x_1,...,x_n|y)}{g(x1,...,x_n)}\propto\pi(y)f(x_
 <li><p>读操作需要获取叶子节点所有前缀read-lock</p>
 </li>
 <li><p>写操作只需要叶子节点路径write-lock(因为目录并不是实际的数据结构，不需要修改目录，只需修改文件)</p>
-<img src="/2022/04/17/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220415152805791.png" class="" title="image-20220415152805791">
+<img src="/2022/04/17/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%9B%B8%E5%85%B3/%E7%90%86%E8%AE%BA%E6%80%BB%E7%BB%93/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220415152805791.png" class="" title="image-20220415152805791">
 </li>
 </ol>
 <h5 id="Snapshot"><a href="#Snapshot" class="headerlink" title="Snapshot"></a>Snapshot</h5><p>系统快照，快速保存文件系统状态，其主要步骤为</p>
@@ -3612,7 +3695,7 @@ h(y|x_1,...,x_n) = \frac{\pi(y)f(x_1,...,x_n|y)}{g(x1,...,x_n)}\propto\pi(y)f(x_
       </categories>
       <tags>
         <tag>GFS</tag>
-        <tag>大数据</tag>
+        <tag>分布式</tag>
       </tags>
   </entry>
 </search>

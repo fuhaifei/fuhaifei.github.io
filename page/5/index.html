@@ -195,6 +195,89 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/21/DL%E7%BC%96%E7%A8%8B/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/07/21/DL%E7%BC%96%E7%A8%8B/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">优化算法学习总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-07-21 15:02:06 / 修改时间：15:14:25" itemprop="dateCreated datePublished" datetime="2021-07-21T15:02:06+08:00">2021-07-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="1-动量梯度下降"><a href="#1-动量梯度下降" class="headerlink" title="1. 动量梯度下降"></a>1. 动量梯度下降</h3><p>为了解决随机梯度梯度下降存在的震荡问题，通过添加动量，平滑动量变化。</p>
+<h4 id="什么是指数加权平均"><a href="#什么是指数加权平均" class="headerlink" title="什么是指数加权平均"></a>什么是指数加权平均</h4><p>当前步的函数值不仅取决于当前的输入，还取决于之前的函数值，公式如下</p>
+<script type="math/tex; mode=display">
+v_t = \beta v_{t-1}+(1-\beta)\theta_t</script><p>通过不断带入展开，可得只包含 <script type="math/tex">\theta</script> 的表达式为</p>
+<script type="math/tex; mode=display">
+v_t = (1-\beta)\theta_t + (1-\beta)\beta\theta_{t-1} + (1-\beta)\beta^2\theta_{t-2}+....+(1-\beta)\beta^n\theta_{t-n}+\beta^nv_{t-n}</script><img src="/2021/07/21/DL%E7%BC%96%E7%A8%8B/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/image-20210720092013215.png" class="" title="image-20210720092013215">
+<p>由于 <script type="math/tex">(1-\frac{1}{n})^n</script> 在n趋向于无穷时等于 <script type="math/tex">e^{-1}</script>。当 <script type="math/tex">\beta</script> 趋向于1时，<script type="math/tex">\beta^{\frac{1}{1-\beta}} = (1-\frac{1}{n})^n</script> 同样等于 <script type="math/tex">e^{-1}</script>,如果将 <script type="math/tex">e^{-1}</script>看作一个可以忽略的数字，则展开式中含有阶数大于等于 <script type="math/tex">\theta^{\frac{1}{1-\theta}}</script> 的相可以忽略。</p>
+<ul>
+<li>当 <script type="math/tex">\beta = 0.98</script>​时，<script type="math/tex">\beta^{\frac{1}{1-\beta}} = \beta^{20}</script>​ ,所以所有系数包含<script type="math/tex">\beta^n</script>​ n&gt;=20的均省略，原式子等价于前20个<script type="math/tex">\theta</script>​的加权平均和，<strong>即当前梯度等于前20个梯度的加权平均和</strong>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/07/21/DL%E7%BC%96%E7%A8%8B/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/21/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%A0%91%E7%8A%B6DP%E6%95%B4%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -931,84 +1014,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/09/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E5%BF%AB%E9%80%9F%E5%B9%82%E6%95%B4%E7%90%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/09/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E5%BF%AB%E9%80%9F%E5%B9%82%E6%95%B4%E7%90%86/" class="post-title-link" itemprop="url">快速幂整理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-07-09 15:24:50 / 修改时间：16:27:43" itemprop="dateCreated datePublished" datetime="2021-07-09T15:24:50+08:00">2021-07-09</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">算法整理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="1-什么是快速幂"><a href="#1-什么是快速幂" class="headerlink" title="1 什么是快速幂"></a>1 什么是快速幂</h3><p>在求幂次操作时，一般采用逐个相乘的方式，求多少阶幂次，就需要进行多少次乘法，乘法的时间复杂度为<strong>O(N)</strong>，通过引入”备忘录“和二分思想，将乘法次数从 <script type="math/tex">N</script> 降低到 <script type="math/tex">log_2N</script></p>
-<h4 id="主要思想："><a href="#主要思想：" class="headerlink" title="主要思想："></a>主要思想：</h4><ol>
-<li>求 N幂次问题 转化为 求两个 N/2幂次的乘积</li>
-<li>两个相同的 N/2幂次子问题，只需要求解一次
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/09/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E5%BF%AB%E9%80%9F%E5%B9%82%E6%95%B4%E7%90%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1080,7 +1085,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-count">53</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1093,7 +1098,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-count">27</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
