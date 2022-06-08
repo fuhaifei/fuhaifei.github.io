@@ -195,6 +195,273 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/08/11/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-1.%E5%A6%82%E4%BD%95%E5%9C%A8%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%AF%8D%E8%AF%AD/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/08/11/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-1.%E5%A6%82%E4%BD%95%E5%9C%A8%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%AF%8D%E8%AF%AD/" class="post-title-link" itemprop="url">cs224n-1.如何在计算机中表示词语</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-08-11 11:12:51" itemprop="dateCreated datePublished" datetime="2021-08-11T11:12:51+08:00">2021-08-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-09-15 21:31:50" itemprop="dateModified" datetime="2021-09-15T21:31:50+08:00">2021-09-15</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <img src="/2021/08/11/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-1.%E5%A6%82%E4%BD%95%E5%9C%A8%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%AF%8D%E8%AF%AD/image-20210809091658017.png" class="" title="image-20210809091658017">
+<p>想要通过计算机解决NLP问题，首先要解决的就是词语表示问题，由于一个词语在不同语境以及不同文化背景下含义的多样性，如何在计算机中有效的存储，表示不同词语的不同含义，是需要解决的重要问题。</p>
+<h3 id="传统表示方式"><a href="#传统表示方式" class="headerlink" title="传统表示方式"></a>传统表示方式</h3><h4 id="WordNet-（discrete-representation）"><a href="#WordNet-（discrete-representation）" class="headerlink" title="WordNet （discrete representation）"></a>WordNet （discrete representation）</h4><blockquote>
+<p>上义词是对事物的概括性、抽象性说明；下义词是事物的具体表现形式或更为具体的说明</p>
+</blockquote>
+<p>采用同义词（synonym）和上义词（hypernym）两个相关词语集合来描述当前词语的含义，当前方法一定程度上能够正确表示词语含义，但是存在一定问题</p>
+<ol>
+<li>忽略了词语在不同语境中的细微语义差异（比如 “中” 只有在河南话中和 “好” 是同义词）</li>
+<li>词语的新的词义的添加较为困难</li>
+<li>同义词和上义词定义较为主观，需要人工来整理两个词语集合</li>
+</ol>
+<img src="/2021/08/11/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-1.%E5%A6%82%E4%BD%95%E5%9C%A8%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%AF%8D%E8%AF%AD/image-20210809091554618.png" class="" title="image-20210809091554618">
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/08/11/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-1.%E5%A6%82%E4%BD%95%E5%9C%A8%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%B8%AD%E8%A1%A8%E7%A4%BA%E8%AF%8D%E8%AF%AD/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/27/%E6%9D%82%E9%A1%B9%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/07/27/%E6%9D%82%E9%A1%B9%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/" class="post-title-link" itemprop="url">Docker基础概念</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-07-27 16:26:46 / 修改时间：16:37:17" itemprop="dateCreated datePublished" datetime="2021-07-27T16:26:46+08:00">2021-07-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A1%86%E6%9E%B6-%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">框架/技术学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>主要包括三个基本核心概念：</p>
+<ul>
+<li><strong>镜像（image)</strong>：相当于一个静态的文件系统，类似于未安装的windows ios文件，相当于是一个未挂载的root文件系统</li>
+<li><strong>容器（container)</strong>：容器是镜像运行时的实体，可以启动、创建、停止以及删除。容器的实质是进程，但与直接在宿主执行的进程不同，容器进程运行于属于自己的独立的命名空间</li>
+<li><strong>仓库（Repository）</strong>：镜像中心，类似于maven的依赖包中心，用来保存镜像，最常使用的公共仓库是官方的Docker Hub</li>
+</ul>
+<p>基本架构（cs架构）:</p>
+<blockquote>
+<p>守护进程（daemon）是生存期长的一种进程，没有控制终端。它们常常在系统引导装入时启动，仅在系统关闭时才终止</p>
+</blockquote>
+<ul>
+<li><strong>Docker 客户端(Client)</strong>:与docker host中的守护进程进行通信，通过命令执行实际的操作（cs架构中的c）</li>
+<li><strong>Docker 主机(Host)</strong>:运行容器，存储镜像的机器</li>
+<li><strong>Docker Registry</strong>：一个 Docker Registry 中可以包含多个仓库（Repository）；每个仓库可以包含多个标签（Tag）；每个标签对应一个镜像。</li>
+</ul>
+<img src="/2021/07/27/%E6%9D%82%E9%A1%B9%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20210727162745322.png" class="" title="image-20210727162745322">
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/07/27/%E6%9D%82%E9%A1%B9%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/Docker%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/27/%E6%9D%82%E9%A1%B9%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/07/27/%E6%9D%82%E9%A1%B9%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/" class="post-title-link" itemprop="url">Dockerfile理解使用</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-07-27 16:22:28 / 修改时间：16:35:31" itemprop="dateCreated datePublished" datetime="2021-07-27T16:22:28+08:00">2021-07-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%A1%86%E6%9E%B6-%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">框架/技术学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>docker file 包含一系列命令行，docker通过该文件组织生成镜像，一个docker file文件主要包括四部分：</p>
+<ol>
+<li>基础镜像信息</li>
+<li>维护者信息</li>
+<li>镜像操作指令</li>
+<li>容器启动时执行指令</li>
+</ol>
+<p>以一个dockerfile为例：<br><img src="/2021/07/27/%E6%9D%82%E9%A1%B9%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/image-20210618162710697.png" class="" title="image-20210618162710697.png"></p>
+<blockquote>
+<p>Dockerfile 的指令每执行一次都会在 docker 上新建一层。所以过多无意义的层，会造成镜像膨胀过大</p>
+</blockquote>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/07/27/%E6%9D%82%E9%A1%B9%E6%8A%80%E6%9C%AF%E5%AD%A6%E4%B9%A0/Dockerfile%E7%90%86%E8%A7%A3%E4%BD%BF%E7%94%A8/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/21/DL%E7%BC%96%E7%A8%8B/%E4%BC%98%E5%8C%96%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -770,250 +1037,6 @@ v_t = (1-\beta)\theta_t + (1-\beta)\beta\theta_{t-1} + (1-\beta)\beta^2\theta_{t
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/09/DL%E7%BC%96%E7%A8%8B/pytorch%E5%A6%82%E4%BD%95%E5%AF%B9%E6%A2%AF%E5%BA%A6%E8%BF%BD%E8%B8%AA%E5%BC%A0%E9%87%8F%E8%BF%9B%E8%A1%8Cinplace%E6%93%8D%E4%BD%9C/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/09/DL%E7%BC%96%E7%A8%8B/pytorch%E5%A6%82%E4%BD%95%E5%AF%B9%E6%A2%AF%E5%BA%A6%E8%BF%BD%E8%B8%AA%E5%BC%A0%E9%87%8F%E8%BF%9B%E8%A1%8Cinplace%E6%93%8D%E4%BD%9C/" class="post-title-link" itemprop="url">pytroch如何对梯度追踪张量进行inplace操作</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2021-07-09 16:42:26" itemprop="dateCreated datePublished" datetime="2021-07-09T16:42:26+08:00">2021-07-09</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-07-21 14:55:44" itemprop="dateModified" datetime="2021-07-21T14:55:44+08:00">2021-07-21</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/" itemprop="url" rel="index"><span itemprop="name">ML/DL编程总结</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="如何对梯度追踪张量进行inplace操作"><a href="#如何对梯度追踪张量进行inplace操作" class="headerlink" title="如何对梯度追踪张量进行inplace操作"></a>如何对梯度追踪张量进行inplace操作</h3><blockquote>
-<p>别忘了梯度追踪张量必须为float</p>
-<p>Only Tensors of floating point and complex dtype can require gradients</p>
-</blockquote>
-<h4 id="问题来源"><a href="#问题来源" class="headerlink" title="问题来源"></a>问题来源</h4><p>当对设置了requires_grad=True的张量进行原地操作时，pytorch会抛出运行错误：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt; X = torch.rand((3,4),requires_grad = True)</span><br><span class="line">&gt;&gt; X.fill_(0)</span><br><span class="line">RuntimeError: a leaf Variable that requires grad is being used in an in-place operation.</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/09/DL%E7%BC%96%E7%A8%8B/pytorch%E5%A6%82%E4%BD%95%E5%AF%B9%E6%A2%AF%E5%BA%A6%E8%BF%BD%E8%B8%AA%E5%BC%A0%E9%87%8F%E8%BF%9B%E8%A1%8Cinplace%E6%93%8D%E4%BD%9C/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/09/DL%E7%BC%96%E7%A8%8B/DataLoaders%E5%92%8CDataSets%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/09/DL%E7%BC%96%E7%A8%8B/DataLoaders%E5%92%8CDataSets%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">DataLoaders和DataSets使用总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-07-09 16:40:50 / 修改时间：16:41:42" itemprop="dateCreated datePublished" datetime="2021-07-09T16:40:50+08:00">2021-07-09</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/" itemprop="url" rel="index"><span itemprop="name">ML/DL编程总结</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="DataLoaders和DataSets使用总结"><a href="#DataLoaders和DataSets使用总结" class="headerlink" title="DataLoaders和DataSets使用总结"></a>DataLoaders和DataSets使用总结</h1><p>通过 <code>torch.utils.data.Dataset</code>类定义数据集，通过<code>torch.utils.data.DataLoader</code>与<code>Dataset</code>配合定义数据加载方式</p>
-<p><code>torch.utils.data.Dataset</code>主要参数:</p>
-<ol>
-<li>dataset 指定构造的数据集，一般是数据+label的元组</li>
-<li>shuffle 指定是否打乱</li>
-<li>sampler 指定采样器，采取某种方式遍历数据（顺序，随机等）</li>
-<li>collate_fn (callable, optional):将数据形成一个batch的tensor（在某些时候需要自定义）
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/09/DL%E7%BC%96%E7%A8%8B/DataLoaders%E5%92%8CDataSets%E4%BD%BF%E7%94%A8%E6%80%BB%E7%BB%93/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/07/09/DL%E7%BC%96%E7%A8%8B/pytorch%E6%A8%A1%E5%9E%8B%E5%AE%9A%E4%B9%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/07/09/DL%E7%BC%96%E7%A8%8B/pytorch%E6%A8%A1%E5%9E%8B%E5%AE%9A%E4%B9%89/" class="post-title-link" itemprop="url">pytorch模型定义</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-07-09 16:36:55 / 修改时间：16:40:13" itemprop="dateCreated datePublished" datetime="2021-07-09T16:36:55+08:00">2021-07-09</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/" itemprop="url" rel="index"><span itemprop="name">ML/DL编程总结</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="pytorch模型定义的几种方式"><a href="#pytorch模型定义的几种方式" class="headerlink" title="pytorch模型定义的几种方式"></a>pytorch模型定义的几种方式</h2><p>主要包括 标准继承模式 和 使用常用容器 两种方式</p>
-<h3 id="1-继承nn-Module实现模型"><a href="#1-继承nn-Module实现模型" class="headerlink" title="1. 继承nn.Module实现模型"></a>1. 继承nn.Module实现模型</h3><p>通过继承nn模块的Module基类，并实现初始化<strong>init</strong>()以及forward()方法，实现模型定义</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Model</span>(<span class="params">nn.Module</span>):</span></span><br><span class="line">    <span class="comment"># 模型的初始化方法</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="comment"># 首先调用父类构造方法</span></span><br><span class="line">        <span class="built_in">super</span>(Model, self).__init__()</span><br><span class="line">        <span class="comment"># 定义各层模型，层与层之间的权重</span></span><br><span class="line">        self.hidden = nn.Linear(<span class="number">128</span>, <span class="number">16</span>) <span class="comment"># 隐藏层</span></span><br><span class="line">        self.activate = nn.ReLU()</span><br><span class="line">        self.output = nn.Linear(<span class="number">16</span>, <span class="number">10</span>)  <span class="comment"># 输出层</span></span><br><span class="line">    <span class="comment"># 模型的计算方法  </span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">forward</span>(<span class="params">self, x</span>):</span></span><br><span class="line">        x = self.activate(self.hidden(x))</span><br><span class="line">        <span class="keyword">return</span> self.output(x)</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/07/09/DL%E7%BC%96%E7%A8%8B/pytorch%E6%A8%A1%E5%9E%8B%E5%AE%9A%E4%B9%89/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1085,20 +1108,20 @@ v_t = (1-\beta)\theta_t + (1-\beta)\beta\theta_{t-1} + (1-\beta)\beta^2\theta_{t
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">53</span>
+          <span class="site-state-item-count">56</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">27</span>
+        <span class="site-state-item-count">31</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="搜索相关算法开头废话：最近这几周搞辣鸡项目花了太长时间，好久没写博客了，整理一下这几周写的搜索算法 通过枚举遍历问题的解空间，实现问题的求解，搜索作为比较基础的算法问题之一，题目数量众多，问题难度可难可易，希望通过这篇博客的整理能够加深我对目前学习到的相关搜索算法的理解。 主要的算法 DFS 深度优先搜索 BFS 广度优先搜索 双向搜索 Best First Search 最佳优先搜索 迭代加深搜">
+<meta property="og:type" content="article">
+<meta property="og:title" content="搜索算法整理">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="搜索相关算法开头废话：最近这几周搞辣鸡项目花了太长时间，好久没写博客了，整理一下这几周写的搜索算法 通过枚举遍历问题的解空间，实现问题的求解，搜索作为比较基础的算法问题之一，题目数量众多，问题难度可难可易，希望通过这篇博客的整理能够加深我对目前学习到的相关搜索算法的理解。 主要的算法 DFS 深度优先搜索 BFS 广度优先搜索 双向搜索 Best First Search 最佳优先搜索 迭代加深搜">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220530202815963.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220606101813112.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220607170129957.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220608094659278.png">
+<meta property="article:published_time" content="2022-06-08T08:23:51.000Z">
+<meta property="article:modified_time" content="2022-06-08T08:34:57.464Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="搜索">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220530202815963.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>搜索算法整理 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          搜索算法整理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-06-08 16:23:51 / 修改时间：16:34:57" itemprop="dateCreated datePublished" datetime="2022-06-08T16:23:51+08:00">2022-06-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">算法整理</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="搜索相关算法"><a href="#搜索相关算法" class="headerlink" title="搜索相关算法"></a>搜索相关算法</h2><p><em>开头废话：最近这几周搞辣鸡项目花了太长时间，好久没写博客了，整理一下这几周写的搜索算法</em></p>
+<p>通过枚举遍历问题的解空间，实现问题的求解，搜索作为比较基础的算法问题之一，题目数量众多，问题难度可难可易，希望通过这篇博客的整理能够加深我对目前学习到的相关搜索算法的理解。</p>
+<h4 id="主要的算法"><a href="#主要的算法" class="headerlink" title="主要的算法"></a>主要的算法</h4><ol>
+<li>DFS 深度优先搜索</li>
+<li>BFS 广度优先搜索</li>
+<li>双向搜索</li>
+<li>Best First Search 最佳优先搜索</li>
+<li>迭代加深搜索</li>
+<li>其他</li>
+</ol>
+<h4 id="基础搜索算法"><a href="#基础搜索算法" class="headerlink" title="基础搜索算法"></a>基础搜索算法</h4><p>最简单也是最常用的两个搜索算法（简单总结）</p>
+<ol>
+<li>深度优先搜索<ul>
+<li>每次递归首先尝试向更深的结点走</li>
+</ul>
+</li>
+<li>广度优先搜索<ul>
+<li>每次枚举穷尽同一层的所有结点</li>
+</ul>
+</li>
+</ol>
+<p>其中深度优先搜索更适合搜索解空间深度与目标解<strong>深度相近</strong>类型问题，广度优先遍历更适合搜索目标解深度<strong>一定程度小于</strong>目标解深度类型问题</p>
+<span id="more"></span>
+<h3 id="双向搜索"><a href="#双向搜索" class="headerlink" title="双向搜索"></a>双向搜索</h3><p>与普通DFS和BFS不同的点在于，双向搜索同时从两个”方向“开始搜索，这里的方向包括两种形式</p>
+<ol>
+<li>从初始状态正向搜索+目标状态逆向搜索</li>
+<li>将问题划分为两个规模为一半的子问题，分别进行搜索（meet in middle）</li>
+</ol>
+<p>双向搜索能够使得遍历解空间数量<strong>在幂级上缩小一半</strong></p>
+<h4 id="正-逆双向搜索（BFS）"><a href="#正-逆双向搜索（BFS）" class="headerlink" title="正/逆双向搜索（BFS）"></a>正/逆双向搜索（BFS）</h4><p>基于BFS正/逆双向搜索，问题需要满足<strong>目标解已知</strong>，否则无法进行双向搜索，以深度为N的二叉问题为例</p>
+<ul>
+<li><p>若使用普通的BFS，找到解的BFS深度为N，时间复杂度为O(2^N)</p>
+</li>
+<li><p>双向bfs每次从初始状态和目标状态遍历深度加一，相当于两个深度为N/2的BFS，时间复杂度为0(2^(N/2))</p>
+</li>
+</ul>
+<p>伪代码模板（自己写的）如下：</p>
+<ul>
+<li><p>两个访问标记，两个队列</p>
+</li>
+<li><p>每次训练，正向bfs一层，逆向bfs一层</p>
+</li>
+<li><p>终止条件：正/逆向bfs过程中，新状态存在于另一个方向的访问标记中；或队列为空</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//主函数每次循环，正向和逆均搜索一层</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; !forwardQue.isEmpty() || !backwardQue.isEmpty(); i++) &#123;</span><br><span class="line">            <span class="comment">//正向搜索一层</span></span><br><span class="line">            <span class="keyword">if</span> (!forwardQue.isEmpty() &amp;&amp; bfs(forwardVisitedMap, backwardVisitedMap, forwardQue, i)) <span class="keyword">return</span>;</span><br><span class="line">            <span class="comment">//逆向搜索一层</span></span><br><span class="line">            <span class="keyword">if</span> (!backwardQue.isEmpty() &amp;&amp; bfs(backwardVisitedMap, forwardVisitedMap, backwardQue, i)) <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//修改终止条件的bfs</span></span><br><span class="line">bfs(forwardVisitedMap, backwardVisitedMap, forwardQue, <span class="keyword">int</span> curDepth) &#123;</span><br><span class="line">        <span class="keyword">int</span> tempSize = forwardQue.size();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; tempSize; j++) &#123;</span><br><span class="line">            curState = forwardQue.poll();</span><br><span class="line">            <span class="comment">//遍历所有子状态</span></span><br><span class="line">            <span class="keyword">for</span>(childState of curState)&#123;</span><br><span class="line">                <span class="comment">//若逆向的map中包含当前状态，说明双向搜索相交，找到最优解</span></span><br><span class="line">                <span class="keyword">if</span>(backwardVisitedMap.contains(childState))&#123;</span><br><span class="line">                    <span class="comment">//记录或者输出解空间</span></span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">//否则按照普通的bfs继续执行</span></span><br><span class="line">                <span class="keyword">if</span>(!forwardVisitedMap.contains(childState))&#123;</span><br><span class="line">                    forwardVisitedMap.put(childState， curDepth);</span><br><span class="line">                    forwardQue.offer(childState)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>例题：</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://www.luogu.com.cn/problem/P1032">P1032 [NOIP2002 提高组] 字串变换</a> BFS VS 双向BFS </p>
+<ul>
+<li>时间空间复杂度均降低</li>
+</ul>
+<img src="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220530202815963.png" class="" title="image-20220530202815963">
+</li>
+</ul>
+<h4 id="Meet-in-middle"><a href="#Meet-in-middle" class="headerlink" title="Meet in middle"></a>Meet in middle</h4><p>将规模为N问题，从中间拆分为两个N/2子问题，两个子问题分别进行dfs+状态存储，最后两个状态组合求解，已N个物品的背包问题为例</p>
+<ul>
+<li>与双向dfs相同，时间复杂度从 O(2^N)降低到0(2^(N/2))</li>
+<li>空间复杂度由于要存储中间状态，最坏情况下为0(2^(N/2))</li>
+</ul>
+<p>这类问题的难点其实在判断直接暴力是否超时</p>
+<ul>
+<li>一般刷题平台的时间限制是1秒或2秒，<strong>操作次数应该控制在 $10^{7-9} \approx 2^{23-25}$ 左右（按照这个标准进行判断）</strong></li>
+</ul>
+<p>伪代码模板：</p>
+<ul>
+<li>另一种解法时前后dfs获得的状态均存下来，最后一块求解（我觉得空间复杂度太大，没用过）</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">dfs1</span><span class="params">(depth, status)</span></span>&#123;</span><br><span class="line">     <span class="comment">//到中间停止dfs</span></span><br><span class="line">     <span class="keyword">if</span>(depth == N / <span class="number">2</span>)&#123;</span><br><span class="line">         <span class="comment">//不需要state，只需要value 直接存储在列表</span></span><br><span class="line">         states.add(value)</span><br><span class="line">         <span class="comment">//需要记录状态的数组或者Map中</span></span><br><span class="line">         states[status] = value</span><br><span class="line">         <span class="keyword">return</span>;</span><br><span class="line">     &#125;</span><br><span class="line">new_status = <span class="comment">//根据规则+status确定新的status</span></span><br><span class="line">     dfs1(depth + <span class="number">1</span>, new_status);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">dfs2</span><span class="params">(depth, status)</span></span>&#123;</span><br><span class="line">     <span class="comment">//到N国模</span></span><br><span class="line">     <span class="keyword">if</span>(depth == N)&#123;</span><br><span class="line">         <span class="comment">//找到states数组中需要的value+当前dfs结果组成目标解</span></span><br><span class="line">        	<span class="comment">//可能会用到：二分查找</span></span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span>  dfs1(depth + <span class="number">1</span>, new_status);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">     <span class="comment">//首先第一个dfs，求前半部分状态</span></span><br><span class="line">     dfs1(<span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">     <span class="comment">//第二个dfs求第二部分状态，同时与第一个部分状态组合形成解</span></span><br><span class="line">     dfs2(N/<span class="number">2</span>);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>例题：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.acwing.com/problem/content/description/173/">AcWing171. 送礼物</a> <ul>
+<li>暴力：$O(2^{46})$  动态规划：$O(46*2^{31}) $  明显超时</li>
+<li>双向DFS：$O(2^{23})$</li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://www.luogu.com.cn/problem/P3067">P3067 [USACO12OPEN]Balanced Cow Subsets G</a><ul>
+<li>暴力：$O(2^{40})$  动态规划：$O(40*2^{18}) $  明显超时，且动态规划方法会超内存</li>
+<li>双向DFS：$O(2^{20})$</li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://www.luogu.com.cn/problem/P3067">P3067 [USACO12OPEN]Balanced Cow Subsets G</a>（知识点比较全的一道题 <strong>重点！！！</strong>）<ul>
+<li>这道题双向DFS：$O(3^{20}) \approx O(10^{9})$</li>
+<li>使用二分查找搜索状态会导致时间复杂度增加一个数量级超时，<strong>map存储状态</strong></li>
+</ul>
+</li>
+</ul>
+<h3 id="Best-First-Search-最佳优先搜索"><a href="#Best-First-Search-最佳优先搜索" class="headerlink" title="Best First Search 最佳优先搜索"></a>Best First Search 最佳优先搜索</h3><p>最佳优先搜索是一种结合了贪心的搜索思想：如果任意时刻能够近似估计到达目标点的成本，每次选取最底层进行扩展搜索，以降低搜索空间。主要的搜索算法有</p>
+<ol>
+<li>Greedy/Beam Search<ul>
+<li>最简单应用贪心思路到搜索上的算法，每次扩展选择估计成本最低的结点加入到路径中（多个就是beam search）</li>
+<li>这种方法简单且暴力，但是存在贪心算法的普遍问题，即可能<strong>无法找到最优解</strong></li>
+</ul>
+</li>
+<li>Dijkstra’s algorithm<ul>
+<li>每次选择距离出发点成本最低的点进行扩展</li>
+<li>能够保证找到最优解，但是搜索复杂度还是较高（剪枝效率不高）</li>
+<li>采用了堆优化的算法<strong>时间复杂度</strong>为 $O(E + V logV)$，空间复杂度为  $O(logV)$（其中 $E$ 为边数，$V$为结点数量）</li>
+</ul>
+</li>
+<li>A* algorithm<ul>
+<li>A<em> 算法类似于Dijkstra，只是Dijkstra会获得从出发点到所有目的地的最短路径生成树，A</em>只会找到出发点到目标点的最短路径</li>
+</ul>
+</li>
+</ol>
+<h4 id="A-算法"><a href="#A-算法" class="headerlink" title="A*算法"></a>A*算法</h4><blockquote>
+<p><a target="_blank" rel="noopener" href="https://wikimili.com/en/Peter_E._Hart">Peter Hart</a>, Nils Nilsson and <a target="_blank" rel="noopener" href="https://wikimili.com/en/Bertram_Raphael">Bertram Raphael</a> of Stanford Research Institute (now <a target="_blank" rel="noopener" href="https://wikimili.com/en/SRI_International">SRI International</a>) first published the algorithm in 1968. <a target="_blank" rel="noopener" href="https://wikimili.com/en/A*_search_algorithm#cite_note-nilsson-4">[4]</a> It can be seen as an extension of <a target="_blank" rel="noopener" href="https://wikimili.com/en/Dijkstra&#39;s_algorithm">Dijkstra’s algorithm</a>. A* achieves better performance by using <a target="_blank" rel="noopener" href="https://wikimili.com/en/Heuristic_(computer_science">heuristics</a>) to guide its search.</p>
+</blockquote>
+<p>A*算法是对Dijkstra’s algorithm的扩展，A* 定义了特殊形式的函数$f(n)$作为结点优先级的衡量标准</p>
+<script type="math/tex; mode=display">
+f(n) = g(n) + h(n)</script><p>其中$g(n)$ 为起点到结点n的成本（已知），$h(n)$为结点n到终点成本的估计函数（对未知的估计）-<strong>启发函数</strong></p>
+<p><strong>启发函数（<a target="_blank" rel="noopener" href="https://wikimili.com/en/Heuristic">heuristic</a> function）</strong></p>
+<p>其实仔细看看我们会发现，其实A*算法相较于Dijkstra只是增加了一个启发函数$h(n)$，为什么要添加启发函数？</p>
+<ol>
+<li>“以史为鉴” $g(n)$ ：从结点到当前节点的成本我是已知的，所以每次选成本最低的可能能找到最优解（Dijkstra）</li>
+<li>“最速梯度下降” $h(n)$：如果我能够近似估计从当前结点到目标结点的距离，我肯定要选择估计上更近的点，更可能找到最优解（Greedy Search）</li>
+</ol>
+<p>所以启发函数的选取对于A*算法极为重要</p>
+<ol>
+<li>一方面决定剪枝效率</li>
+<li>一方面决定能够A*能否找到最优解</li>
+</ol>
+<p>论文中证明了只要启发函数满足以下两个性质即能满足我们的要求</p>
+<ol>
+<li><strong>admissible</strong>：$h(x) \leq h^<em>(x)$ 其中 $h^</em>(x)$ 为到目标结点的真实距离，即<strong>到目标结点的估计距离非严格小于实际距离</strong></li>
+<li><strong>consistent/monotone</strong>：若存在边$(x, y)$，则 $h(x) ≤ d(x, y) + h(y)$，即当前节点到目标结点的估计距离，小于当前结点到临接结点的距离+临接结点到目标结点的估计距离（可以理解成 <strong>两边之和大于第三边</strong>）</li>
+<li>若启发函数满足admissible，则A<em>算法一定能够找到<strong>最优解</strong>；若启发函数满足consistent，则A\</em>算法不会向优先队列中重复添加点（即<strong>单调递增</strong>，后找到点的f(n) 一定小于前找到点），其中consistent性质蕴含admissible，若启发函数具有consistent，其一定满足admissible性质</li>
+</ol>
+<p>根据wiki百科中的解释简单理解一下两个性质为什么导致结果成立</p>
+<ol>
+<li>admissible $\rightarrow$ 能够找到最优解：反证法，由于最后一次目标结点进入队列时其 $f(n_{目标}) = g(n_{目标}) + (h(n_{目标}) = 0)$, 其函数值已不包括估计值，假设我们找到非最优解，则存在一条到目标点的路径长度小于A<em>迭代退出时选择的路径，取该路径上的任意一点 $n_{rand}$ ，其启发函数一定满足$f(n_{rand}) = g(n_{rand}) + (h(n_{rand}) &lt; 经过n_{rand}实际路径长 &lt; f(n_{目标}))$，所以优先队列不可能弹出目标结点，A\</em>此次迭代优先队列不可能弹出目标节点。</li>
+<li>consistent $\rightarrow$ admissible：随便选一条从出发点到目标点的路径，根据 $h(x) ≤ d(x, y) + h(y)$ 不断的转换不等式: $h(x) ≤ d(x, y) + h(y) \leq d(x, y) + d(y, z) + h(z)…$ 直到不等式转换为$h(x) ≤ d(x, n_{目标})$，推导出admissible</li>
+</ol>
+<p>常用的启发函数有（别人的博客）</p>
+<img src="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220606101813112.png" class="" title="image-20220606101813112">
+<p>所以<strong>如何选择启发函数</strong>？</p>
+<ol>
+<li>首先要满足admissible的性质，保证算法能够找到最优解</li>
+<li>其次<strong>启发函数的估计值尽量大</strong>，</li>
+<li>极端情况（即$h(x) = h^<em>(x)$）下，A</em>算法转化为 <strong>保证能够找到解的贪心搜索</strong>；若 $h(x) = 0$，A<em>算法转化为 <em>*Dijkstra</em></em>算法</li>
+</ol>
+<p><strong>复杂度</strong></p>
+<ol>
+<li>时间复杂度：看不明白证明</li>
+<li>空间复杂度：看不明白证明</li>
+</ol>
+<p><strong>伪代码模板</strong></p>
+<p>在Dijkstra改改就是A*（<del>不会写伪代码，网上抄一个</del>）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">* 初始化open_set和close_set；</span><br><span class="line">* 将起点加入open_set中，并设置优先级为<span class="number">0</span>（优先级最高）；</span><br><span class="line">* 如果open_set不为空，则从open_set中选取优先级最高的节点n：</span><br><span class="line">    * 如果节点n为终点，则：</span><br><span class="line">        * 从终点开始逐步追踪parent节点，一直达到起点；</span><br><span class="line">        * 返回找到的结果路径，算法结束；</span><br><span class="line">    * 如果节点n不是终点，则：</span><br><span class="line">        * 将节点n从open_set中删除，并加入close_set中；</span><br><span class="line">        * 遍历节点n所有的邻近节点：</span><br><span class="line">            * 如果邻近节点m在close_set中，则：</span><br><span class="line">                * 跳过，选取下一个邻近节点</span><br><span class="line">            * 如果邻近节点m也不在open_set中，则：</span><br><span class="line">                * 设置节点m的parent为节点n</span><br><span class="line">                * 计算节点m的优先级</span><br><span class="line">                * 将节点m加入open_set中</span><br></pre></td></tr></table></figure>
+<h4 id="典型例题"><a href="#典型例题" class="headerlink" title="典型例题"></a>典型例题</h4><ol>
+<li><a target="_blank" rel="noopener" href="https://www.luogu.com.cn/problem/P1379">P1379 八数码难题</a><ul>
+<li>比较了几个不同的启发函数计算方式，确实是启发函数越大，剪枝效果越好</li>
+</ul>
+</li>
+</ol>
+<h3 id="迭代加深"><a href="#迭代加深" class="headerlink" title="迭代加深"></a>迭代加深</h3><p>通过限制DFS搜索的深度实现BFS效果，本质上还是DFS搜索，只是每次DFS增加了最大递归深度。</p>
+<ul>
+<li>当DFS达到最大深度时，即使未找到目标解，也要返回。</li>
+<li>若某次深度d的DFS没有找到解，则将迭代深度+1，重新进行DFS搜索。</li>
+</ul>
+<p>伪代码如下:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">int</span> maxDepth = <span class="number">1</span>;maxDepth &lt;= 最大迭代深度；maxDepth++)&#123;</span><br><span class="line">	dfs(<span class="number">0</span>, maxDepth)</span><br><span class="line">&#125;</span><br><span class="line">dfs(depth, maxDepth)&#123;</span><br><span class="line">	<span class="keyword">if</span>(depth == maxDepth)&#123;</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	dfs(depth + <span class="number">1</span>, maxDepth)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>迭代加深与BFS的区别在于</p>
+<ol>
+<li>迭代加深方法通过DFS实现BFS效果，避免了BFS队列对于状态的存储，降低了空间占用</li>
+<li>每次增加迭代深度，会导致DFS重复遍历</li>
+</ol>
+<p>什么时机使用迭代加深？（玄学）</p>
+<ul>
+<li>当搜索树的分支比较多时，每增加一层的搜索复杂度会出现指数级爆炸式增长，这时前面重复进行的部分所带来的复杂度几乎可以忽略</li>
+<li><p>为了避免过量的空间占用，采用迭代加深</p>
+</li>
+<li><p>题目特征：<strong>限定了搜索深度</strong>，要求找到解没有限定解的类型（<del>遇到这样的题，就嫁了吧</del>）</p>
+</li>
+</ul>
+<h4 id="典型例题-1"><a href="#典型例题-1" class="headerlink" title="典型例题"></a>典型例题</h4><p>单纯的迭代加深方法应用的不多，与A<em>算法结合使用IDA\</em>的比较多</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://www.acwing.com/problem/content/172/">170. 加成序列</a><ul>
+<li>BFS的<strong>最坏空间复杂度为O(N!)</strong>,当N=100时，对应复杂度能达到 $10^{158}$</li>
+<li>迭代加深重复遍历相较于状态个数已经可以忽略不计</li>
+</ul>
+</li>
+</ol>
+<h3 id="IDA"><a href="#IDA" class="headerlink" title="IDA*"></a>IDA*</h3><p>迭代加深和A*结合，使用启发函数在dfs过程中减枝，从而实现算法时间复杂度的降低，伪代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">int</span> maxDepth = <span class="number">1</span>;maxDepth &lt;= 最大迭代深度；maxDepth++)&#123;</span><br><span class="line">	dfs(<span class="number">0</span>, maxDepth)</span><br><span class="line">&#125;</span><br><span class="line">dfs(depth, maxDepth)&#123;</span><br><span class="line">	<span class="keyword">if</span>(depth == maxDepth)&#123;</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//只有在启发函数+当前代价小于最大代价时才继续进行迭代</span></span><br><span class="line">	<span class="keyword">if</span>(depth + h(curStatus) &lt;= maxDepth)</span><br><span class="line">		dfs(depth + <span class="number">1</span>, maxDepth)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>观察代码其实和迭代加深算法区别不大，只是增加了减枝函数，最难的点也就在如何决定这个剪枝函数-<strong>启发函数的选取</strong>，</p>
+<h4 id="典型例题-2"><a href="#典型例题-2" class="headerlink" title="典型例题"></a>典型例题</h4><ol>
+<li><p><a href="P2324 [SCOI2005]骑士精神">P2324 [SCOI2005]骑士精神</a>， 简单分析一下为什么要用IDA*</p>
+<ul>
+<li><p>类似于八数码难题，从空位置出发，每次寻找能够移动到</p>
+</li>
+<li><p>空位置的棋子，该问题每次最多可能有8个位置能够移动到空位置</p>
+</li>
+<li><p>bfs和迭代加深算法的最坏复杂度为<strong>O(8^15)</strong>（限制了递归深度最大为15），显然超时，且BFS还会出现MLE问题，所以只能尝试IDA*</p>
+<img src="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220607170129957.png" class="" title="image-20220607170129957">
+</li>
+</ul>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.luogu.com.cn/problem/P2534">P2534 [AHOI2012]铁盘整理</a></p>
+<ul>
+<li>IDA*的模板题目，难点是想出来启发函数，其他倒不难</li>
+</ul>
+</li>
+</ol>
+<h3 id="Dancing-Links"><a href="#Dancing-Links" class="headerlink" title="Dancing Links"></a>Dancing Links</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://oi-wiki.org/search/dlx/">OIWIKI:Dancing Links</a></p>
+</blockquote>
+<p>舞蹈链是为了解决精确覆盖的一种特殊数据结构，精确覆盖问题目前只能通过暴力回溯法的方式实现求解，Dancing links通过链表存储的方式实现了时间和空间复杂度一定程度的降低（难度太大找工作用不到，了解一下，不深入学习，<del>贴张别人的图表示字自己学习过了</del>）</p>
+<img src="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220608094659278.png" class="" title="image-20220608094659278">
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>算是把搜索问题的主要解题思路整理学习完毕，搜索问题的难点可以总结为：</p>
+<ol>
+<li>剪枝：无论是普通的DFS还是A<em>，IDA\</em>算法，实现难度其实都不是很大，最难的点还是在于<strong>找到合适的剪枝函数</strong></li>
+<li>时间空间复杂度分析：很多时候问题的方法显而易见，难点反而在选用什么搜索方法才能适应题目的时间空间复杂度要求</li>
+<li>问题抽象：如何讲问题转化为搜索问题是比较难的点，很多问题往往即使告诉你要用搜索（比如铁盘整理和骑士精神），我也会想不明白</li>
+</ol>
+<p>其他没什么可总结的了，其实目前很多算法只能说懂了怎么写，真正的解决相关搜索问题的能力还欠缺，继续努力！！！</p>
+<h3 id="相关参考"><a href="#相关参考" class="headerlink" title="相关参考"></a>相关参考</h3><ol>
+<li><a target="_blank" rel="noopener" href="https://oi-wiki.org/search/">OI WiKi的搜索专题</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.luogu.com.cn/training/9376">luogu官方搜索题单</a></li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/A*_search_algorithm">wikipeida A*_search_algorithm</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/grenet/p/3145800.html">博客：跳跃的舞者，舞蹈链（Dancing Links）算法——求解精确覆盖问题</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.acwing.com/problem/">部分题目：acWing</a></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E6%90%9C%E7%B4%A2/" rel="tag"><i class="fa fa-tag"></i> 搜索</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/04/24/Mapreduce%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/" rel="prev" title="Mapreduce论文总结">
+      <i class="fa fa-chevron-left"></i> Mapreduce论文总结
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Paxos/" rel="next" title="共识算法-Paxos">
+      共识算法-Paxos <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%90%9C%E7%B4%A2%E7%9B%B8%E5%85%B3%E7%AE%97%E6%B3%95"><span class="nav-number">1.</span> <span class="nav-text">搜索相关算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E7%9A%84%E7%AE%97%E6%B3%95"><span class="nav-number">1.0.1.</span> <span class="nav-text">主要的算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95"><span class="nav-number">1.0.2.</span> <span class="nav-text">基础搜索算法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8C%E5%90%91%E6%90%9C%E7%B4%A2"><span class="nav-number">1.1.</span> <span class="nav-text">双向搜索</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%AD%A3-%E9%80%86%E5%8F%8C%E5%90%91%E6%90%9C%E7%B4%A2%EF%BC%88BFS%EF%BC%89"><span class="nav-number">1.1.1.</span> <span class="nav-text">正&#x2F;逆双向搜索（BFS）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Meet-in-middle"><span class="nav-number">1.1.2.</span> <span class="nav-text">Meet in middle</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Best-First-Search-%E6%9C%80%E4%BD%B3%E4%BC%98%E5%85%88%E6%90%9C%E7%B4%A2"><span class="nav-number">1.2.</span> <span class="nav-text">Best First Search 最佳优先搜索</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#A-%E7%AE%97%E6%B3%95"><span class="nav-number">1.2.1.</span> <span class="nav-text">A*算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B8%E5%9E%8B%E4%BE%8B%E9%A2%98"><span class="nav-number">1.2.2.</span> <span class="nav-text">典型例题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%AD%E4%BB%A3%E5%8A%A0%E6%B7%B1"><span class="nav-number">1.3.</span> <span class="nav-text">迭代加深</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B8%E5%9E%8B%E4%BE%8B%E9%A2%98-1"><span class="nav-number">1.3.1.</span> <span class="nav-text">典型例题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IDA"><span class="nav-number">1.4.</span> <span class="nav-text">IDA*</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B8%E5%9E%8B%E4%BE%8B%E9%A2%98-2"><span class="nav-number">1.4.1.</span> <span class="nav-text">典型例题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dancing-Links"><span class="nav-number">1.5.</span> <span class="nav-text">Dancing Links</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">2.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E5%8F%82%E8%80%83"><span class="nav-number">2.1.</span> <span class="nav-text">相关参考</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">56</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yourname" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/zhihu.com/people/fu-hai-fei" title="zhihu → zhihu.com&#x2F;people&#x2F;fu-hai-fei"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : '6915d609b38465e8b558d33296020ded',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

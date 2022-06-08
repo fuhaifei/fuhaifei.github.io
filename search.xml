@@ -3698,4 +3698,522 @@ h(y|x_1,...,x_n) = \frac{\pi(y)f(x_1,...,x_n|y)}{g(x1,...,x_n)}\propto\pi(y)f(x_
         <tag>分布式</tag>
       </tags>
   </entry>
+  <entry>
+    <title>搜索算法整理</title>
+    <url>/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/</url>
+    <content><![CDATA[<h2 id="搜索相关算法"><a href="#搜索相关算法" class="headerlink" title="搜索相关算法"></a>搜索相关算法</h2><p><em>开头废话：最近这几周搞辣鸡项目花了太长时间，好久没写博客了，整理一下这几周写的搜索算法</em></p>
+<p>通过枚举遍历问题的解空间，实现问题的求解，搜索作为比较基础的算法问题之一，题目数量众多，问题难度可难可易，希望通过这篇博客的整理能够加深我对目前学习到的相关搜索算法的理解。</p>
+<h4 id="主要的算法"><a href="#主要的算法" class="headerlink" title="主要的算法"></a>主要的算法</h4><ol>
+<li>DFS 深度优先搜索</li>
+<li>BFS 广度优先搜索</li>
+<li>双向搜索</li>
+<li>Best First Search 最佳优先搜索</li>
+<li>迭代加深搜索</li>
+<li>其他</li>
+</ol>
+<h4 id="基础搜索算法"><a href="#基础搜索算法" class="headerlink" title="基础搜索算法"></a>基础搜索算法</h4><p>最简单也是最常用的两个搜索算法（简单总结）</p>
+<ol>
+<li>深度优先搜索<ul>
+<li>每次递归首先尝试向更深的结点走</li>
+</ul>
+</li>
+<li>广度优先搜索<ul>
+<li>每次枚举穷尽同一层的所有结点</li>
+</ul>
+</li>
+</ol>
+<p>其中深度优先搜索更适合搜索解空间深度与目标解<strong>深度相近</strong>类型问题，广度优先遍历更适合搜索目标解深度<strong>一定程度小于</strong>目标解深度类型问题</p>
+<span id="more"></span>
+<h3 id="双向搜索"><a href="#双向搜索" class="headerlink" title="双向搜索"></a>双向搜索</h3><p>与普通DFS和BFS不同的点在于，双向搜索同时从两个”方向“开始搜索，这里的方向包括两种形式</p>
+<ol>
+<li>从初始状态正向搜索+目标状态逆向搜索</li>
+<li>将问题划分为两个规模为一半的子问题，分别进行搜索（meet in middle）</li>
+</ol>
+<p>双向搜索能够使得遍历解空间数量<strong>在幂级上缩小一半</strong></p>
+<h4 id="正-逆双向搜索（BFS）"><a href="#正-逆双向搜索（BFS）" class="headerlink" title="正/逆双向搜索（BFS）"></a>正/逆双向搜索（BFS）</h4><p>基于BFS正/逆双向搜索，问题需要满足<strong>目标解已知</strong>，否则无法进行双向搜索，以深度为N的二叉问题为例</p>
+<ul>
+<li><p>若使用普通的BFS，找到解的BFS深度为N，时间复杂度为O(2^N)</p>
+</li>
+<li><p>双向bfs每次从初始状态和目标状态遍历深度加一，相当于两个深度为N/2的BFS，时间复杂度为0(2^(N/2))</p>
+</li>
+</ul>
+<p>伪代码模板（自己写的）如下：</p>
+<ul>
+<li><p>两个访问标记，两个队列</p>
+</li>
+<li><p>每次训练，正向bfs一层，逆向bfs一层</p>
+</li>
+<li><p>终止条件：正/逆向bfs过程中，新状态存在于另一个方向的访问标记中；或队列为空</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">//主函数每次循环，正向和逆均搜索一层</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; !forwardQue.isEmpty() || !backwardQue.isEmpty(); i++) &#123;</span><br><span class="line">            <span class="comment">//正向搜索一层</span></span><br><span class="line">            <span class="keyword">if</span> (!forwardQue.isEmpty() &amp;&amp; bfs(forwardVisitedMap, backwardVisitedMap, forwardQue, i)) <span class="keyword">return</span>;</span><br><span class="line">            <span class="comment">//逆向搜索一层</span></span><br><span class="line">            <span class="keyword">if</span> (!backwardQue.isEmpty() &amp;&amp; bfs(backwardVisitedMap, forwardVisitedMap, backwardQue, i)) <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//修改终止条件的bfs</span></span><br><span class="line">bfs(forwardVisitedMap, backwardVisitedMap, forwardQue, <span class="keyword">int</span> curDepth) &#123;</span><br><span class="line">        <span class="keyword">int</span> tempSize = forwardQue.size();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; tempSize; j++) &#123;</span><br><span class="line">            curState = forwardQue.poll();</span><br><span class="line">            <span class="comment">//遍历所有子状态</span></span><br><span class="line">            <span class="keyword">for</span>(childState of curState)&#123;</span><br><span class="line">                <span class="comment">//若逆向的map中包含当前状态，说明双向搜索相交，找到最优解</span></span><br><span class="line">                <span class="keyword">if</span>(backwardVisitedMap.contains(childState))&#123;</span><br><span class="line">                    <span class="comment">//记录或者输出解空间</span></span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">//否则按照普通的bfs继续执行</span></span><br><span class="line">                <span class="keyword">if</span>(!forwardVisitedMap.contains(childState))&#123;</span><br><span class="line">                    forwardVisitedMap.put(childState， curDepth);</span><br><span class="line">                    forwardQue.offer(childState)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>例题：</p>
+<ul>
+<li><p><a href="https://www.luogu.com.cn/problem/P1032">P1032 [NOIP2002 提高组] 字串变换</a> BFS VS 双向BFS </p>
+<ul>
+<li>时间空间复杂度均降低</li>
+</ul>
+<img src="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220530202815963.png" class="" title="image-20220530202815963">
+</li>
+</ul>
+<h4 id="Meet-in-middle"><a href="#Meet-in-middle" class="headerlink" title="Meet in middle"></a>Meet in middle</h4><p>将规模为N问题，从中间拆分为两个N/2子问题，两个子问题分别进行dfs+状态存储，最后两个状态组合求解，已N个物品的背包问题为例</p>
+<ul>
+<li>与双向dfs相同，时间复杂度从 O(2^N)降低到0(2^(N/2))</li>
+<li>空间复杂度由于要存储中间状态，最坏情况下为0(2^(N/2))</li>
+</ul>
+<p>这类问题的难点其实在判断直接暴力是否超时</p>
+<ul>
+<li>一般刷题平台的时间限制是1秒或2秒，<strong>操作次数应该控制在 $10^{7-9} \approx 2^{23-25}$ 左右（按照这个标准进行判断）</strong></li>
+</ul>
+<p>伪代码模板：</p>
+<ul>
+<li>另一种解法时前后dfs获得的状态均存下来，最后一块求解（我觉得空间复杂度太大，没用过）</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">dfs1</span><span class="params">(depth, status)</span></span>&#123;</span><br><span class="line">     <span class="comment">//到中间停止dfs</span></span><br><span class="line">     <span class="keyword">if</span>(depth == N / <span class="number">2</span>)&#123;</span><br><span class="line">         <span class="comment">//不需要state，只需要value 直接存储在列表</span></span><br><span class="line">         states.add(value)</span><br><span class="line">         <span class="comment">//需要记录状态的数组或者Map中</span></span><br><span class="line">         states[status] = value</span><br><span class="line">         <span class="keyword">return</span>;</span><br><span class="line">     &#125;</span><br><span class="line">new_status = <span class="comment">//根据规则+status确定新的status</span></span><br><span class="line">     dfs1(depth + <span class="number">1</span>, new_status);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">dfs2</span><span class="params">(depth, status)</span></span>&#123;</span><br><span class="line">     <span class="comment">//到N国模</span></span><br><span class="line">     <span class="keyword">if</span>(depth == N)&#123;</span><br><span class="line">         <span class="comment">//找到states数组中需要的value+当前dfs结果组成目标解</span></span><br><span class="line">        	<span class="comment">//可能会用到：二分查找</span></span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span>  dfs1(depth + <span class="number">1</span>, new_status);</span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">     <span class="comment">//首先第一个dfs，求前半部分状态</span></span><br><span class="line">     dfs1(<span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">     <span class="comment">//第二个dfs求第二部分状态，同时与第一个部分状态组合形成解</span></span><br><span class="line">     dfs2(N/<span class="number">2</span>);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>例题：</p>
+<ul>
+<li><a href="https://www.acwing.com/problem/content/description/173/">AcWing171. 送礼物</a> <ul>
+<li>暴力：$O(2^{46})$  动态规划：$O(46*2^{31}) $  明显超时</li>
+<li>双向DFS：$O(2^{23})$</li>
+</ul>
+</li>
+<li><a href="https://www.luogu.com.cn/problem/P3067">P3067 [USACO12OPEN]Balanced Cow Subsets G</a><ul>
+<li>暴力：$O(2^{40})$  动态规划：$O(40*2^{18}) $  明显超时，且动态规划方法会超内存</li>
+<li>双向DFS：$O(2^{20})$</li>
+</ul>
+</li>
+<li><a href="https://www.luogu.com.cn/problem/P3067">P3067 [USACO12OPEN]Balanced Cow Subsets G</a>（知识点比较全的一道题 <strong>重点！！！</strong>）<ul>
+<li>这道题双向DFS：$O(3^{20}) \approx O(10^{9})$</li>
+<li>使用二分查找搜索状态会导致时间复杂度增加一个数量级超时，<strong>map存储状态</strong></li>
+</ul>
+</li>
+</ul>
+<h3 id="Best-First-Search-最佳优先搜索"><a href="#Best-First-Search-最佳优先搜索" class="headerlink" title="Best First Search 最佳优先搜索"></a>Best First Search 最佳优先搜索</h3><p>最佳优先搜索是一种结合了贪心的搜索思想：如果任意时刻能够近似估计到达目标点的成本，每次选取最底层进行扩展搜索，以降低搜索空间。主要的搜索算法有</p>
+<ol>
+<li>Greedy/Beam Search<ul>
+<li>最简单应用贪心思路到搜索上的算法，每次扩展选择估计成本最低的结点加入到路径中（多个就是beam search）</li>
+<li>这种方法简单且暴力，但是存在贪心算法的普遍问题，即可能<strong>无法找到最优解</strong></li>
+</ul>
+</li>
+<li>Dijkstra’s algorithm<ul>
+<li>每次选择距离出发点成本最低的点进行扩展</li>
+<li>能够保证找到最优解，但是搜索复杂度还是较高（剪枝效率不高）</li>
+<li>采用了堆优化的算法<strong>时间复杂度</strong>为 $O(E + V logV)$，空间复杂度为  $O(logV)$（其中 $E$ 为边数，$V$为结点数量）</li>
+</ul>
+</li>
+<li>A* algorithm<ul>
+<li>A<em> 算法类似于Dijkstra，只是Dijkstra会获得从出发点到所有目的地的最短路径生成树，A</em>只会找到出发点到目标点的最短路径</li>
+</ul>
+</li>
+</ol>
+<h4 id="A-算法"><a href="#A-算法" class="headerlink" title="A*算法"></a>A*算法</h4><blockquote>
+<p><a href="https://wikimili.com/en/Peter_E._Hart">Peter Hart</a>, Nils Nilsson and <a href="https://wikimili.com/en/Bertram_Raphael">Bertram Raphael</a> of Stanford Research Institute (now <a href="https://wikimili.com/en/SRI_International">SRI International</a>) first published the algorithm in 1968. <a href="https://wikimili.com/en/A*_search_algorithm#cite_note-nilsson-4">[4]</a> It can be seen as an extension of <a href="https://wikimili.com/en/Dijkstra&#39;s_algorithm">Dijkstra’s algorithm</a>. A* achieves better performance by using <a href="https://wikimili.com/en/Heuristic_(computer_science">heuristics</a>) to guide its search.</p>
+</blockquote>
+<p>A*算法是对Dijkstra’s algorithm的扩展，A* 定义了特殊形式的函数$f(n)$作为结点优先级的衡量标准</p>
+<script type="math/tex; mode=display">
+f(n) = g(n) + h(n)</script><p>其中$g(n)$ 为起点到结点n的成本（已知），$h(n)$为结点n到终点成本的估计函数（对未知的估计）-<strong>启发函数</strong></p>
+<p><strong>启发函数（<a href="https://wikimili.com/en/Heuristic">heuristic</a> function）</strong></p>
+<p>其实仔细看看我们会发现，其实A*算法相较于Dijkstra只是增加了一个启发函数$h(n)$，为什么要添加启发函数？</p>
+<ol>
+<li>“以史为鉴” $g(n)$ ：从结点到当前节点的成本我是已知的，所以每次选成本最低的可能能找到最优解（Dijkstra）</li>
+<li>“最速梯度下降” $h(n)$：如果我能够近似估计从当前结点到目标结点的距离，我肯定要选择估计上更近的点，更可能找到最优解（Greedy Search）</li>
+</ol>
+<p>所以启发函数的选取对于A*算法极为重要</p>
+<ol>
+<li>一方面决定剪枝效率</li>
+<li>一方面决定能够A*能否找到最优解</li>
+</ol>
+<p>论文中证明了只要启发函数满足以下两个性质即能满足我们的要求</p>
+<ol>
+<li><strong>admissible</strong>：$h(x) \leq h^<em>(x)$ 其中 $h^</em>(x)$ 为到目标结点的真实距离，即<strong>到目标结点的估计距离非严格小于实际距离</strong></li>
+<li><strong>consistent/monotone</strong>：若存在边$(x, y)$，则 $h(x) ≤ d(x, y) + h(y)$，即当前节点到目标结点的估计距离，小于当前结点到临接结点的距离+临接结点到目标结点的估计距离（可以理解成 <strong>两边之和大于第三边</strong>）</li>
+<li>若启发函数满足admissible，则A<em>算法一定能够找到<strong>最优解</strong>；若启发函数满足consistent，则A\</em>算法不会向优先队列中重复添加点（即<strong>单调递增</strong>，后找到点的f(n) 一定小于前找到点），其中consistent性质蕴含admissible，若启发函数具有consistent，其一定满足admissible性质</li>
+</ol>
+<p>根据wiki百科中的解释简单理解一下两个性质为什么导致结果成立</p>
+<ol>
+<li>admissible $\rightarrow$ 能够找到最优解：反证法，由于最后一次目标结点进入队列时其 $f(n_{目标}) = g(n_{目标}) + (h(n_{目标}) = 0)$, 其函数值已不包括估计值，假设我们找到非最优解，则存在一条到目标点的路径长度小于A<em>迭代退出时选择的路径，取该路径上的任意一点 $n_{rand}$ ，其启发函数一定满足$f(n_{rand}) = g(n_{rand}) + (h(n_{rand}) &lt; 经过n_{rand}实际路径长 &lt; f(n_{目标}))$，所以优先队列不可能弹出目标结点，A\</em>此次迭代优先队列不可能弹出目标节点。</li>
+<li>consistent $\rightarrow$ admissible：随便选一条从出发点到目标点的路径，根据 $h(x) ≤ d(x, y) + h(y)$ 不断的转换不等式: $h(x) ≤ d(x, y) + h(y) \leq d(x, y) + d(y, z) + h(z)…$ 直到不等式转换为$h(x) ≤ d(x, n_{目标})$，推导出admissible</li>
+</ol>
+<p>常用的启发函数有（别人的博客）</p>
+<img src="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220606101813112.png" class="" title="image-20220606101813112">
+<p>所以<strong>如何选择启发函数</strong>？</p>
+<ol>
+<li>首先要满足admissible的性质，保证算法能够找到最优解</li>
+<li>其次<strong>启发函数的估计值尽量大</strong>，</li>
+<li>极端情况（即$h(x) = h^<em>(x)$）下，A</em>算法转化为 <strong>保证能够找到解的贪心搜索</strong>；若 $h(x) = 0$，A<em>算法转化为 <em>*Dijkstra</em></em>算法</li>
+</ol>
+<p><strong>复杂度</strong></p>
+<ol>
+<li>时间复杂度：看不明白证明</li>
+<li>空间复杂度：看不明白证明</li>
+</ol>
+<p><strong>伪代码模板</strong></p>
+<p>在Dijkstra改改就是A*（<del>不会写伪代码，网上抄一个</del>）</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">* 初始化open_set和close_set；</span><br><span class="line">* 将起点加入open_set中，并设置优先级为<span class="number">0</span>（优先级最高）；</span><br><span class="line">* 如果open_set不为空，则从open_set中选取优先级最高的节点n：</span><br><span class="line">    * 如果节点n为终点，则：</span><br><span class="line">        * 从终点开始逐步追踪parent节点，一直达到起点；</span><br><span class="line">        * 返回找到的结果路径，算法结束；</span><br><span class="line">    * 如果节点n不是终点，则：</span><br><span class="line">        * 将节点n从open_set中删除，并加入close_set中；</span><br><span class="line">        * 遍历节点n所有的邻近节点：</span><br><span class="line">            * 如果邻近节点m在close_set中，则：</span><br><span class="line">                * 跳过，选取下一个邻近节点</span><br><span class="line">            * 如果邻近节点m也不在open_set中，则：</span><br><span class="line">                * 设置节点m的parent为节点n</span><br><span class="line">                * 计算节点m的优先级</span><br><span class="line">                * 将节点m加入open_set中</span><br></pre></td></tr></table></figure>
+<h4 id="典型例题"><a href="#典型例题" class="headerlink" title="典型例题"></a>典型例题</h4><ol>
+<li><a href="https://www.luogu.com.cn/problem/P1379">P1379 八数码难题</a><ul>
+<li>比较了几个不同的启发函数计算方式，确实是启发函数越大，剪枝效果越好</li>
+</ul>
+</li>
+</ol>
+<h3 id="迭代加深"><a href="#迭代加深" class="headerlink" title="迭代加深"></a>迭代加深</h3><p>通过限制DFS搜索的深度实现BFS效果，本质上还是DFS搜索，只是每次DFS增加了最大递归深度。</p>
+<ul>
+<li>当DFS达到最大深度时，即使未找到目标解，也要返回。</li>
+<li>若某次深度d的DFS没有找到解，则将迭代深度+1，重新进行DFS搜索。</li>
+</ul>
+<p>伪代码如下:</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">int</span> maxDepth = <span class="number">1</span>;maxDepth &lt;= 最大迭代深度；maxDepth++)&#123;</span><br><span class="line">	dfs(<span class="number">0</span>, maxDepth)</span><br><span class="line">&#125;</span><br><span class="line">dfs(depth, maxDepth)&#123;</span><br><span class="line">	<span class="keyword">if</span>(depth == maxDepth)&#123;</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	dfs(depth + <span class="number">1</span>, maxDepth)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>迭代加深与BFS的区别在于</p>
+<ol>
+<li>迭代加深方法通过DFS实现BFS效果，避免了BFS队列对于状态的存储，降低了空间占用</li>
+<li>每次增加迭代深度，会导致DFS重复遍历</li>
+</ol>
+<p>什么时机使用迭代加深？（玄学）</p>
+<ul>
+<li>当搜索树的分支比较多时，每增加一层的搜索复杂度会出现指数级爆炸式增长，这时前面重复进行的部分所带来的复杂度几乎可以忽略</li>
+<li><p>为了避免过量的空间占用，采用迭代加深</p>
+</li>
+<li><p>题目特征：<strong>限定了搜索深度</strong>，要求找到解没有限定解的类型（<del>遇到这样的题，就嫁了吧</del>）</p>
+</li>
+</ul>
+<h4 id="典型例题-1"><a href="#典型例题-1" class="headerlink" title="典型例题"></a>典型例题</h4><p>单纯的迭代加深方法应用的不多，与A<em>算法结合使用IDA\</em>的比较多</p>
+<ol>
+<li><a href="https://www.acwing.com/problem/content/172/">170. 加成序列</a><ul>
+<li>BFS的<strong>最坏空间复杂度为O(N!)</strong>,当N=100时，对应复杂度能达到 $10^{158}$</li>
+<li>迭代加深重复遍历相较于状态个数已经可以忽略不计</li>
+</ul>
+</li>
+</ol>
+<h3 id="IDA"><a href="#IDA" class="headerlink" title="IDA*"></a>IDA*</h3><p>迭代加深和A*结合，使用启发函数在dfs过程中减枝，从而实现算法时间复杂度的降低，伪代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="keyword">int</span> maxDepth = <span class="number">1</span>;maxDepth &lt;= 最大迭代深度；maxDepth++)&#123;</span><br><span class="line">	dfs(<span class="number">0</span>, maxDepth)</span><br><span class="line">&#125;</span><br><span class="line">dfs(depth, maxDepth)&#123;</span><br><span class="line">	<span class="keyword">if</span>(depth == maxDepth)&#123;</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//只有在启发函数+当前代价小于最大代价时才继续进行迭代</span></span><br><span class="line">	<span class="keyword">if</span>(depth + h(curStatus) &lt;= maxDepth)</span><br><span class="line">		dfs(depth + <span class="number">1</span>, maxDepth)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>观察代码其实和迭代加深算法区别不大，只是增加了减枝函数，最难的点也就在如何决定这个剪枝函数-<strong>启发函数的选取</strong>，</p>
+<h4 id="典型例题-2"><a href="#典型例题-2" class="headerlink" title="典型例题"></a>典型例题</h4><ol>
+<li><p><a href="P2324 [SCOI2005]骑士精神">P2324 [SCOI2005]骑士精神</a>， 简单分析一下为什么要用IDA*</p>
+<ul>
+<li><p>类似于八数码难题，从空位置出发，每次寻找能够移动到</p>
+</li>
+<li><p>空位置的棋子，该问题每次最多可能有8个位置能够移动到空位置</p>
+</li>
+<li><p>bfs和迭代加深算法的最坏复杂度为<strong>O(8^15)</strong>（限制了递归深度最大为15），显然超时，且BFS还会出现MLE问题，所以只能尝试IDA*</p>
+<img src="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220607170129957.png" class="" title="image-20220607170129957">
+</li>
+</ul>
+</li>
+<li><p><a href="https://www.luogu.com.cn/problem/P2534">P2534 [AHOI2012]铁盘整理</a></p>
+<ul>
+<li>IDA*的模板题目，难点是想出来启发函数，其他倒不难</li>
+</ul>
+</li>
+</ol>
+<h3 id="Dancing-Links"><a href="#Dancing-Links" class="headerlink" title="Dancing Links"></a>Dancing Links</h3><blockquote>
+<p><a href="https://oi-wiki.org/search/dlx/">OIWIKI:Dancing Links</a></p>
+</blockquote>
+<p>舞蹈链是为了解决精确覆盖的一种特殊数据结构，精确覆盖问题目前只能通过暴力回溯法的方式实现求解，Dancing links通过链表存储的方式实现了时间和空间复杂度一定程度的降低（难度太大找工作用不到，了解一下，不深入学习，<del>贴张别人的图表示字自己学习过了</del>）</p>
+<img src="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/image-20220608094659278.png" class="" title="image-20220608094659278">
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>算是把搜索问题的主要解题思路整理学习完毕，搜索问题的难点可以总结为：</p>
+<ol>
+<li>剪枝：无论是普通的DFS还是A<em>，IDA\</em>算法，实现难度其实都不是很大，最难的点还是在于<strong>找到合适的剪枝函数</strong></li>
+<li>时间空间复杂度分析：很多时候问题的方法显而易见，难点反而在选用什么搜索方法才能适应题目的时间空间复杂度要求</li>
+<li>问题抽象：如何讲问题转化为搜索问题是比较难的点，很多问题往往即使告诉你要用搜索（比如铁盘整理和骑士精神），我也会想不明白</li>
+</ol>
+<p>其他没什么可总结的了，其实目前很多算法只能说懂了怎么写，真正的解决相关搜索问题的能力还欠缺，继续努力！！！</p>
+<h3 id="相关参考"><a href="#相关参考" class="headerlink" title="相关参考"></a>相关参考</h3><ol>
+<li><a href="https://oi-wiki.org/search/">OI WiKi的搜索专题</a></li>
+<li><a href="https://www.luogu.com.cn/training/9376">luogu官方搜索题单</a></li>
+<li><a href="https://en.wikipedia.org/wiki/A*_search_algorithm">wikipeida A*_search_algorithm</a></li>
+<li><a href="https://www.cnblogs.com/grenet/p/3145800.html">博客：跳跃的舞者，舞蹈链（Dancing Links）算法——求解精确覆盖问题</a></li>
+<li><a href="https://www.acwing.com/problem/">部分题目：acWing</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>算法整理</category>
+      </categories>
+      <tags>
+        <tag>搜索</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>共识算法-Paxos</title>
+    <url>/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Paxos/</url>
+    <content><![CDATA[<h2 id="分布式共识算法-Paxos"><a href="#分布式共识算法-Paxos" class="headerlink" title="分布式共识算法-Paxos"></a>分布式共识算法-Paxos</h2><p>共识算法目的是通过一系列通信约束，使得依靠不可靠通信网络上的不同结点之间能够通过算法得到一致的结论（区别于分布式一致性这一概念）,共识算法是实现<a href="https://en.wikipedia.org/wiki/State_machine_replication">state machine replication</a> 的基础，后者是分布式系统中较为重要的备份容错算法策略</p>
+<h3 id="分布式CAP"><a href="#分布式CAP" class="headerlink" title="分布式CAP"></a>分布式CAP</h3><p>一个分布式系统只能满足一下三条性质中的两条</p>
+<ol>
+<li>Consistency(一致性)：每个客户端的读操作均能读取到最近的写入内容或者返回错误</li>
+<li>Availability(可用性): 客户端的每个请求均能收到非报错响应（回复不一定正确即不一定保证C）</li>
+<li>Partition Tolerance(分区容错性)：不同结点或分区之间的网络故障不会影响系统的正常运行</li>
+</ol>
+<p>为什么说分布式系统只能保证其中两条？</p>
+<ol>
+<li>分布式系统由于系统结点/分区分布于不同的网络环境，通过网络进行通信，不可避免地会出现结点由于网络故障下线问题，为了系统的可用性，必须保证Partition Tolerance</li>
+<li>当部分结点出现网络故障时，面对客户端请求，系统有两种处理方式<ul>
+<li>回退操作，相当于保证了C但舍弃了A</li>
+<li>继续执行操作，由于部分结点下线，此时执行操作无法保证C，但是保证了A</li>
+</ul>
+</li>
+</ol>
+<p>单机系统由于不会出现分布网络失效，所以也就不需要P，可以同时保证CA</p>
+<span id="more"></span>
+<h3 id="Paxos"><a href="#Paxos" class="headerlink" title="Paxos"></a>Paxos</h3><blockquote>
+<p>The Paxos protocol was first submitted in 1989 and named after a fictional legislative consensus system used on the <a href="https://en.wikipedia.org/wiki/Paxi">Paxos</a> island in Greece</p>
+</blockquote>
+<p>Paxos是经典的基于消息传递共识算法，然而理解难度过高，简单整理以加深印象，算法中定义了四种不同的角色（一个结点可以有多个不同的角色）</p>
+<ol>
+<li>Client: 客户端向系统发送请求（例如：向分布式文件系统写入）</li>
+<li>Proposer: 提出提案</li>
+<li>Acceptor:  判断是否接受提案</li>
+<li>Learner: 当提案被接受时，执行具体操作（例如：执行写入操作）</li>
+<li>Leader: 唯一的Proposer</li>
+</ol>
+<p>其他概念</p>
+<ol>
+<li>Proposal: 提案，每个提案由提案号n和提案值组成v:<n, v></li>
+<li>Quorums: 由大多数Accepter组成的集合，用来投票确定是否接受提案</li>
+<li>safety/liveness/fault tolerance: 共识算法的三个形式，类似于CAP三者只能满足其二<ul>
+<li>safety: “坏事”永远不会发生</li>
+<li>liveness: “好事”终将发生</li>
+<li>没太理解和fault tolerance之间的关系和区别</li>
+</ul>
+</li>
+</ol>
+<p>Paxos保证safety+fault tolerance，不保证liveness</p>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Paxos/image-20220531103804034.png" class="" title="image-20220531103804034">
+<h4 id="算法流程（Basic-Paxos）"><a href="#算法流程（Basic-Paxos）" class="headerlink" title="算法流程（Basic Paxos）"></a>算法流程（Basic Paxos）</h4><p>分为确定提案值+接受提案两个阶段</p>
+<ol>
+<li>阶段1（prepare+promise）<ul>
+<li>由Proposer创建Prepare message，其中包括此次提案号n（n保证大于之前任何Prepare中的n），发送给至少一个Quorums（确定谁来投票）</li>
+<li>接收到Prepare message的Acceptor，根据提案号n确定返回消息类型<ul>
+<li>若Acceptor已通过提案，返回通过提案号m+提案value</li>
+<li>若Prepare message中的提案号大于之前任何接收到的提案号，返回Promise message</li>
+<li>若存在大于Prepare message中的提案号的历史提案号，忽略Prepare Message</li>
+</ul>
+</li>
+<li>若Proposer未收到大多数Acceptor的响应信息,终止此次提案过程</li>
+</ul>
+</li>
+<li>阶段2（accept+accepted）<ul>
+<li>Proposer根据接收到的响应类型确定提案value，之后发送Accept message (n,v)到Acceptor<ul>
+<li>若响应中包含提案号m+提案value，将当前提案value设置为最大m对应的value</li>
+<li>若只有Promise响应，将提案value设置为 originally wanted value</li>
+</ul>
+</li>
+<li>Acceptor只有在未通过过提案且当前Accept message (n,v)中的提案号最大时，通过该提案，并向Proposer和所有的Learners发送接受信息</li>
+</ul>
+</li>
+</ol>
+<p>理解的还是比较浅薄，但是基本理解算法流程了,形式上理解为什么Paxos能够实现共识（safety）</p>
+<ol>
+<li>同一个Acceptor不会出现同一个提案多个值的情况。一旦Acceptor接受一个提案，其不会再接受其他提案</li>
+<li>不同Acceptor不会出现同一个提案多个值的情况。提案号递增，且Acceptor不会响应提案号小于已经接受过的提案</li>
+</ol>
+<p>每个通过的提案不保证所有Acceptor均收到通过信息，但保证收到通过信息的Acceptor通过的为同一value</p>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Paxos/image-20220531112542422.png" class="" title="image-20220531112542422">
+<p>Basic Paxos无法保证livness，即无法保证算法能够终止找到共识</p>
+<ul>
+<li>两个Proposer在Accept阶段争抢,如下<ul>
+<li>Proposer1此时提出提案1，即将走到Accept阶段时，Proposer2提出提案2，导致提案1的编号因为小于最新提案2，无法通过，Proposer1重新提交提案3，导致提案2小于提案3，无法通过</li>
+<li>最终导致无限的抢占，无法达共识</li>
+</ul>
+</li>
+<li>通过Proposer的随机休眠避免抢占冲突发生</li>
+</ul>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Paxos/image-20220531112719316.png" class="" title="image-20220531112719316">
+<h4 id="Multi-Paxos"><a href="#Multi-Paxos" class="headerlink" title="Multi Paxos"></a>Multi Paxos</h4><p>为了解决Paxos算法存在的争抢以及两段式RPC的通信成本问题，改进得到Multi Paxos算法</p>
+<ol>
+<li>选举一个固定的Proposer,提案编号中变为 Proposer编号+提案编号<ul>
+<li>通过一个和basic Paxos相同两阶段选举主Proposer</li>
+</ul>
+</li>
+<li>每次提出提案，直接进行第二阶段</li>
+</ol>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Paxos/image-20220531143508710.png" class="" title="image-20220531143508710">
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><ol>
+<li><a href="https://en.wikipedia.org/wiki/Paxos_(computer_science">Paxos (computer science) From Wikipedia</a>)</li>
+<li><a href="https://zhuanlan.zhihu.com/p/31780743">知乎：Paxos算法详解</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>分布式理论</category>
+      </categories>
+      <tags>
+        <tag>共识算法</tag>
+        <tag>CAP</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>共识算法-Raft</title>
+    <url>/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/</url>
+    <content><![CDATA[<h2 id="分布式共识算法-Raft"><a href="#分布式共识算法-Raft" class="headerlink" title="分布式共识算法-Raft"></a>分布式共识算法-Raft</h2><p>Raft是基于Paxos改进的共识算法，其最开始的设计目标即为容易理解且容易实行，所以相较于Paxos学起来更容易（<del>确实比Paxos容易，但我还是看不懂啊</del>）。</p>
+<p>Raft中定义了三种角色：</p>
+<ol>
+<li>Leader：唯一的leader，负责与Client交互，在其他follower上备份log日志。</li>
+<li>Follower: 多个Follower，接收Leader的日志备份请求，当Leader出现问题时，选举成为新的leader。</li>
+<li>Candidate: 当Follower认为Leader失效时，Follower状态转换为Candidate，进行Leader的竞选。</li>
+</ol>
+<p>Raft中只包括两种类型的RPC消息</p>
+<ol>
+<li>RequestVote RPC：参与选举的Candidate发送的选举消息</li>
+<li>AppendEntries RPC:  Leader向Follower发送的添加日志信息</li>
+</ol>
+<span id="more"></span>
+<h3 id="Raft的一般流程"><a href="#Raft的一般流程" class="headerlink" title="Raft的一般流程"></a>Raft的一般流程</h3><p>算法主要包括两个步骤（均基于Majority Vote思想）</p>
+<ol>
+<li>Leader election: 选举出全局的Leader</li>
+<li>Log replication: 日志备份，每当Leader接收到Client的一个请求，Leader将日志成功的备份到多数Follower后，提交操作，向Client返回操作信息</li>
+</ol>
+<p>基本流程</p>
+<ol>
+<li>Server集群启动，开始选举，部分Follower Server转化为Candidate状态向其他的Server发送RequestVote RPC</li>
+<li>每个收到RequestVote RPC的Server按照”first come first serve”的原则，给对应的Candidate投票，获得过半投票的Candidate成为Leader</li>
+<li>Leader接受Client请求，写入log，并向其他Follower发送AppendEntries RPC备份log，保证所有server的state machine状态一致</li>
+</ol>
+<p>Raft将时间划分为了固定的 “term”，不同服务器通过term作为逻辑时钟实现同步和一致性的保持</p>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602150043559.png" class="" title="image-20220602150043559">
+<h3 id="Leader-election"><a href="#Leader-election" class="headerlink" title="Leader election"></a>Leader election</h3><p>要了解选举，首先要了解<strong>触发选举的条件</strong>，为了避免Leader崩溃导致的系统单点失效，Raft通过“heart beat”机制实现Leader状态的监控</p>
+<ol>
+<li>Leader周期性所有的Follower的发送heartbeart消息（不包含log的(AppendEntriesRPC）</li>
+<li>每个Follower设定了一个 “election timeout” 超时时间，当Follower超过该时间为收到来自Leader的heartbeart消息时，该Follower认为Leader失效，发起选举。</li>
+<li>服务器启动时初始化所有服务为Follower状态，并启动”election timeout”计时器</li>
+</ol>
+<p>所以Leader election的<strong>触发时机为某个Follower超时，转化为Candiate状态</strong></p>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602153212870.png" class="" title="image-20220602153212870">
+<h4 id="选举过程"><a href="#选举过程" class="headerlink" title="选举过程"></a>选举过程</h4><img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602153043100.png" class="" title="image-20220602153043100">
+<p>Follower转化为Candidate后，开启新一轮选举，执行一下几个操作后，等待选举结果</p>
+<ol>
+<li>term增加1，代表进入下一个逻辑时间段</li>
+<li>为自己投票</li>
+<li>重置election timer</li>
+<li>向其他Server发送RequestVote RPC，请求成为Leader</li>
+</ol>
+<p>其他Server收到请求后，按照”first come first serve”原则向Candidate投票</p>
+<ol>
+<li><p>若RequestVote RPC的term值小于当前term值，说明当前投票信息已过期，拒接投票</p>
+</li>
+<li><p>若未投过票，则未接收到的第一个 RV RPC投票，否则拒绝投票（”first come first serve”）</p>
+</li>
+<li><p><strong>election restriction</strong>：RequestVote RPC中的 more up-to-date，投票，否则拒绝</p>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602201511973.png" class="" title="image-20220602201511973">
+</li>
+</ol>
+<p>等待成为Leader的Candidate可能等到三种情况</p>
+<ol>
+<li>收到了过半的投票（包括自己）<strong>-&gt;</strong> 竞选成功，转换状态为Leader</li>
+<li>收到了来自其他Server的term大小相同的AppendEntries RPC  <strong>-&gt;</strong> 其他Server竞选成功，转换状态为Follower</li>
+<li>直到election timer超时也未收到上述两个情况响应 <strong>-&gt;</strong> 进入下一轮选举</li>
+</ol>
+<p>如果不断的重复出现3，也就是<strong>split votes</strong>问题</p>
+<ul>
+<li>多个candidate争抢，导致每个candidate均无法达到过半的票数</li>
+<li>解决方法：Raft使用随机选举超时机制（<strong>randomized election timeouts</strong>），错开不同的Follower成为Candidate的时机</li>
+</ul>
+<p>一系列操作最终保证 <strong>Election Safety</strong> : 一个term内最多存在一个Leader</p>
+<ul>
+<li>一个term内可以不存在Leader</li>
+<li>系统同时可以存在多个leader，但每个leader一定是不同的term内选出的</li>
+</ul>
+<h3 id="Log-replication"><a href="#Log-replication" class="headerlink" title="Log replication"></a>Log replication</h3><p>选举Leader的最终目的还是为了保证log的一致性，保证log的一致性是为了保证所有Server上state machine按照相同顺序执行相同操作以达到备份效果,Raft保证以下性质:</p>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602155409902.png" class="" title="image-20220602155409902">
+<p><strong>具体发送流程</strong>如下：</p>
+<ol>
+<li>Leader为每个Follower维护一个nextIndex，代表下一个AppendEntries RPC中要携带的log entry的index</li>
+<li>AppendEntries RPC中不止携带当前要添加的log entry(nextIndex指向的entry),还包括上一个log entry的term和index</li>
+<li>Follower判断当前的last entry是否与AppendEntries RPC中携带的上一个log entry的term和index（<strong>Consistent Check</strong>）<ul>
+<li>一致 接受添加</li>
+<li>不一致 拒绝添加</li>
+</ul>
+</li>
+<li>Leader 根据 Follower的响应信息，进行下一步操作<ul>
+<li>若Follower拒绝，将nextIndex - 1</li>
+<li>若Follower接受，将nextIndex + 1</li>
+</ul>
+</li>
+<li>Leader不断发送AppendEntries RPC， 直到Follower的nextIndex等于Leader的last log entry</li>
+</ol>
+<p><strong>commit时机</strong>：</p>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602193022746.png" class="" title="image-20220602193022746">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602161725209.png" class="" title="image-20220602161725209">
+<ol>
+<li><p>Leader收到超半数接受信息后即commit当前log entry</p>
+</li>
+<li><p>Follower根据AppendEntries RPC中携带的leaderCommit号，更新自身的commitIndex，若leaderCommit &gt; commitIndex,将commitIndex目标值</p>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602191533241.png" class="" title="image-20220602191533241">
+</li>
+<li><p>当Follower检测到 lastApplied小于commitIndex,提交lastApplied的log,并自增lastApplied</p>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602191623397.png" class="" title="image-20220602191623397">
+</li>
+<li><p>特殊情况：<strong>Raft 永远不会通过计算副本数目的方式来提交之前任期内的日志条目</strong></p>
+<ul>
+<li>非常难理解这么做的原因以及为什么能解决，<a href="https://www.zhihu.com/question/68287713">知乎回答</a> + 论文中的图8 结合理解</li>
+<li>我的理解：Leader选举并不能严格保证新的Leader一定包含所有的<strong>多数派log</strong><ul>
+<li>多数派log中存在提交也存在未提交，若不加上述限制，就会出现图8中的例子，在同步log时，由于新Leader<strong>不包括已提交的多数派log</strong>，导致该log被覆盖</li>
+<li>添加上述约束后，保证了新选出的Leader一定包含所有<strong>已提交的多数派log</strong>(但还是不一定包含所有多数派log)<ul>
+<li>若当前未提交log的term小于最新term，我先不能提交（图8中三个2），等当前Server成为Leader拿到最新term（term = 4），准备提交当时term的log时（图8中三个4），再提交当前log（图8中可能覆盖当前log的S5不可能被选上了，因为term = 3 小于当前 term = 4）</li>
+<li>要么当前未提交log被覆盖（无伤大雅，因为并没有提交）</li>
+</ul>
+</li>
+<li>换句话说，既然我（term=2）的决定（log）会被你（term=3）无视，那我就不提交，等到我的年龄比你大时的决定(term = 4)要执行了，我再把之前的决定一起执行了，你不可能无视我的决定了（term = 3 &lt; term = 4）</li>
+<li>或者 等不到我长大你就把我的决定给磨灭了</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="Cluster-membership-changes-成员修改"><a href="#Cluster-membership-changes-成员修改" class="headerlink" title="Cluster membership changes 成员修改"></a>Cluster membership changes 成员修改</h3><p>Raft支持动态修改配置（例如：增加，删除Server）,为了避免在配置切换过程中出现脑裂问题，Raft通过两段式提交实现配置切换</p>
+<ol>
+<li>首先由Leader创建包括新旧配置log entry的特殊 AE RPC：$C_{old_new}$, 向所有的Follower发送，超过半数同意后提交，实现 <strong>joint concensus</strong></li>
+<li>实现后<strong>joint concensus</strong>，Leader创建 新配置log entry：$C_{new}$，按照一般添加log entry的流程执行，成功commit后，完成配置切换</li>
+</ol>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220603152218579.png" class="" title="image-20220603152218579">
+<p>在配置切换时，可能选举出多个leader的原因来自于：</p>
+<ul>
+<li>$C_{new}$的部分传播导致 <strong>持有$C_{new}$的server</strong> 和 <strong>持有 $C_{old}$的server</strong> 对于 投票时的<strong>majority</strong> 判断标准不同，两个server子集合在一个term内选举出了两个Leader</li>
+<li>例如下图：新配置为系统添加了两个新server(4和5)，Server1 未收到新配置，在竞选Leader时收到了 自己和Server 2的投票，即认为过半，转换为状态为Leader;Server 5使用新配置，收到了自己、Server3、Server4的投票，同样认为过半，转换状态为Leader</li>
+</ul>
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220603151523710.png" class="" title="image-20220603151523710">
+<p>Raft引入了以下几个规则避免了上述问题的出现</p>
+<ol>
+<li>Log entry 在所有配置的Server($C_{old}$ 和$C_{old_new}$)上均进行备份（避免切换过程中，未收到$C_{old_new}$的Server遗失Log entry）</li>
+<li>此时的Majority要满足$C_{new}$ 和  $C_{old}$两个配置中的Majority（单依靠$C_{new}$ 选不出Leader）、</li>
+<li>Server收到新配置立即生效，无论配置日志是否commit</li>
+</ol>
+<p>导致的结果（要么老配置生效，要么兼容老配置和新配置生效，不会出现新配置单独生效的问题）</p>
+<ol>
+<li>要么选出的leader带有$C_{old}$，根据一致性约束，将带有$C_{old_new}$的Server回退，相当于未发生配置切换</li>
+<li>要么选出的leader只带有$C_{old_new}$，实现了joint concensus</li>
+</ol>
+<h3 id="Snapshot"><a href="#Snapshot" class="headerlink" title="Snapshot"></a>Snapshot</h3><p>当系统运行时间后，难以避免的会出现log过多，导致占用大量存储空间、Server的重启状态时间过长等问题，Raft采用快照机制实现log 压缩</p>
+<ol>
+<li>每个Server单独对已commit的log entry进行快照（降低单一快照+网络传递的通信成本）</li>
+<li>Leader定期向Follower发送自己的快照，Follower根据快照情况修改本地log和快照（<strong>InstallSnapshot RPC</strong>）<ul>
+<li>基本思路就是：快照里有的log entry,Follower直接删除, 直到快照和log完美衔接</li>
+</ul>
+</li>
+</ol>
+<p>既然为了避免通信开销已经让每个Server自己备份了，为什么还需要第二步骤？</p>
+<ul>
+<li>为了避免Follower落后Server过多，Server已经将某一个log快照以后删除，导致Follower永远收不到来自Leader的这个log</li>
+</ul>
+<h3 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h3><p>客户端连接Server部分主要有三个逻辑：</p>
+<ol>
+<li><strong>客户端如何确定Leader是谁？</strong>随机选择Server，由Server返回Leader地址</li>
+<li><strong>如何实现幂等？</strong><ul>
+<li>Leader在Commit某操作后未返回结果直接崩溃，Client会尝试重发请求，这就需要系统支持幂等操作。</li>
+<li>Raft在客户端为每个操作添加序列号，Leader维护每个Client已Commit的最新序列号，对已执行过的操作直接返回结果</li>
+</ul>
+</li>
+<li><strong>对应Read-only  op，如何保证返回最新结果?</strong> 换句话说就是保证Raft的强一致性（Zookeeper中会详细讲什么是强一致性-<strong>Linearizability</strong>）<ul>
+<li>Leader在每个term开始时，提交一个no-op entry，保证Leader得到所有的Commit Entry（由于Raft 永远不会通过计算副本数目的方式来提交之前任期内的日志条目，<strong>为了避免存在部分多数entry未提交的情况</strong>）</li>
+<li>Leader每次响应只读操作前，首先通过心跳机制确定自己还是leader(以免已有另外的leader被选举，导致返回结果stale)</li>
+</ul>
+</li>
+</ol>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Raft说实话理解难度是比paxos降低了，但是细节和涉及到的分布式知识太多了，我目前只能说弄懂了部分细节，整体上理解还是欠缺，即做到了深入，但以我目前的水平还做不到浅出（<del>反正研究生不搞这个，能懂点面试吹吹nb即可</del>）</p>
+]]></content>
+      <categories>
+        <category>分布式理论</category>
+      </categories>
+      <tags>
+        <tag>共识算法</tag>
+        <tag>Raft</tag>
+      </tags>
+  </entry>
 </search>
