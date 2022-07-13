@@ -195,6 +195,252 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-11.Transformers/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-11.Transformers/" class="post-title-link" itemprop="url">cs224n-11.Transformers</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-10-17 20:52:16 / 修改时间：21:11:03" itemprop="dateCreated datePublished" datetime="2021-10-17T20:52:16+08:00">2021-10-17</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="主要概念理解"><a href="#主要概念理解" class="headerlink" title="主要概念理解"></a>主要概念理解</h2><h3 id="self-Attention-自注意力机制"><a href="#self-Attention-自注意力机制" class="headerlink" title="self-Attention 自注意力机制"></a>self-Attention 自注意力机制</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/265108616">注意力机制介绍</a></p>
+</blockquote>
+<p>自注意力机制与注意力不同点在于，自注意力机制在序列内部进行注意力的计算，每个词与相邻词进行F(Q,K)计算，当前词作为Q，临近词作为K，计算主力注意力分数后，进行嵌入向量的加权平均。</p>
+<ul>
+<li>一个词语的含义取决于上下文临近词语的含义（语境），自注意力机制解决了RNN<strong>无法抽取长距离信息</strong>的问题</li>
+<li>自注意力机制的计算可以通过矩阵运算实现并行化，解决了RNN<strong>无法并行优化</strong>的问题</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-11.Transformers/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-10.%E4%B8%8A%E4%B8%8B%E6%96%87%E8%AF%8D%E5%B5%8C%E5%85%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-10.%E4%B8%8A%E4%B8%8B%E6%96%87%E8%AF%8D%E5%B5%8C%E5%85%A5/" class="post-title-link" itemprop="url">cs224n-10.上下文词嵌入</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-10-17 20:51:03 / 修改时间：21:11:00" itemprop="dateCreated datePublished" datetime="2021-10-17T20:51:03+08:00">2021-10-17</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="课程大纲"><a href="#课程大纲" class="headerlink" title="课程大纲"></a>课程大纲</h2><img src="/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-10.%E4%B8%8A%E4%B8%8B%E6%96%87%E8%AF%8D%E5%B5%8C%E5%85%A5/image-20211013201952293.png" class="" title="image-20211013201952293">
+<h2 id="预训练到来之前"><a href="#预训练到来之前" class="headerlink" title="预训练到来之前"></a>预训练到来之前</h2><h3 id="词嵌入"><a href="#词嵌入" class="headerlink" title="词嵌入"></a>词嵌入</h3><p>迄今为止，我们主要使用包括Word2Vec，Glove等词嵌入向量，通过大量的数据预训练，提供给下游任务作为单词输入</p>
+<img src="/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-10.%E4%B8%8A%E4%B8%8B%E6%96%87%E8%AF%8D%E5%B5%8C%E5%85%A5/image-20211013202450741.png" class="" title="image-20211013202450741">
+<p>之后我们遇到了 OOV(out of dic)和各种英语后缀不同导致单词含义不同得问题，传统预训练向量难以解决，引入了character-level的向量嵌入，如fastText。</p>
+<img src="/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-10.%E4%B8%8A%E4%B8%8B%E6%96%87%E8%AF%8D%E5%B5%8C%E5%85%A5/image-20211013203324779.png" class="" title="image-20211013203324779">
+<p>然而以往的词向量存在<strong>两个问题</strong></p>
+<ul>
+<li>以往的词向量嵌入<strong>不考虑上下文语境信息（或者说只考虑一种固定的语境）</strong>，仅仅是固定的一个词向量，应用于不同的下游任务</li>
+<li>一个词不止有字面意思，还有包括词性，语法以及适用的语境等其他隐含信息，以往词向量只考虑了词的字面含义</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-10.%E4%B8%8A%E4%B8%8B%E6%96%87%E8%AF%8D%E5%B5%8C%E5%85%A5/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-9.%E5%AD%90%E8%AF%8D%E6%A8%A1%E5%9E%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-9.%E5%AD%90%E8%AF%8D%E6%A8%A1%E5%9E%8B/" class="post-title-link" itemprop="url">cs224n-9.子词模型</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-10-17 20:47:06 / 修改时间：21:10:57" itemprop="dateCreated datePublished" datetime="2021-10-17T20:47:06+08:00">2021-10-17</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="语言学背景-划分更小单位的词"><a href="#语言学背景-划分更小单位的词" class="headerlink" title="语言学背景-划分更小单位的词"></a>语言学背景-划分更小单位的词</h3><h4 id="语音学和音韵学"><a href="#语音学和音韵学" class="headerlink" title="语音学和音韵学"></a>语音学和音韵学</h4><p>语音学中将语音看作连续不断变化的声音流，音韵学将语音划分为不同的单位-音位（phoneme），同一个词的读法中音位的不同，对于不同群体理解可能有不同的含义。但是由于发音对于文本的理解并无意义，将此思想借鉴到单词形态分析上，形成了这种（parts of word）的思想</p>
+<h4 id="形态学：部分词（part-of-word）"><a href="#形态学：部分词（part-of-word）" class="headerlink" title="形态学：部分词（part of word）"></a>形态学：部分词（part of word）</h4><p>如何对词进行拆分以更好地理解当前的单词（有点中文里的看半边猜词的味道，英文里去掉前缀后缀看词根）</p>
+<ul>
+<li>传统方式是将单词划分为最小语义单位</li>
+<li>使用字符级n-grams对单词进行拆分</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-9.%E5%AD%90%E8%AF%8D%E6%A8%A1%E5%9E%8B/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/10/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-8.NLP%E4%B8%AD%E7%9A%84CNN/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -770,248 +1016,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/15/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-3.%E4%BE%9D%E5%AD%98%E5%88%86%E6%9E%90%E9%97%AE%E9%A2%98/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/15/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-3.%E4%BE%9D%E5%AD%98%E5%88%86%E6%9E%90%E9%97%AE%E9%A2%98/" class="post-title-link" itemprop="url">cs224n-3.依存分析问题</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-09-15 21:19:16 / 修改时间：21:34:55" itemprop="dateCreated datePublished" datetime="2021-09-15T21:19:16+08:00">2021-09-15</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h4 id="句法分析"><a href="#句法分析" class="headerlink" title="句法分析"></a>句法分析</h4><p>句法分析与上下文无关文法相对立，强调通过对于句子语法结构的分析，实现对于句子的理解。最常见的三种句法分析任务如下</p>
-<ol>
-<li>句法结构分析 识别句子中的短语结构和层次关系</li>
-<li>依存关系分析 识别句子中词与词之间的依存关系，确定词语的含义</li>
-<li>深层文法句法分析 利用深层文法对句子进行分析</li>
-</ol>
-<h4 id="依存句法分析（Dependency-Parsing）"><a href="#依存句法分析（Dependency-Parsing）" class="headerlink" title="依存句法分析（Dependency Parsing）"></a>依存句法分析（Dependency Parsing）</h4><p>依存结构展示了句子中依赖于其他词语的单词，这种依赖体现为被修饰或者被限定</p>
-<img src="/2021/09/15/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-3.%E4%BE%9D%E5%AD%98%E5%88%86%E6%9E%90%E9%97%AE%E9%A2%98/image-20210909082635347.png" class="" title="image-20210909082635347">
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/09/15/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-3.%E4%BE%9D%E5%AD%98%E5%88%86%E6%9E%90%E9%97%AE%E9%A2%98/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/09/15/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-2.%E4%BD%BF%E7%94%A8%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E8%A7%A3%E5%86%B3nlp%E9%97%AE%E9%A2%98/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/15/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-2.%E4%BD%BF%E7%94%A8%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E8%A7%A3%E5%86%B3nlp%E9%97%AE%E9%A2%98/" class="post-title-link" itemprop="url">cs224n-2.使用神经网络解决nlp问题</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-09-15 21:14:38 / 修改时间：21:31:44" itemprop="dateCreated datePublished" datetime="2021-09-15T21:14:38+08:00">2021-09-15</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="神经网络介绍"><a href="#神经网络介绍" class="headerlink" title="神经网络介绍"></a>神经网络介绍</h3><p>神经网络介绍部分省略</p>
-<h3 id="命名实体识别（NER）"><a href="#命名实体识别（NER）" class="headerlink" title="命名实体识别（NER）"></a>命名实体识别（NER）</h3><p>标注中句子中的目标词性词语-实体，其中实体是指识别文本中具有特定意义的实体，主要包括人名、地名、机构名、专有名词等</p>
-<img src="/2021/09/15/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-2.%E4%BD%BF%E7%94%A8%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E8%A7%A3%E5%86%B3nlp%E9%97%AE%E9%A2%98/image-20210831093150777.png" class="" title="image-20210831093150777">
-<p>命名实体存在的困难：</p>
-<ol>
-<li>难以确定实体的上下文边界（王小明 还是 小明）</li>
-<li>难以确定词语是否为 实体</li>
-<li>实体的具体含义依赖于上下文，难以确定</li>
-<li>难以辨别不知道的实体（特定语境 特定环境下的某些词作为实体）</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/09/15/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/cs224n%E7%AC%94%E8%AE%B0/cs224n-2.%E4%BD%BF%E7%94%A8%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E8%A7%A3%E5%86%B3nlp%E9%97%AE%E9%A2%98/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2021/08/12/%E6%9D%82%E6%96%87/%E6%AD%BB%E4%BA%A1%E6%90%81%E6%B5%85/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/08/12/%E6%9D%82%E6%96%87/%E6%AD%BB%E4%BA%A1%E6%90%81%E6%B5%85/" class="post-title-link" itemprop="url">死亡搁浅通关感想:一场关于‘连接’的快递之旅</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-08-12 10:46:50 / 修改时间：11:39:38" itemprop="dateCreated datePublished" datetime="2021-08-12T10:46:50+08:00">2021-08-12</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%8E%A9%E7%89%A9%E4%B8%A7%E5%BF%97/" itemprop="url" rel="index"><span itemprop="name">玩物丧志</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>最开始从b站老戴的全流程视频里了解到了死亡搁浅这款游戏，听说这个游戏好看不好玩，原计划在b站云通关，但是看了几期视频后，发现游戏所营造的世界观和剧情深深的吸引了我，于是等到了Epic夏促打折入手，这几天终于通关了游戏，心里有一些小感受，写一点东西，算是对死亡搁浅体验的个人总结。</p>
-<img src="/2021/08/12/%E6%9D%82%E6%96%87/%E6%AD%BB%E4%BA%A1%E6%90%81%E6%B5%85/20210617193238_1.jpg" class="" title="20210617193238_1">
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/08/12/%E6%9D%82%E6%96%87/%E6%AD%BB%E4%BA%A1%E6%90%81%E6%B5%85/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1083,20 +1087,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">56</span>
+          <span class="site-state-item-count">59</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-count">34</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
