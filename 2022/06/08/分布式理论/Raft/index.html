@@ -34,30 +34,30 @@
   <meta name="description" content="分布式共识算法-RaftRaft是基于Paxos改进的共识算法，其最开始的设计目标即为容易理解且容易实行，所以相较于Paxos学起来更容易（确实比Paxos容易，但我还是看不懂啊）。 Raft中定义了三种角色：  Leader：唯一的leader，负责与Client交互，在其他follower上备份log日志。 Follower: 多个Follower，接收Leader的日志备份请求，当Leade">
 <meta property="og:type" content="article">
 <meta property="og:title" content="共识算法-Raft">
-<meta property="og:url" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/index.html">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/index.html">
 <meta property="og:site_name" content="光与影的个人博客">
 <meta property="og:description" content="分布式共识算法-RaftRaft是基于Paxos改进的共识算法，其最开始的设计目标即为容易理解且容易实行，所以相较于Paxos学起来更容易（确实比Paxos容易，但我还是看不懂啊）。 Raft中定义了三种角色：  Leader：唯一的leader，负责与Client交互，在其他follower上备份log日志。 Follower: 多个Follower，接收Leader的日志备份请求，当Leade">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602150043559.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602153212870.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602153043100.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602201511973.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602155409902.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602193022746.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602161725209.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602191533241.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602191623397.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220603152218579.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220603151523710.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602150043559.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602153212870.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602153043100.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602201511973.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602155409902.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602193022746.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602161725209.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602191533241.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602191623397.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220603152218579.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220603151523710.png">
 <meta property="article:published_time" content="2022-06-08T08:36:34.000Z">
 <meta property="article:modified_time" content="2022-06-08T08:41:51.921Z">
 <meta property="article:author" content="NEU-FHF">
 <meta property="article:tag" content="共识算法">
 <meta property="article:tag" content="Raft">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602150043559.png">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602150043559.png">
 
-<link rel="canonical" href="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/">
+<link rel="canonical" href="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/">
 
 
 <script id="page-configurations">
@@ -214,7 +214,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -293,7 +293,7 @@
 <li>Leader接受Client请求，写入log，并向其他Follower发送AppendEntries RPC备份log，保证所有server的state machine状态一致</li>
 </ol>
 <p>Raft将时间划分为了固定的 “term”，不同服务器通过term作为逻辑时钟实现同步和一致性的保持</p>
-<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602150043559.png" class="" title="image-20220602150043559">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602150043559.png" class="" title="image-20220602150043559">
 <h3 id="Leader-election"><a href="#Leader-election" class="headerlink" title="Leader election"></a>Leader election</h3><p>要了解选举，首先要了解<strong>触发选举的条件</strong>，为了避免Leader崩溃导致的系统单点失效，Raft通过“heart beat”机制实现Leader状态的监控</p>
 <ol>
 <li>Leader周期性所有的Follower的发送heartbeart消息（不包含log的(AppendEntriesRPC）</li>
@@ -301,8 +301,8 @@
 <li>服务器启动时初始化所有服务为Follower状态，并启动”election timeout”计时器</li>
 </ol>
 <p>所以Leader election的<strong>触发时机为某个Follower超时，转化为Candiate状态</strong></p>
-<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602153212870.png" class="" title="image-20220602153212870">
-<h4 id="选举过程"><a href="#选举过程" class="headerlink" title="选举过程"></a>选举过程</h4><img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602153043100.png" class="" title="image-20220602153043100">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602153212870.png" class="" title="image-20220602153212870">
+<h4 id="选举过程"><a href="#选举过程" class="headerlink" title="选举过程"></a>选举过程</h4><img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602153043100.png" class="" title="image-20220602153043100">
 <p>Follower转化为Candidate后，开启新一轮选举，执行一下几个操作后，等待选举结果</p>
 <ol>
 <li>term增加1，代表进入下一个逻辑时间段</li>
@@ -317,7 +317,7 @@
 <li><p>若未投过票，则未接收到的第一个 RV RPC投票，否则拒绝投票（”first come first serve”）</p>
 </li>
 <li><p><strong>election restriction</strong>：RequestVote RPC中的 more up-to-date，投票，否则拒绝</p>
-<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602201511973.png" class="" title="image-20220602201511973">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602201511973.png" class="" title="image-20220602201511973">
 </li>
 </ol>
 <p>等待成为Leader的Candidate可能等到三种情况</p>
@@ -337,7 +337,7 @@
 <li>系统同时可以存在多个leader，但每个leader一定是不同的term内选出的</li>
 </ul>
 <h3 id="Log-replication"><a href="#Log-replication" class="headerlink" title="Log replication"></a>Log replication</h3><p>选举Leader的最终目的还是为了保证log的一致性，保证log的一致性是为了保证所有Server上state machine按照相同顺序执行相同操作以达到备份效果,Raft保证以下性质:</p>
-<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602155409902.png" class="" title="image-20220602155409902">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602155409902.png" class="" title="image-20220602155409902">
 <p><strong>具体发送流程</strong>如下：</p>
 <ol>
 <li>Leader为每个Follower维护一个nextIndex，代表下一个AppendEntries RPC中要携带的log entry的index</li>
@@ -355,16 +355,16 @@
 <li>Leader不断发送AppendEntries RPC， 直到Follower的nextIndex等于Leader的last log entry</li>
 </ol>
 <p><strong>commit时机</strong>：</p>
-<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602193022746.png" class="" title="image-20220602193022746">
-<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602161725209.png" class="" title="image-20220602161725209">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602193022746.png" class="" title="image-20220602193022746">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602161725209.png" class="" title="image-20220602161725209">
 <ol>
 <li><p>Leader收到超半数接受信息后即commit当前log entry</p>
 </li>
 <li><p>Follower根据AppendEntries RPC中携带的leaderCommit号，更新自身的commitIndex，若leaderCommit &gt; commitIndex,将commitIndex目标值</p>
-<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602191533241.png" class="" title="image-20220602191533241">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602191533241.png" class="" title="image-20220602191533241">
 </li>
 <li><p>当Follower检测到 lastApplied小于commitIndex,提交lastApplied的log,并自增lastApplied</p>
-<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220602191623397.png" class="" title="image-20220602191623397">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220602191623397.png" class="" title="image-20220602191623397">
 </li>
 <li><p>特殊情况：<strong>Raft 永远不会通过计算副本数目的方式来提交之前任期内的日志条目</strong></p>
 <ul>
@@ -388,13 +388,13 @@
 <li>首先由Leader创建包括新旧配置log entry的特殊 AE RPC：$C_{old_new}$, 向所有的Follower发送，超过半数同意后提交，实现 <strong>joint concensus</strong></li>
 <li>实现后<strong>joint concensus</strong>，Leader创建 新配置log entry：$C_{new}$，按照一般添加log entry的流程执行，成功commit后，完成配置切换</li>
 </ol>
-<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220603152218579.png" class="" title="image-20220603152218579">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220603152218579.png" class="" title="image-20220603152218579">
 <p>在配置切换时，可能选举出多个leader的原因来自于：</p>
 <ul>
 <li>$C_{new}$的部分传播导致 <strong>持有$C_{new}$的server</strong> 和 <strong>持有 $C_{old}$的server</strong> 对于 投票时的<strong>majority</strong> 判断标准不同，两个server子集合在一个term内选举出了两个Leader</li>
 <li>例如下图：新配置为系统添加了两个新server(4和5)，Server1 未收到新配置，在竞选Leader时收到了 自己和Server 2的投票，即认为过半，转换为状态为Leader;Server 5使用新配置，收到了自己、Server3、Server4的投票，同样认为过半，转换状态为Leader</li>
 </ul>
-<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Raft/image-20220603151523710.png" class="" title="image-20220603151523710">
+<img src="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/image-20220603151523710.png" class="" title="image-20220603151523710">
 <p>Raft引入了以下几个规则避免了上述问题的出现</p>
 <ol>
 <li>Log entry 在所有配置的Server($C_{old}$ 和$C_{old_new}$)上均进行备份（避免切换过程中，未收到$C_{old_new}$的Server遗失Log entry）</li>
@@ -453,7 +453,7 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/Paxos/" rel="prev" title="共识算法-Paxos">
+    <a href="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/" rel="prev" title="共识算法-Paxos">
       <i class="fa fa-chevron-left"></i> 共识算法-Paxos
     </a></div>
       <div class="post-nav-item">
@@ -535,7 +535,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">59</span>
+          <span class="site-state-item-count">63</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -548,7 +548,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">34</span>
+        <span class="site-state-item-count">38</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -755,7 +755,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'MyBlogComment',
       owner       : 'fuhaifei',
       admin       : ['fuhaifei'],
-      id          : '913aa30b4b97738557e0b2bd2ce6fce9',
+      id          : '43f65a0b3099c56aacc00229dbde5386',
         language: 'zh-CN',
       distractionFreeMode: true
     });
