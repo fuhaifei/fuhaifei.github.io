@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="基于Raft的Sharded KV 数据库实现 项目来自于MIT6.824分布式系统的结课大作业，实现代码已上传 github仓库，该博客为项目的总体框架总结，省略了大量的实现细节和代码，细节总结可参考 MIT6.824实验总结  该项目实现目标为一个分布式容错的简单KV数据库，系统主要的功能点可以总结为：  提供包括put(key, value), append(key, value), get">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Raft的ShardedKV数据库实现">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="基于Raft的Sharded KV 数据库实现 项目来自于MIT6.824分布式系统的结课大作业，实现代码已上传 github仓库，该博客为项目的总体框架总结，省略了大量的实现细节和代码，细节总结可参考 MIT6.824实验总结  该项目实现目标为一个分布式容错的简单KV数据库，系统主要的功能点可以总结为：  提供包括put(key, value), append(key, value), get">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220904152037470.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220904161454555.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220905112323707.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220905145204954.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220905161251235.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220905161743796.png">
+<meta property="article:published_time" content="2022-09-06T02:52:12.000Z">
+<meta property="article:modified_time" content="2022-09-06T02:57:23.477Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="分布式">
+<meta property="article:tag" content="MIT6.824">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220904152037470.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>基于Raft的ShardedKV数据库实现 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于Raft的ShardedKV数据库实现
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-09-06 10:52:12 / 修改时间：10:57:23" itemprop="dateCreated datePublished" datetime="2022-09-06T10:52:12+08:00">2022-09-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/" itemprop="url" rel="index"><span itemprop="name">项目总结</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="基于Raft的Sharded-KV-数据库实现"><a href="#基于Raft的Sharded-KV-数据库实现" class="headerlink" title="基于Raft的Sharded KV 数据库实现"></a>基于Raft的Sharded KV 数据库实现</h2><blockquote>
+<p>项目来自于<a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.824/index.html">MIT6.824分布式系统</a>的结课大作业，实现代码已上传 <a target="_blank" rel="noopener" href="https://github.com/fuhaifei/ProjectShardKV">github仓库</a>，该博客为项目的总体框架总结，省略了大量的实现细节和代码，细节总结可参考 <a href="https://fuhaifei.github.io/2022/09/06/分布式理论/MIT6.824实验总结/">MIT6.824实验总结</a></p>
+</blockquote>
+<p>该项目实现目标为一个分布式容错的简单KV数据库，系统主要的功能点可以总结为：</p>
+<ol>
+<li>提供包括<code>put(key, value), append(key, value), get(key)</code>的基本kv数据库功能</li>
+<li>基于Raft共识算法的多服务器备份，实现一致性备份存储，实现了系统容错功能</li>
+<li>基于Raft日志的WAL机制以及系统快照机制，允许系统在失效后通过日志重新执行、加载快照等，快速恢复数据</li>
+<li>通过数据分片和多复制服务器组存储方式，实现了系统的高并发访问性能</li>
+<li>支持存储服务器的动态配置，即可以动态的增加删除存储服务器</li>
+</ol>
+<span id="more"></span>
+<h3 id="基本实现架构"><a href="#基本实现架构" class="headerlink" title="基本实现架构"></a>基本实现架构</h3><p>如下图所示，系统按照标准的CS架构实现，其中Server端包括一个配置管理集群（Shard Manager）以及多个数据片存储管理集群（KV Server Group）；Client端包括两种类型身份的Client：一种为发送KV数据操作请求的客户端（KV Client）,一种为管理分片信息以及数据片存储集群的客户端（Shard Manage Client）</p>
+<ul>
+<li>Shard Manager Server负责kv server group、数据分片以及分片到kv server映射信息等系统元数据的管理（类似于HDFS Master）</li>
+<li>KV Server Group负责按照分片配置存储对应分片数据以及执行和响应KV客户端操作</li>
+</ul>
+<img src="/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220904152037470.png" class="" title="image-20220905145204954">
+<p>其中<strong>Shard Manager</strong>和每个<strong>KV Server Group</strong>，通过多服务器备份的方式实现数据的可靠性，具体实现架构如下图所示（以KV Server Group为例）：</p>
+<ul>
+<li>每个KV Server Group以及ShardManager内包括三个服务器实例，互为备份服务器</li>
+<li>通过基于Raft日志的WAL机制，保证不同副本之间的状态一致性以及错误恢复（KV Server中状态机为存储数据片、Shard Manager中状态机为系统shard元数据）</li>
+</ul>
+<img src="/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220904161454555.png" class="" title="image-20220905145204954">
+<h3 id="分片以及分片分配-sharding"><a href="#分片以及分片分配-sharding" class="headerlink" title="分片以及分片分配(sharding)"></a>分片以及分片分配(sharding)</h3><p>kv数据库中的每个key对相当于关系数据库中表中的条目，且value为单值，区别于关系型数据库条目由多个属性组成，采用Horiziontal Partitioning策略，基于hash的方法对数据进行分片，分片方式如下：</p>
+<ul>
+<li>shardNum为配置的固定分片数量，确定后即不会改变</li>
+</ul>
+<script type="math/tex; mode=display">
+shardId := hash(key) \% shardNum</script><ul>
+<li>确定分片后，根据KV Server Group数量将shard<strong>均匀分配</strong>到KV Server Gruop上，由Shard Manager维护映射关系<script type="math/tex; mode=display">
+shadId->GruopId</script></li>
+</ul>
+<p>上述方法可以总结为：<strong>固定分片策略，动态分配方法</strong>相，优缺点为：</p>
+<ul>
+<li>优点：当KV Server Group配置改变时，涉及到数据迁移时，以shard为单位进行迁移，较于以key直接映射KV Serve Group(如下公式)，降低了涉及到的数据迁移通信量</li>
+<li>缺点：根据key分布进行划分，当key分布不均有或者某些热点key访问量较高时，无法保证不同KV Serve Group之间的负载均衡</li>
+</ul>
+<script type="math/tex; mode=display">
+shardId := hash(key) \% Server Group Num</script><p>未来可以优化的点：</p>
+<ul>
+<li>采用复合划分Composite partitioning策略即：首先基于哈希方法划分，在根据key的分布规律和请求访问，进行基于列表划分（List Partitionning）的二次细粒度划分</li>
+<li>可以基于一致性哈希实现shard-&gt;KV Serve Group的映射管理，降低由于KV Serve Group的增加或者减少shard重分配导致的数据迁移</li>
+</ul>
+<h4 id="分片分配机制"><a href="#分片分配机制" class="headerlink" title="分片分配机制"></a>分片分配机制</h4><p>Shard Manager作为<script type="math/tex">key->kvServerGroup</script>的配置管理查询服务，支持动态增加/删除存储服务器，相关接口如下</p>
+<ul>
+<li><code>Join(servers)</code>：批量增加存储服务器组</li>
+<li><code>Leave(gruopIds)</code>：批量删除存储服务器组</li>
+</ul>
+<p>当kvServerGroup配置发生改变时，Shard Manager会重新在剩余可用Gruop进行shard重分配，基本原则如下：</p>
+<ul>
+<li>保证shard在所有server Group上的<strong>均匀分配</strong>：一部分存储平均数个shard，一部分存储平均数+1个shard</li>
+<li>尽量<strong>减少shard迁移</strong>：重新计算平均数，存储shard大于平均数的group移动到小于平均数的group</li>
+</ul>
+<p>重分配关键代码如下所示：</p>
+<ul>
+<li>根据group数量，计算平均值<code>averagerShard</code>和余数<code>remindShard</code>，<strong>最终分配结果为</strong>：<code>remindShard</code>个server存储<code>averagerShard + 1</code>个shard，其余group存储<code>averagerShard</code>个shard</li>
+<li>分为统计重分配shard和重新分配两个步骤，两步骤思路基本相同</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//首先统计当前gruop数量</span></span><br><span class="line"><span class="keyword">for</span> key, _ := <span class="keyword">range</span> newConfig.Groups &#123;</span><br><span class="line">	groupShardNumMap[key] = <span class="number">0</span></span><br><span class="line">	allGroupId = <span class="built_in">append</span>(allGroupId, key)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//将shard超过average的日志重新分配</span></span><br><span class="line">reallocateShards := <span class="built_in">make</span>([]<span class="keyword">int</span>, <span class="number">0</span>)</span><br><span class="line">averageShard := <span class="built_in">len</span>(newConfig.Shards) / <span class="built_in">len</span>(allGroupId)</span><br><span class="line">remindShard := <span class="built_in">len</span>(newConfig.Shards) % <span class="built_in">len</span>(allGroupId)</span><br><span class="line"><span class="keyword">for</span> shard, group := <span class="keyword">range</span> newConfig.Shards &#123;</span><br><span class="line">	_, ok := newConfig.Groups[group]</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		<span class="comment">//shard所属gruop被删除的情况</span></span><br><span class="line">		reallocateShards = <span class="built_in">append</span>(reallocateShards, shard)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		numShard := groupShardNumMap[group]</span><br><span class="line">		<span class="comment">//如何判断一个group是否超量（关键）：管理shard数量 &gt; averageShard 或者 管理shard数量 == averageShard 且此时可以管理averageShard + 1个shard的机会已经用尽</span></span><br><span class="line">		<span class="keyword">if</span> numShard &gt; averageShard || (numShard == averageShard &amp;&amp; remindShard == <span class="number">0</span>) &#123;</span><br><span class="line">			reallocateShards = <span class="built_in">append</span>(reallocateShards, shard)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="comment">//如果当前group管理shard数量为averageShard，再分配一个shard，当前group管理了averageShard + 1个shard，则需要占用一个管理averageShard + 1的名额</span></span><br><span class="line">			<span class="keyword">if</span> numShard == averageShard &#123;</span><br><span class="line">				remindShard--</span><br><span class="line">			&#125;</span><br><span class="line">			groupShardNumMap[group] += <span class="number">1</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//开始重新分配</span></span><br><span class="line"><span class="comment">//。。。。。。省略重新分配代码，和上部分差异不大</span></span><br></pre></td></tr></table></figure>
+<h3 id="分片迁移实现"><a href="#分片迁移实现" class="headerlink" title="分片迁移实现"></a>分片迁移实现</h3><p>当系统发生Server Gruop的增加或者删除时，会触发shard在不同server之间的变更，虽然整体上思考较为复杂，但是从单个shard迁移的角度考虑，可以将变更过程定义为：多个同时进行的<strong>shard从一个server group 到 另一个server group</strong>的过程，如下图所示：</p>
+<ul>
+<li>对于每个server group来说，在每个配置变更期，要么有一定量移出的shard，要么有一定量等待移入的shard，要么shard不变</li>
+</ul>
+<img src="/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220905112323707.png" class="" title="image-20220905145204954">
+<p>在shard迁移过程中，我们必须保证一下几点：</p>
+<ol>
+<li>shard不能丢失：需要迁出shard的server group只有在确保对方成功接收对应shard后，才能安全删除</li>
+<li>shard一旦迁出，不能再提供服务：server group在迁出shard后，不能再服务shard上的数据操作（client端可能为获取到最新配置，导致该问题的出现）</li>
+<li>在配置切换过程中，系统能够继续提供服务</li>
+</ol>
+<p>针对上述问题，为shard定义以下几个状态，迁入迁出过程可以通过状态变更实现：</p>
+<ul>
+<li><code>Normal</code>：默认正常状态（<strong>正常访问操作</strong>）</li>
+<li><code>WaitIn</code>：等待迁入状态（无法访问操作）</li>
+<li><code>In</code>：已经迁入，但还向发送端确认状态（<strong>正常访问操作</strong>）</li>
+<li><code>out</code>：等待迁出状态（无法访问操作）</li>
+<li><code>Delelte</code>：迁出完毕状态，可以进行垃圾回收（无法访问操作）</li>
+</ul>
+<p>如下图以一个shard迁移过程中的状态变更为例，分析变更流程：</p>
+<ul>
+<li>shard接收端读取到新配置后，创建空shard，并设置状态为 <code>WaitIn</code></li>
+<li>不断地向发送端，拉取shard(<strong>由发送端推也一样，只是选择实现了拉</strong>)，不断重试，直到获取到shard，修改状态： <code>WaitIn -&gt; In</code></li>
+<li>完成状态转换后，向发动端发送确认收到RPC，发动端修改shard状态： <code>Out -&gt; Delete</code></li>
+<li>接收端不断地发送确认收到RPC，直到RPC请求返回，携带有发送端已经将对应shard状态变更为<code>Delete</code>或者删除的信息后，停止发送，修改状态：<code>In -&gt; Normal</code></li>
+<li>当server Group的所有shard状态变为<code>Normal</code>或者<code>Delete</code>时，<strong>完成配置变更</strong></li>
+<li>上述所有状态变更操作均首先提交到raft，在<strong>操作日志成功提交后</strong>，执行对应状态变更</li>
+</ul>
+<img src="/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220905145204954.png" class="" title="image-20220905145204954">
+<p>上述设计思路的原因：</p>
+<ol>
+<li><p>为什么需要确认消息，才能将对应shard状态变更<code>Out -&gt; Delete</code></p>
+<ul>
+<li>由于发送端是被拉取方，在接收端发送确认收到消息后，发送端才能保证shard已经发送到接收端且成功存储可以<strong>删除</strong></li>
+</ul>
+</li>
+<li><p>为什么确认收到消息，返回需要携带发动端是否将对应shard状态变更为delete</p>
+<ul>
+<li>接受端发送确认消息的目的是为了通知发送端自己确认收到shard，接收端需要<strong>保证</strong>发送端收到并且成功记录的自己的确认消息，当发送端shard状态变为delete时，接收端可以确定自己的确认消息成功执行</li>
+<li><p>若不按照上述方式执行，可能存在第一次消息确认成功返回，接收端停止发送，但是发送端由于leader切换等，消息确认操作log未成功提交，导致发送端<strong>无限期等待接收端的确认消息</strong></p>
+</li>
+<li><p>上述设计来源于假设：即使请求成功返回，对应操作不一定成功执行，只有操作结果出现（raft保证操作结果不丢失），才能保证操作执行</p>
+</li>
+</ul>
+</li>
+</ol>
+<ul>
+<li><strong>简单总结</strong>：发送端需要保证接收端接收到才能删除shard-&gt;接收端需要通知发送端自己收到了-&gt;接收端需要保证接收端知道了自己成功接收，才能停止通知</li>
+</ul>
+<h4 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h4><p>在具体设计实现过程中，并未采用状态变更与通信绑定的操作，即一个线程执行了状态变更后，进行对应发送请求，具体考虑如下：</p>
+<ul>
+<li>通信可能失败，需要不断重试，状态变更线程不应等待通信，应该继续执行其他操作</li>
+<li>状态变更线程由于互斥需要，往往需要持有锁，由于通信的不确定性（延迟、失败），持有锁时进行RPC通信，可能导致系统性能大幅下降</li>
+</ul>
+<p>综合考虑上述设计问题，采用了状态变更线程+周期性状态检测线程的思路</p>
+<ul>
+<li>状态变更线程：负责读取raft日志，根据日志中操作变更shard状态</li>
+<li>周期性状态检测线程：周期性遍历shard，根据shard状态按照上述交互图，发送消息</li>
+</ul>
+<p><strong>状态变更线程</strong>代码如下所示：</p>
+<ul>
+<li>只负责根据日志操作进行状态变更，不负责状态变更后的操作</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *ShardKV)</span> <span class="title">processConfigOp</span><span class="params">(commandInterface <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> opCommand := commandInterface.(<span class="keyword">type</span>) &#123;</span><br><span class="line">	<span class="keyword">case</span> ConfigOp:</span><br><span class="line">		<span class="comment">//过滤重复的修改配置操作（因为从写入日志到日志提交存在时间差，可能重复提交日志）</span></span><br><span class="line">		<span class="keyword">if</span> opCommand.Config.Num &gt; kv.config.Num &#123;</span><br><span class="line">            <span class="comment">//省略根据配置信息修改shard状态代码</span></span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> InShardOp:</span><br><span class="line">		<span class="keyword">if</span> opCommand.ConfigNum == kv.config.Num &#123;</span><br><span class="line">			<span class="comment">//省略添加shard(去重)</span></span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> DelShardOp:</span><br><span class="line">		<span class="keyword">if</span> opCommand.ConfigNum == kv.config.Num &#123;</span><br><span class="line">			<span class="comment">//省略修改shard状态为out-&gt;delete(需要去重)</span></span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> AckShardOp:</span><br><span class="line">		<span class="keyword">if</span> opCommand.ConfigNum == kv.config.Num &#123;</span><br><span class="line">			<span class="comment">//省略从in状态修改为normal状态(需要去重)</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>周期性检测线程</strong>代码如下所示：</p>
+<ul>
+<li>遍历所有shard，启动单独线程负责通信，主线程等待所有通信线程退出</li>
+<li>所有通信线程退出后，主线程遍历所有shard，判断是否退出配置切换状态</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *ShardKV)</span> <span class="title">updateShardState</span><span class="params">(updateFunc <span class="keyword">func</span>(<span class="keyword">int</span>, <span class="keyword">int</span>, []<span class="keyword">string</span>)</span>, <span class="title">chaeckStatus</span> <span class="title">string</span>)</span> &#123;</span><br><span class="line">	kv.mu.RLock()</span><br><span class="line">	_, isLeader := kv.rf.GetState()</span><br><span class="line">	<span class="comment">//如果在配置</span></span><br><span class="line">	<span class="keyword">if</span> kv.isConfiging() &amp;&amp; isLeader &#123;</span><br><span class="line">		<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">        <span class="comment">//遍历所有shard，根据状态执行对应操作（如：WaitIn状态发起拉取RPC请求，In状态发起确认RPC）</span></span><br><span class="line">		<span class="keyword">for</span> shardId, shard := <span class="keyword">range</span> kv.allShards &#123;</span><br><span class="line">			<span class="keyword">if</span> shard.ShardStatus == chaeckStatus &#123;</span><br><span class="line">				wg.Add(<span class="number">1</span>)</span><br><span class="line">				<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(shardId <span class="keyword">int</span>, configNum <span class="keyword">int</span>, allServers []<span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">					<span class="keyword">defer</span> wg.Done()</span><br><span class="line">					updateFunc(shardId, configNum, allServers)</span><br><span class="line">				&#125;(shardId, kv.config.Num, kv.preConfig.Groups[kv.preConfig.Shards[shardId]])</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">//释放锁，并等待</span></span><br><span class="line">		kv.mu.RUnlock()</span><br><span class="line">		wg.Wait()</span><br><span class="line">        <span class="comment">//上锁，判断当前状态是否可以退出配置状态</span></span><br><span class="line">		kv.mu.RLock()</span><br><span class="line">		completeFlag := <span class="literal">true</span></span><br><span class="line">		<span class="keyword">for</span> _, shard := <span class="keyword">range</span> kv.allShards &#123;</span><br><span class="line">			<span class="keyword">if</span> shard.ShardStatus != ShardNormal &amp;&amp; shard.ShardStatus != ShardDelete &#123;</span><br><span class="line">				completeFlag = <span class="literal">false</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		kv.mu.RUnlock()</span><br><span class="line">		<span class="keyword">if</span> completeFlag &#123;</span><br><span class="line">			kv.changeConfigState(<span class="literal">false</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		kv.mu.RUnlock()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于后台存在多个周期性运行函数（状态检测、垃圾回收），抽取一个<strong>公用的周期循环</strong>方法：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *ShardKV)</span> <span class="title">backRoutine</span><span class="params">(operation <span class="keyword">func</span>()</span>, <span class="title">interval</span> <span class="title">int</span>)</span> &#123;</span><br><span class="line">	<span class="keyword">for</span> !kv.killed() &#123;</span><br><span class="line">		<span class="comment">//执行具体操作</span></span><br><span class="line">		operation()</span><br><span class="line">		time.Sleep(time.Duration(interval) * time.Millisecond)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//传入需要周期运行的方法</span></span><br><span class="line"><span class="keyword">go</span> kv.backRoutine(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; kv.updateShardState(kv.callMigrateShard, ShardWaitIn) &#125;, UpdateShardInterval)</span><br><span class="line"><span class="comment">//启动确认收到对应shard的线程</span></span><br><span class="line"><span class="keyword">go</span> kv.backRoutine(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; kv.updateShardState(kv.callMigrateShardAck, ShardIn) &#125;, UpdateShardInterval)</span><br></pre></td></tr></table></figure>
+<h4 id="垃圾回收实现"><a href="#垃圾回收实现" class="headerlink" title="垃圾回收实现"></a>垃圾回收实现</h4><p>根据分片迁移实现部分逻辑，仅仅需要回收状态为delete状态的shard，实现逻辑较为简单，采用周期性回收线程的方式，关键代码如下：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *ShardKV)</span> <span class="title">garbageCollect</span><span class="params">()</span></span> &#123;</span><br><span class="line">	kv.mu.Lock()</span><br><span class="line">	<span class="keyword">for</span> shardId, shard := <span class="keyword">range</span> kv.allShards &#123;</span><br><span class="line">		<span class="keyword">if</span> shard.ShardStatus == ShardDelete &#123;</span><br><span class="line">			<span class="comment">//删除对应状态的shard</span></span><br><span class="line">			<span class="built_in">delete</span>(kv.allShards, shardId)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	kv.mu.Unlock()</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//启动垃圾回收线程</span></span><br><span class="line"><span class="keyword">go</span> kv.backRoutine(kv.garbageCollect, GCInterval)</span><br></pre></td></tr></table></figure>
+<h3 id="遇到的实现问题"><a href="#遇到的实现问题" class="headerlink" title="遇到的实现问题"></a>遇到的实现问题</h3><h5 id="1-同一个类型中的RPC请求-结构体中，由于条件不同请求参数不同，导致大量无用参数"><a href="#1-同一个类型中的RPC请求-结构体中，由于条件不同请求参数不同，导致大量无用参数" class="headerlink" title="1.同一个类型中的RPC请求/结构体中，由于条件不同请求参数不同，导致大量无用参数"></a>1.同一个类型中的RPC请求/结构体中，由于条件不同请求参数不同，导致大量无用参数</h5><p>在实现过程中遇到了一个操作请求对应多种不同操作的情况，不同操作需要携带不同的操作参数，如下代码所示：</p>
+<ul>
+<li>一种操作对应四种类型的操作，传输其他操作时需要占用其他三种操作参数的空间</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ShardOp <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">//公共参数</span></span><br><span class="line">	OpType    <span class="keyword">string</span></span><br><span class="line">	ConfigNum <span class="keyword">int</span></span><br><span class="line">	<span class="comment">//修改配置操作参数</span></span><br><span class="line">	Config shardctrler.Config</span><br><span class="line">	<span class="comment">//添加shard操作参数</span></span><br><span class="line">	AddShard <span class="keyword">int</span></span><br><span class="line">	Shard    ShardData</span><br><span class="line">	<span class="comment">//删除操作参数</span></span><br><span class="line">	DelShard <span class="keyword">int</span></span><br><span class="line">	<span class="comment">//确认shard操作参数</span></span><br><span class="line">	AckShard <span class="keyword">int</span> <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>针对以上情况，想出了三种解决方案</p>
+<ol>
+<li><p>发送不特殊处理，接收端根据opType进行处理（不做处理），缺点是：多余参数占用空间</p>
+</li>
+<li><p>修改结构体，使用byte[]存储编码后的参数，发送端编码，接收端根据OpType进行解码，缺点：编解码浪费时间，发送接收端需要确定编码顺序</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ShardOp <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">//公共参数</span></span><br><span class="line">	OpType    <span class="keyword">string</span></span><br><span class="line">	ConfigNum <span class="keyword">int</span></span><br><span class="line">	<span class="comment">//修改配置操作参数</span></span><br><span class="line">	parameters []<span class="keyword">byte</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将结构体拆分，传输不同的结构体，在接收端基于golang反射进行操作，缺点：反射的运行效率较低，影响系统运行效率</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> DelShardOp <span class="keyword">struct</span> &#123;</span><br><span class="line">	ConfigNum <span class="keyword">int</span> <span class="comment">//非切换配置需要使用的去重参数</span></span><br><span class="line">	DelShard  <span class="keyword">int</span> <span class="comment">//迁移出删除shard的参数</span></span><br><span class="line"></span><br><span class="line">	AddShard <span class="keyword">int</span>       <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">	Shard    ShardData <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">type</span> InShardOp <span class="keyword">struct</span> &#123;</span><br><span class="line">	ConfigNum <span class="keyword">int</span>       <span class="comment">//非切换配置需要使用的去重参数</span></span><br><span class="line">	AddShard  <span class="keyword">int</span>       <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">	Shard     ShardData <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">type</span> AckShardOp <span class="keyword">struct</span> &#123;</span><br><span class="line">	ConfigNum <span class="keyword">int</span> <span class="comment">//非切换配置需要使用的去重参数</span></span><br><span class="line">	AckShard  <span class="keyword">int</span> <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//接收端执行操作</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *ShardKV)</span> <span class="title">processConfigOp</span><span class="params">(commandInterface <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> opCommand := commandInterface.(<span class="keyword">type</span>) &#123;</span><br><span class="line">	<span class="keyword">case</span> ConfigOp:</span><br><span class="line">	<span class="keyword">case</span> InShardOp:</span><br><span class="line">	<span class="keyword">case</span> DelShardOp:</span><br><span class="line">	<span class="keyword">case</span> AckShardOp:</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>最后综合考虑<strong>采用第三种方法</strong>，虽然执行效率低，但是实现逻辑上更加清晰，相较于第一种方式减少了空间浪费，降低了网络通信代价</p>
+<h3 id="测试与总结"><a href="#测试与总结" class="headerlink" title="测试与总结"></a>测试与总结</h3><p>测试过程按照以下方式进行：</p>
+<ul>
+<li><p>执行测试脚本，测试200次，每次输出结果写入到文件中</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">for ((i = 0; i &lt; 200; i++)); do echo $i; (go test) &gt; ./res/$i; grep -nr &quot;FAIL.*&quot; res;  done</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>执行完毕，统计通过数量</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grep -nr <span class="string">&quot;PASS&quot;</span> res |wc -l</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>重复执行三轮，共计测试600次</p>
+</li>
+</ul>
+<p>测试结果为：</p>
+<ul>
+<li>测试所有轮次均通过</li>
+</ul>
+<img src="/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220905161251235.png" class="" title="image-20220905161251235">
+<ul>
+<li>其中一次的测试输出为：</li>
+</ul>
+<img src="/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/image-20220905161743796.png" class="" title="image-20220905161743796">
+<h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><p>终于经过了一个多月的视频学习和接近一个月的实验实现，终于完成MIT6.824的学习，现在回看自己的收获可以总结为以下几点：</p>
+<ol>
+<li>对于分布式系统概念以及涉及到的知识点，有了广泛但不一定深入的了解</li>
+<li>掌握了基本golang开发和调试的能力，对于golang的特性和语法有了一定程度的理解</li>
+<li>对于并发编程，RPC通信，线程和进程有了更深的理解</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag"><i class="fa fa-tag"></i> 分布式</a>
+              <a href="/tags/MIT6-824/" rel="tag"><i class="fa fa-tag"></i> MIT6.824</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/09/06/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/" rel="prev" title="MIT6.824实验总结">
+      <i class="fa fa-chevron-left"></i> MIT6.824实验总结
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8ERaft%E7%9A%84Sharded-KV-%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.</span> <span class="nav-text">基于Raft的Sharded KV 数据库实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E5%AE%9E%E7%8E%B0%E6%9E%B6%E6%9E%84"><span class="nav-number">1.1.</span> <span class="nav-text">基本实现架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E7%89%87%E4%BB%A5%E5%8F%8A%E5%88%86%E7%89%87%E5%88%86%E9%85%8D-sharding"><span class="nav-number">1.2.</span> <span class="nav-text">分片以及分片分配(sharding)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E7%89%87%E5%88%86%E9%85%8D%E6%9C%BA%E5%88%B6"><span class="nav-number">1.2.1.</span> <span class="nav-text">分片分配机制</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E7%89%87%E8%BF%81%E7%A7%BB%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.</span> <span class="nav-text">分片迁移实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.1.</span> <span class="nav-text">代码实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.2.</span> <span class="nav-text">垃圾回收实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%81%87%E5%88%B0%E7%9A%84%E5%AE%9E%E7%8E%B0%E9%97%AE%E9%A2%98"><span class="nav-number">1.4.</span> <span class="nav-text">遇到的实现问题</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-%E5%90%8C%E4%B8%80%E4%B8%AA%E7%B1%BB%E5%9E%8B%E4%B8%AD%E7%9A%84RPC%E8%AF%B7%E6%B1%82-%E7%BB%93%E6%9E%84%E4%BD%93%E4%B8%AD%EF%BC%8C%E7%94%B1%E4%BA%8E%E6%9D%A1%E4%BB%B6%E4%B8%8D%E5%90%8C%E8%AF%B7%E6%B1%82%E5%8F%82%E6%95%B0%E4%B8%8D%E5%90%8C%EF%BC%8C%E5%AF%BC%E8%87%B4%E5%A4%A7%E9%87%8F%E6%97%A0%E7%94%A8%E5%8F%82%E6%95%B0"><span class="nav-number">1.4.0.1.</span> <span class="nav-text">1.同一个类型中的RPC请求&#x2F;结构体中，由于条件不同请求参数不同，导致大量无用参数</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E4%B8%8E%E6%80%BB%E7%BB%93"><span class="nav-number">1.5.</span> <span class="nav-text">测试与总结</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.5.0.1.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">70</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yourname" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/zhihu.com/people/fu-hai-fei" title="zhihu → zhihu.com&#x2F;people&#x2F;fu-hai-fei"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : 'c4b6fdbef6522fa4c57105a3b7f2c11a',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
