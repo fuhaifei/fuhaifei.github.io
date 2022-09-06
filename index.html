@@ -195,78 +195,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">MIT6.824实验总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-09-06 10:24:17 / 修改时间：10:31:40" itemprop="dateCreated datePublished" datetime="2022-09-06T10:24:17+08:00">2022-09-06</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>MIT6.824中共设计了四个实验，主要内容是一个分布式kv数据库。</p>
-<ol>
-<li>mapreduce分布式实现</li>
-<li>raft实现</li>
-<li>基于raft的kv数据库实现</li>
-<li>Sharded KV数据库实现</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/09/06/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1029,6 +957,87 @@
   
   
 
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/ZooKeeper%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/13/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/ZooKeeper%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">ZooKeeper论文总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-07-13 17:10:42 / 修改时间：17:14:12" itemprop="dateCreated datePublished" datetime="2022-07-13T17:10:42+08:00">2022-07-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">大数据理论</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="分布式消息中间件-ZooKeeper"><a href="#分布式消息中间件-ZooKeeper" class="headerlink" title="分布式消息中间件-ZooKeeper"></a>分布式消息中间件-ZooKeeper</h2><h3 id="线性一致性（linearizability）"><a href="#线性一致性（linearizability）" class="headerlink" title="线性一致性（linearizability）"></a>线性一致性（<strong>linearizability</strong>）</h3><p><strong>线性一致性</strong>是指分布式系统面对网络延迟和系统故障保证不同分布之间的数据一致性，使分布式系统在客户端看起来就像一个没有副本的单机系统。</p>
+<ul>
+<li><p>也成为 <strong>原子一致性（atomic consistency）</strong>，<strong>强一致性（strong consistency）</strong>，<strong>立即一致性（immediate consistency）</strong> 或 <strong>外部一致性（external consistency ）</strong>。</p>
+</li>
+<li><p>换一个角度：一旦新的值被写入或读取，所有后续的读都会看到写入的值，直到它被再次覆盖</p>
+</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/13/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/ZooKeeper%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
 
   
   <nav class="pagination">
@@ -1100,7 +1109,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">70</span>
+          <span class="site-state-item-count">69</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
