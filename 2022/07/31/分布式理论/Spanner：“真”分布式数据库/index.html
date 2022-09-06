@@ -34,24 +34,24 @@
   <meta name="description" content="Spanner：“真”分布式数据库 Spanner: Google’s Globally Distributed Database  Spanner作为Google开发的全球分布式数据系统，具备外部一致性、支持分布式事务、多副本容错等特性，相较于Aurora，更具“分布式”特征。 从何而来？论文的intro介绍Spanner是从类似于MegaStore的基于BigTable的kv存储系统演化而来的">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Spanner：“真”分布式数据库">
-<meta property="og:url" content="https://fuhaifei.github.io/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/index.html">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/index.html">
 <meta property="og:site_name" content="光与影的个人博客">
 <meta property="og:description" content="Spanner：“真”分布式数据库 Spanner: Google’s Globally Distributed Database  Spanner作为Google开发的全球分布式数据系统，具备外部一致性、支持分布式事务、多副本容错等特性，相较于Aurora，更具“分布式”特征。 从何而来？论文的intro介绍Spanner是从类似于MegaStore的基于BigTable的kv存储系统演化而来的">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719155057293.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719160204168.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719163022272.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720142153487.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720155852284.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719155057293.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719160204168.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719163022272.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720142153487.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720155852284.png">
 <meta property="article:published_time" content="2022-07-31T02:23:09.000Z">
 <meta property="article:modified_time" content="2022-07-31T02:31:17.792Z">
 <meta property="article:author" content="NEU-FHF">
 <meta property="article:tag" content="分布式">
 <meta property="article:tag" content="分布式数据库">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fuhaifei.github.io/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719155057293.png">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719155057293.png">
 
-<link rel="canonical" href="https://fuhaifei.github.io/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
+<link rel="canonical" href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
 
 
 <script id="page-configurations">
@@ -208,7 +208,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -281,7 +281,7 @@
 <li>location proxy：通知客户端访问数据所在的spanserver位置</li>
 <li>span server：存储并为客户端提供数据</li>
 </ul>
-<img src="/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719155057293.png" class="" title="image-20220719155057293">
+<img src="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719155057293.png" class="" title="image-20220719155057293">
 <p>每个span server的内部组成如下图所示，自下而上进行分析：</p>
 <ul>
 <li><p>底层数据存储在Colossus（基于GFS改进的文件系统）上</p>
@@ -295,7 +295,7 @@
 <li><p>对于每个Paxos Group中被选为leader的span server，在lock table上层同时会实现一个transaction manager，用来协调和管理分布式事务</p>
 </li>
 </ul>
-<img src="/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719160204168.png" class="" title="image-20220719160204168">
+<img src="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719160204168.png" class="" title="image-20220719160204168">
 <h4 id="数据模型"><a href="#数据模型" class="headerlink" title="数据模型"></a>数据模型</h4><p>Spanner的数据库模型来自于BigTable的数据模型，区别关系型数据模型，论文中称为Directory Table（<strong>directory-bucketed key-value mappings</strong>），一种类似于关系模型的kv存储模型</p>
 <ul>
 <li>Directory是一系列key的集合（bulk），是系统放置和同步备份的基本单位</li>
@@ -307,7 +307,7 @@
 <li>从图中可知，表项按照类似目录的形式进行<strong>交错存储</strong></li>
 <li>交错存储考虑到了不同表之间关系，在分布式存储环境下访问具备<strong>locality</strong>性质（我理解的是通常有关系的表要一起访问，不如就交错存储在一起，论文中一部分出发点是为了magastore对于跨行事务支持较差的问题）</li>
 </ul>
-<img src="/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719163022272.png" class="" title="image-20220719163022272">
+<img src="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719163022272.png" class="" title="image-20220719163022272">
 <h4 id="分布式事务实现"><a href="#分布式事务实现" class="headerlink" title="分布式事务实现"></a>分布式事务实现</h4><p>Spanner中最难理解的一部分内容就在这一点，通过TrueTime API+分布式锁+Paxios的方式实现了满足强一致性的分布式事务支持，其中设计细节和实现细节较多，理解不到位，仅仅整理一下理解到的内容。</p>
 <p><strong>True Time API</strong></p>
 <p>Spanner通过True Time API为分布式系统提供全局时间戳，在全局时间戳的基础上实现了分布式事务的线性一致性（linearizability）。其中True Time API提供如下图的几个接口：</p>
@@ -316,7 +316,7 @@
 <li>TT.after(t)：判断时间t是否已经过去</li>
 <li>TT.before(t)：判断时间t是否还未到来</li>
 </ol>
-<img src="/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720142153487.png" class="" title="image-20220720142153487">
+<img src="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720142153487.png" class="" title="image-20220720142153487">
 <p><strong>分布式事务</strong></p>
 <p>Spanner分布式事务基于两阶段提交的思想，并结合全局时间戳分配+锁实现分布式事务的并发控制，基本的阶段提交过程如下：</p>
 <ol>
@@ -355,7 +355,7 @@
 <li>根据时间戳查找对应新旧程度的副本，保证读取副本的最新时间戳($t_{safe}$)大于等于当前时间戳（如果没有就需要阻塞更新副本）</li>
 </ol>
 <p>由于以上根据时间戳进行读的特性，RO事务不需要上锁（lock-free），这极大的降低了只读事务的处理速度，同时避免了只读事务影响其他写事务的进行</p>
-<img src="/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720155852284.png" class="" title="image-20220720155852284">
+<img src="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720155852284.png" class="" title="image-20220720155852284">
 <h4 id="其他实现细节"><a href="#其他实现细节" class="headerlink" title="其他实现细节"></a>其他实现细节</h4><p><strong>选主过程中的时间戳分配问题</strong></p>
 <p>每个Paxios leader带有一个超时时长为10s的lease，由于leader需要维护大量的状态信息（锁表、时间戳等），leader短时间交换的成本得不偿失，Spanner设计的Paxios leader机制在我看来更像是一个长期leader，可通过以下两种方式延长lease:</p>
 <ol>
@@ -425,7 +425,7 @@
       <i class="fa fa-chevron-left"></i> Frangipani分布式文件系统
     </a></div>
       <div class="post-nav-item">
-    <a href="/2022/07/31/%E6%97%A0%E5%A6%A5%E5%8D%8F%E7%9A%84%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="next" title="FaRM:无妥协的强一致性分布式数据库">
+    <a href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E6%97%A0%E5%A6%A5%E5%8D%8F%E7%9A%84%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="next" title="FaRM:无妥协的强一致性分布式数据库">
       FaRM:无妥协的强一致性分布式数据库 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
@@ -503,20 +503,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">67</span>
+          <span class="site-state-item-count">69</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-count">42</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -723,7 +723,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'MyBlogComment',
       owner       : 'fuhaifei',
       admin       : ['fuhaifei'],
-      id          : '25c401d4e7964f845c0783f690cdff62',
+      id          : 'e4894d1092415cfd397a0c0fda2dd116',
         language: 'zh-CN',
       distractionFreeMode: true
     });

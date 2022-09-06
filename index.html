@@ -195,7 +195,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -209,7 +209,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">分布式事务总结</a>
+            <a href="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">MIT6.824实验总结</a>
         </h2>
 
         <div class="post-meta">
@@ -220,7 +220,662 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-07-31 10:31:52 / 修改时间：10:33:13" itemprop="dateCreated datePublished" datetime="2022-07-31T10:31:52+08:00">2022-07-31</time>
+              <time title="创建时间：2022-09-06 10:24:17 / 修改时间：10:25:42" itemprop="dateCreated datePublished" datetime="2022-09-06T10:24:17+08:00">2022-09-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="MIT6-824实验总结-基于Raft的分布式Sharded-KV数据库"><a href="#MIT6-824实验总结-基于Raft的分布式Sharded-KV数据库" class="headerlink" title="MIT6.824实验总结:基于Raft的分布式Sharded KV数据库"></a>MIT6.824实验总结:基于Raft的分布式Sharded KV数据库</h1><p>MIT6.824中共设计了四个实验，主要内容是一个分布式kv数据库。</p>
+<ol>
+<li>mapreduce分布式实现</li>
+<li>raft实现</li>
+<li>基于raft的kv数据库实现</li>
+<li>Sharded KV数据库实现</li>
+</ol>
+<h2 id="Lab1-MapReduce分布式实现"><a href="#Lab1-MapReduce分布式实现" class="headerlink" title="Lab1:MapReduce分布式实现"></a>Lab1:MapReduce分布式实现</h2><p>实现架构按照论文中描述的实现方式：</p>
+<ol>
+<li>coordinator（master）：一个协作服务器，负责任务的分配+任务运行状态的监控</li>
+<li>worker：多个worker，负责map和reduce任务的执行</li>
+</ol>
+<img src="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/image-20220801085644561.png" class="" title="image-20220801085644561">
+<p>整个系统的实现逻辑为（worker主动发送请求，coordinator被动响应请求）：</p>
+<ol>
+<li>coordinator启动，初始化任务信息；同时多个worker启动，开始向coordinator发送rpc请求，请求分配任务</li>
+<li>coordinator根据“FIFO”原则，将map和任务分配给请求地worker，并记录任务状态和分配worker</li>
+<li>coordinator每收到一个worker完成任务的rpc请求，修改待完成任务数量，当map任务完成进入reduce阶段，当reduce任务完成，结束执行</li>
+</ol>
+<p>coordinator主要实现逻辑即为map和reduce任务的分配，以map任务分配的<strong>关键代码</strong>为例：</p>
+<ol>
+<li><p>首先判断是否存在未分配的map任务，若存在则进行任务分配</p>
+</li>
+<li><p>传入workerId，分配任务（记录workerId，修改任务数量，修改任务状态）</p>
+</li>
+<li><p>启动10秒的监控线程，休眠十秒后，如果此时任务状态不为已完成，认为worker执行任务出现问题，将任务状态重新修改为空闲待处理</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> c.numMap != <span class="number">0</span> &#123;</span><br><span class="line">	allocateNumber, allocateFile := c.AllocateMapJob(args.WorkerId)</span><br><span class="line">	<span class="keyword">if</span> allocateNumber != <span class="number">-1</span> &#123;</span><br><span class="line">		reply.JobType = JOBTYPEMAP</span><br><span class="line">		reply.FileList = []<span class="keyword">string</span>&#123;allocateFile&#125;</span><br><span class="line">		reply.JobNumber = allocateNumber</span><br><span class="line">		<span class="comment">//启动线程，10秒种后若结果没有返回,将任务重置为未分配状态</span></span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			time.Sleep(<span class="number">10</span> * time.Second)</span><br><span class="line">			<span class="keyword">if</span> c.mapJobStatus[allocateFile][<span class="number">1</span>] != JOBCOMPLETED &#123;</span><br><span class="line">				c.mapJobLocks[allocateFile].Lock()</span><br><span class="line">				<span class="keyword">defer</span> c.mapJobLocks[allocateFile].Unlock()</span><br><span class="line">				<span class="keyword">if</span> c.mapJobStatus[allocateFile][<span class="number">1</span>] != JOBCOMPLETED &#123;</span><br><span class="line">					c.mapJobStatus[allocateFile][<span class="number">1</span>] = JOBIDLE</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;()</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>worker的主要实现逻辑为不断地向coordinator申请任务，<strong>关键代码</strong>为：</p>
+<ol>
+<li><p>启动时首先向coordinator发送注册rpc请求，获得workerid</p>
+</li>
+<li><p>循环发送申请任务请求，终止条件为：收到任务结束标志或rpc请求失败</p>
+<ul>
+<li>根据获得任务类型（map/reduce），调用对应处理方法，返回处理结果</li>
+<li>当返回失败时（执行超时/rpc失败），删除任务输出结果</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">func Worker(mapf func(string, string) []KeyValue,</span><br><span class="line">	reducef func(string, []string) string) &#123;</span><br><span class="line">	ok, workerId, reduceNumber := ReigsiterWorker()</span><br><span class="line">	if ok &#123;</span><br><span class="line">		for taskEndFlag := false; !taskEndFlag; &#123;</span><br><span class="line">			ok, workInfo := CallForJob(workerId)</span><br><span class="line">			if ok &#123;</span><br><span class="line">				if workInfo.IsOver &#123;</span><br><span class="line">					taskEndFlag = true</span><br><span class="line">				&#125; else &#123;</span><br><span class="line">					switch workInfo.JobType &#123;</span><br><span class="line">					case JOBTYPEMAP:</span><br><span class="line">						ok, intermediate_file_names := doMapWork(workInfo.JobNumber, workInfo.FileList[0], reduceNumber, workerId, mapf)</span><br><span class="line">						if ok &#123;</span><br><span class="line">							ok = CallForMapJobAccomplished(workInfo.FileList[0], workerId, intermediate_file_names)</span><br><span class="line">						&#125;</span><br><span class="line">						if !ok &#123;</span><br><span class="line">							RemoveAllFiles(intermediate_file_names)</span><br><span class="line">						&#125;</span><br><span class="line">					case JOBTYPEREDUCE:</span><br><span class="line">					//省略...................</span><br><span class="line">					default:</span><br><span class="line">						log.Printf(&quot;none job recieved, waiting to next call\n&quot;)</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125; else &#123;</span><br><span class="line">				log.Printf(&quot;failed to request a task, retry 2 seconds later&quot;)</span><br><span class="line">			&#125;</span><br><span class="line">			time.Sleep(2 * time.Second)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p><strong>测试用例完全通过</strong></p>
+<img src="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/image-20220801100606914.png" class="" title="image-20220801100606914">
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Lab1实现还是比较简单的，主要涉及的技术包括：</p>
+<ol>
+<li>通过锁控制共享变量的访问</li>
+<li>通过gorutine实现多线程并发编程</li>
+<li>通过RPC进行进程间相互通信</li>
+</ol>
+<h2 id="Lab2-Raft共识算法实现"><a href="#Lab2-Raft共识算法实现" class="headerlink" title="Lab2:Raft共识算法实现"></a>Lab2:Raft共识算法实现</h2><p>实验二主要任务是实现一个不包括成员切换功能的Raft共识算法，主要实现的功能部分如下</p>
+<ol>
+<li>Leader Election(选主)：实现raft算法的选主功能</li>
+<li>Log Replication(日志复制)：实现日志添加和多副本备份功能</li>
+<li>Persistence(持久化)：按照raft论文中持久化要求，实现对应参数的持久化</li>
+<li>Snapshot/Log Compaction（快照）：raft层实现日志压缩，从而实现上层应用的快照需求</li>
+</ol>
+<h3 id="功能实现"><a href="#功能实现" class="headerlink" title="功能实现"></a>功能实现</h3><p>上述四个功能的实现主要参照论文中的figure2以及课程的相关资料，还有一部分存在疑问的地方也参考了其他人的实现思路，涉及到的参考均在文章末尾列出。</p>
+<h4 id="选主"><a href="#选主" class="headerlink" title="选主"></a>选主</h4><p>选主首先要解决是raft结点的状态变更问题（即<strong>何时进入选举</strong>），按照论文中的思路如下（<strong>关键代码为ticker()函数</strong>）：</p>
+<ul>
+<li><p>为避免选主的争抢问题，随机设置超时时间为250-400ms</p>
+</li>
+<li><p>采用sleep的方式实现超时检测，而不是timer+事件处理的方式</p>
+</li>
+<li>更新超时时间的时机为收到有效的“RPC”消息：<ol>
+<li>为某个 <strong>RequestVoteRPC</strong>(投票请求) 投出一票</li>
+<li>收到 <strong>AppendEntryRPC</strong>(添加日志请求) 且该rpc是有效的</li>
+<li>收到主节点的 <strong>InstallSnapshotRPC</strong>(更新快照请求)</li>
+</ol>
+</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">ticker</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> !rf.killed() &#123;</span><br><span class="line">		time.Sleep(time.Duration(rf.election_timeout-time.Now().UnixMilli()) * time.Millisecond)</span><br><span class="line">		rf.mu.Lock()</span><br><span class="line">		<span class="keyword">if</span> !rf.killed() &amp;&amp; rf.peer_status != STATUS_LEADER &amp;&amp; rf.election_timeout&lt;=time.Now().UnixMilli() &#123;</span><br><span class="line">			<span class="keyword">if</span> rf.election_timeout &lt;= time.Now().UnixMilli() &#123;</span><br><span class="line">                <span class="comment">//省略：修改状态，发起选举</span></span><br><span class="line">			&#125;</span><br><span class="line">            <span class="comment">//省略。。。。。。。</span></span><br><span class="line">		&#125;</span><br><span class="line">		rf.mu.Unlock()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>第二个要解决的是leader端的选举判断逻辑（即<strong>如何进行选举</strong>），基本思路如下（<strong>关键代码为startElection()函数</strong>）：</p>
+<ol>
+<li>主进程为每个其他的raft结点启动一个发送线程，发送请求投票请求</li>
+<li>主进程启动完毕之后，等待到“条件成熟”(主线程使用自旋锁，不断判断)，判断是否成功选为leader</li>
+<li>选为leader执行初始化操作，否则进入下一轮选举</li>
+</ol>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">startElection</span><span class="params">(election_timeout <span class="keyword">int64</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(rf.peers); i++ &#123;</span><br><span class="line">		<span class="keyword">if</span> i != rf.me &#123;</span><br><span class="line">			<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(aimServer <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">				<span class="comment">//省略：发送投票请求，判断是否同意票</span></span><br><span class="line">			&#125;(i)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//主线程不断判断是否满足条件（自旋锁）</span></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">        <span class="comment">//所有发送线程退出/投票数达到要求</span></span><br><span class="line">		<span class="keyword">if</span> <span class="keyword">int</span>(finished_number) == <span class="built_in">len</span>(rf.peers) || <span class="keyword">int</span>(vote_number) &gt; <span class="built_in">len</span>(rf.peers)/<span class="number">2</span> &#123;</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">		rf.mu.Lock()</span><br><span class="line">		<span class="comment">//超时或者状态变更</span></span><br><span class="line">		<span class="keyword">if</span> time.Now().UnixMilli() &gt;= election_timeout || rf.currentTerm != vote_requst.CandidateTerm &#123;</span><br><span class="line">			rf.mu.Unlock()</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">		rf.mu.Unlock()</span><br><span class="line">		<span class="comment">//休息10毫秒</span></span><br><span class="line">		time.Sleep(time.Millisecond * <span class="number">10</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//省略：判断是否能够成为leader，能够成为即转化状态，否则退出，等待下一轮选举</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h5><p>主要涉及到的思路包括以下四点：</p>
+<ol>
+<li>超时状态转换：采用sleep()+election_timeout的机制，不断有”事件“更新election_timeout时间点，检测线程不断的休眠到这个时间点，直到某次“起晚了”</li>
+<li>选举判断：采用<strong>主线程判断+多个从线程（对应结点）发送</strong>的模式，主线程自旋等待条件满足，从线程执行完发送判断即退出</li>
+<li>维持选主状态：通过定时发送heartbeat消息实现（与下部分重叠，在下部分阐述）</li>
+<li>接收端判断投票逻辑：完全按照论文中实现</li>
+</ol>
+<h4 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h4><h5 id="日志发送"><a href="#日志发送" class="headerlink" title="日志发送"></a>日志发送</h5><p>日志复制主要为leader结点的日志发送+follower结点的日志接收，实现之前我想到了两种思路：</p>
+<ol>
+<li>leader为每个follower设置一个发送线程</li>
+<li>leader采用广播形式采用单个发送线程同时向多个follower发送</li>
+</ol>
+<p>逻辑上日志是采用广播形式，即leader每次发送日志会发送到所有的follower结点，另外heatbeart在此逻辑下同样是采用广播形式，然而论文中的如下描述与广播的逻辑相悖（单个结点发送失败不需要重新给其他结点法）</p>
+<blockquote>
+<p>If followers crash or run slowly, or if network packets are lost, the leader retries Append- Entries RPCs indefinitely (even after it has responded to the client) until all followers eventually store all log entries.</p>
+<p>当followers失效或者运行缓慢，导致发送失败，leader应该无限重试直到所有follower存储所有日志</p>
+</blockquote>
+<p>仔细思考所谓的”retries Append- Entries RPCs indefinitely“会发现存在以下问题：</p>
+<ol>
+<li>若在重试过程中leader需要发送另外一个日志，重试是否应该携带新日志，或者停止重试，重新发送，如果不停止一个，就会出现<strong>新旧消息同时发送</strong>的情况，然而如何停止无法实现</li>
+<li>无限的重试导致heartbeat需要针对每个结点单独判断，单独发送</li>
+</ol>
+<p>经过以上思考，最终确定采用广播的形式实现日志发送和heartbeat，基本思路如下：</p>
+<ol>
+<li>统一发送日志和heartbeat使用一个广播接口，发送日志调用广播接口，heartbeat周期性调用广播接口</li>
+<li>广播时每个follower根据nextIndex发送需要的log(不断地广播相当于实现了<strong>无限重试</strong>，只是将重试的逻辑转移到了下一次广播)</li>
+<li>由于heartbeat的周期性发送，即使没有外部日志发送请求，其效果也相当于”无限重试”的效果</li>
+</ol>
+<p>广播关键代码如下（<strong>broadcastAppendEntry()</strong>）：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">broadcastAppendEntry</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">//省略：判断状态函数</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(rf.peers); i++ &#123;</span><br><span class="line">		<span class="keyword">if</span> i != rf.me &#123;</span><br><span class="line">			rf.mu.Lock()</span><br><span class="line">			<span class="comment">//判断perlogIndex是否已经存储在日志中（小于伪头entryindex）</span></span><br><span class="line">			<span class="keyword">if</span> rf.nextIndex[i]<span class="number">-1</span> &lt; rf.log[<span class="number">0</span>].Index &#123;</span><br><span class="line">				<span class="comment">//省略：发送快照方法</span></span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">//根据结点缺失的日志情况，发送日志</span></span><br><span class="line">				args := AppendEntryArgs&#123;LeaderId: rf.me, Entries: rf.log[rf.nextIndex[i]-rf.log[<span class="number">0</span>].Index:], Term: rf.currentTerm,</span><br><span class="line">					PreLogIndex: rf.nextIndex[i] - <span class="number">1</span>, PreLogTerm: rf.log[rf.nextIndex[i]-rf.log[<span class="number">0</span>].Index<span class="number">-1</span>].Term, LeaderCommit: rf.commitIndex + rf.log[<span class="number">0</span>].Index&#125;</span><br><span class="line">				reply := AppendEntryReply&#123;&#125;</span><br><span class="line">				<span class="keyword">go</span> rf.sendAppendEntry(i, &amp;args, &amp;reply)</span><br><span class="line">			&#125;</span><br><span class="line">			rf.mu.Unlock()</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//更新发送时间</span></span><br><span class="line">	rf.lastSendTime = time.Now().UnixMilli()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>调用broadcastAppendEntry的时机有以下两种：</p>
+<ul>
+<li><p>每当leader接收到一个添加日志请求时，调用broadcastAppendEntry() </p>
+</li>
+<li><p>heartbeat采用类似election_timout的机制实现周期性调用broadcastAppendEntry() </p>
+</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">Start</span><span class="params">(command <span class="keyword">interface</span>&#123;&#125;)</span> <span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>, <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">//省略。。。。。</span></span><br><span class="line">	<span class="keyword">if</span> rf.peer_status == STATUS_LEADER &#123;</span><br><span class="line">	<span class="comment">//省略。。。。。</span></span><br><span class="line">		<span class="keyword">go</span> rf.broadcastAppendEntry(<span class="literal">false</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//省略。。。。。</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">heartsbeats</span><span class="params">()</span></span> &#123;</span><br><span class="line">	rf.lastSendTime = time.Now().UnixMilli() - IDLE_INTERVAL_TIME</span><br><span class="line">	<span class="keyword">for</span> !rf.killed() &#123;</span><br><span class="line">		<span class="comment">//省略验证状态代码</span></span><br><span class="line">		<span class="keyword">if</span> time.Now().UnixMilli()-rf.lastSendTime &gt;= IDLE_INTERVAL_TIME &#123;</span><br><span class="line">			rf.broadcastAppendEntry()</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">//休眠到超时（未触发，休息到触发，否则休息一个interval）</span></span><br><span class="line">		time.Sleep(time.Duration(math.Min(IDLE_INTERVAL_TIME, <span class="keyword">float64</span>(IDLE_INTERVAL_TIME+rf.lastSendTime-time.Now().UnixMilli()))) * time.Millisecond)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="日志提交"><a href="#日志提交" class="headerlink" title="日志提交"></a>日志提交</h5><p>日志提交逻辑按照论文中的逻辑，其中实现思路为：</p>
+<ol>
+<li>提交日志到应用：每个raft结点启动时，启动applyEntry线程，等待lastapplied &lt; commitIndex，进行提交</li>
+<li>推进commitIndex：当leader选举成功时，leader启动checkCommit线程，不断推进commitIndex</li>
+</ol>
+<ul>
+<li>两个同步方式均采用golang的条件变量：rf.applyCond 和 rf.leaderCond</li>
+</ul>
+<p>以<strong>关键代码如下</strong>为例：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1.启动raft进程时，启动applyEntry（）进程</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Make</span><span class="params">(peers []*labrpc.ClientEnd, me <span class="keyword">int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">	persister *Persister, applyCh <span class="keyword">chan</span> ApplyMsg)</span> *<span class="title">Raft</span></span> &#123;</span><br><span class="line">	<span class="comment">//省略。。。。。。。。。。。。。。。。。。。。。</span></span><br><span class="line">	<span class="keyword">go</span> rf.checkCommit()</span><br><span class="line">	<span class="keyword">go</span> rf.applyEntry()</span><br><span class="line">	<span class="comment">//省略。。。。。。。。。。。。。。。。。。。。。</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//2.applyEntry等待条件变量</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">applyEntry</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> !rf.killed() &#123;</span><br><span class="line">		rf.applyCond.L.Lock()</span><br><span class="line">		rf.applyCond.Wait()</span><br><span class="line">		rf.applyCond.L.Unlock()</span><br><span class="line">        <span class="comment">//省略：提交代码</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//3.当commitIndex修改时（），唤醒条件变量</span></span><br><span class="line"><span class="comment">//	1. follower收到appenEntries时，有可能修改commitIndex</span></span><br><span class="line"><span class="comment">//	2. leader checkCommit时，有可能修改commitIndex</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">AppendEntries</span><span class="params">(args *AppendEntryArgs, reply *AppendEntryReply)</span></span> &#123;</span><br><span class="line">	<span class="comment">//省略。。。。。。。。。。。。。。。。。。。。。。。。。</span></span><br><span class="line">	<span class="keyword">if</span> rf.lastApplied &lt; rf.commitIndex &#123;</span><br><span class="line">		rf.applyCond.L.Lock()</span><br><span class="line">		rf.applyCond.Signal()</span><br><span class="line">		rf.applyCond.L.Unlock()</span><br><span class="line">	&#125;</span><br><span class="line"><span class="comment">//checkCommit方法不需要等待条件变量，周期性检查</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">checkCommit</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> !rf.killed() &#123;</span><br><span class="line">        <span class="comment">//等待成为leader</span></span><br><span class="line">		rf.leaderCond.L.Lock()</span><br><span class="line">		rf.leaderCond.Wait()</span><br><span class="line">		rf.leaderCond.L.Unlock()</span><br><span class="line">		<span class="comment">//开始周期性检查，是否能增加commitIndex</span></span><br><span class="line">		<span class="keyword">for</span> !rf.killed() &#123;</span><br><span class="line">			time.Sleep(LEADER_COMMIT_CHECK_INTERVAL * time.Millisecond)</span><br><span class="line">			<span class="keyword">if</span> rf.lastApplied &lt; rf.commitIndex &#123;</span><br><span class="line">				rf.applyCond.L.Lock()</span><br><span class="line">				rf.applyCond.Signal()</span><br><span class="line">				rf.applyCond.L.Unlock()</span><br><span class="line">			&#125;</span><br><span class="line">			rf.mu.Unlock()</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h5><p>日志复制部分要实现的逻辑比较多，也比较复杂，难点主要在于设计好整个发送接收以及提交框架，具体的日志验证、nextIndex维护按照论文中的描述即可</p>
+<ol>
+<li>日志发送+heartbeat：统一广播接口，heartbeat周期性调用，日志发送响应外部请求调用</li>
+<li>日志提交：leader的checkCommit线程推进commitIndex，所有raft结点的applyEntry推进lastapplied</li>
+<li>其他实现逻辑：严格按照论文逻辑实现</li>
+</ol>
+<h4 id="持久化"><a href="#持久化" class="headerlink" title="持久化"></a>持久化</h4><p>持久化思路比较简单，在任何修改涉及到持久化属性时，调用持久化方法即可：</p>
+<ol>
+<li><strong>修改term</strong>:任意RPC请求收到Term大于自己的Term响应时;收到任意RPC请求Term大于自己的Term时</li>
+<li><strong>修改log</strong>:AppenEntriesRPC涉及到修改自身log时;Leader被调用start()方法，添加日志时；快照、接收到installsnapshot时</li>
+<li><strong>修改voteFor</strong>:收到RequestVoteRPC，并同意投票时;超时切换为Candidate状态时</li>
+</ol>
+<h4 id="快照"><a href="#快照" class="headerlink" title="快照"></a>快照</h4><p>快照的难点不在于快照本身，而是在于快照导致的<strong>log的index不等于log在LogEntries中的index</strong>，如下图所示，经过快照日志的日志压缩后，raft结点的LogEntries长度从7变为3，导致index为5、6、7的三个日志项在LogEntriesz中的index为1、2、3</p>
+<img src="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/image-20220811144251911.png" class="" title="image-20220811144251911">
+<p>针对以上问题以及raft的性质，进行以下设计:</p>
+<ol>
+<li><strong>本地用伪index</strong>，包括：leader维护的nextIndex和matchIndex、commitIndex和lastApplied</li>
+<li><strong>传输转化为真Index</strong>，包括：appenEntry请求和返回index，requestVote请求和返回Index，installSnpshot请求和返回Index</li>
+</ol>
+<p>确定以上index设计思路后，修改部分原始代码：</p>
+<ol>
+<li>AppendEntries()中接收到leader的commitIndex（真index）确定commitIndex时,需要转化为logEntries中的index</li>
+<li>Snapshot()中接收到leader的commitIndex和lastApplied减去日志压缩的数量</li>
+<li>InstallSnapshot()中接收快照<ul>
+<li>若commitIndex/lastApplied小于快照的LastIncludedIndex，应直接将commitIndex和lastApplied设置为0</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1. 情况1</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">AppendEntries</span><span class="params">(args *AppendEntryArgs, reply *AppendEntryReply)</span></span> &#123;</span><br><span class="line">	<span class="comment">//省略。。。。。。。。</span></span><br><span class="line">    <span class="comment">//更新commitIndex(涉及到index转换)</span></span><br><span class="line">	<span class="keyword">if</span> args.LeaderCommit-rf.log[<span class="number">0</span>].Index &gt; rf.commitIndex &#123;</span><br><span class="line">		rf.commitIndex = args.LeaderCommit - rf.log[<span class="number">0</span>].Index</span><br><span class="line">		<span class="keyword">if</span> rf.commitIndex &gt; <span class="built_in">len</span>(rf.log)<span class="number">-1</span> &#123;</span><br><span class="line">			rf.commitIndex = <span class="built_in">len</span>(rf.log) - <span class="number">1</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">    <span class="comment">//省略。。。。。。。。</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//2.情况2</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">Snapshot</span><span class="params">(index <span class="keyword">int</span>, snapshot []<span class="keyword">byte</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">//省略。。。。。。。。</span></span><br><span class="line">	rf.lastApplied -= index - rf.log[<span class="number">0</span>].Index</span><br><span class="line">	rf.commitIndex -= index - rf.log[<span class="number">0</span>].Index</span><br><span class="line">	<span class="comment">//省略。。。。。。。。</span></span><br><span class="line">  	<span class="comment">//若为leader</span></span><br><span class="line">	<span class="keyword">if</span> rf.peer_status == STATUS_LEADER &#123;</span><br><span class="line">		<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(rf.peers); i++ &#123;</span><br><span class="line">			<span class="keyword">if</span> i != rf.me &#123;</span><br><span class="line">                <span class="comment">//nextIndex移动</span></span><br><span class="line">				rf.nextIndex[i] -= index - rf.log[<span class="number">0</span>].Index</span><br><span class="line">				rf.mathchIndex[i] = rf.nextIndex[i] - <span class="number">1</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">InstallSnapShot</span><span class="params">(args *InstallSnapshotArgs, reply *InstallSnapshotReply)</span></span> &#123;&#123;</span><br><span class="line">	<span class="comment">//省略。。。。。。。。</span></span><br><span class="line">	<span class="comment">//如果lastApplied 或者 commitIndex 小于 args.LastIncludedIndex</span></span><br><span class="line">	<span class="keyword">if</span> rf.commitIndex+rf.log[<span class="number">0</span>].Index &lt; args.LastIncludedIndex </span><br><span class="line">		rf.commitIndex = <span class="number">0</span></span><br><span class="line">		rf.lastApplied = <span class="number">0</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> rf.lastApplied+rf.log[<span class="number">0</span>].Index &lt; args.LastIncludedIndex &#123;</span><br><span class="line">		rf.lastApplied = <span class="number">0</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//省略。。。。。。。。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>快照相关的方法在确定index的转化后，实现难度并不大，关键代码如下：</p>
+<ul>
+<li>在broadcastAppendEntry中增加判断,当prelogIndex指向日志在主节点中不存在时，发送InstallSnapshotRPC</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">broadcastAppendEntry</span><span class="params">(isHeartbeat <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">//省略。。。。。。。。</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(rf.peers); i++ &#123;</span><br><span class="line">		<span class="keyword">if</span> i != rf.me &#123;</span><br><span class="line">			<span class="comment">//省略。。。。。。。。</span></span><br><span class="line">			<span class="comment">//判断perlogIndex是否已经存储在日志中（小于伪头entryindex）</span></span><br><span class="line">			<span class="keyword">if</span> rf.nextIndex[i] &lt;= <span class="number">0</span> &#123;</span><br><span class="line">				<span class="comment">//调用发送快照接口</span></span><br><span class="line">				args := InstallSnapshotArgs&#123;Term: rf.currentTerm, LeaderId: rf.me,</span><br><span class="line">					LastIncludedIndex: rf.log[<span class="number">0</span>].Index, LastIncludedTerm: rf.log[<span class="number">0</span>].Term, Data: rf.persister.snapshot&#125;</span><br><span class="line">				reply := InstallSnapshotReply&#123;&#125;</span><br><span class="line">				<span class="keyword">go</span> rf.sendSnapShot(i, &amp;args, &amp;reply)</span><br><span class="line">				</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				<span class="comment">//省略发送日志代码</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//更新发送时间</span></span><br><span class="line">	rf.lastSendTime = time.Now().UnixMilli()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="总结-3"><a href="#总结-3" class="headerlink" title="总结"></a>总结</h5><p>快照和持久化类似，代码的实现量并不大，关键在于修改历史代码使得兼容当前操作，这几个index的关系和转化折磨了我很久的时间，有时候debug很久才发现，不是逻辑问题，只是index没有考虑到的问题</p>
+<h3 id="遇到的实现问题"><a href="#遇到的实现问题" class="headerlink" title="遇到的实现问题"></a>遇到的实现问题</h3><h5 id="1-不要在占有锁的时候进行通信"><a href="#1-不要在占有锁的时候进行通信" class="headerlink" title="1. 不要在占有锁的时候进行通信"></a>1. 不要在占有锁的时候进行通信</h5><p>通信（RPC,管道等）前应该首先释放锁，因为通信是不可靠的，可能存在延迟返回导致长时间占有锁，系统停顿的问题，两种解决方案</p>
+<ol>
+<li>先释放锁，再进行通信，或者通信完成再获取锁</li>
+<li>启动单独的线程机型通信，主线程继续执行</li>
+</ol>
+<p>情况1应用较为广泛，如下应用日志的关键代码：</p>
+<ul>
+<li>修改之前遇到了死锁bug：当前线程占有锁，向管道(applyCh)中写入，但是由于管道已满导致阻塞，测试代码中管道的消费者消费上一条消息调用Snapshot方法要获取锁，两者构成了占有且等待的条件，构成死锁（<del>这个bug折磨死我了，测试几十次出现一次</del>）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">func (rf *Raft) applyEntry() &#123;</span><br><span class="line">	//省略：。。。。。。。。。。。。。。。</span><br><span class="line">	for !rf.killed() &#123;</span><br><span class="line">		rf.mu.Lock()</span><br><span class="line">		//省略：获取发送所需资源</span><br><span class="line">		rf.mu.Unlock()</span><br><span class="line">		//log.Printf(&quot;peer:%v try to applyEntry，释放锁&quot;, rf.me)</span><br><span class="line">		//再发送信息</span><br><span class="line">		for i := 0; i &lt; len(applyEntries); i++ &#123;</span><br><span class="line">			rf.applyCh &lt;- ApplyMsg&#123;CommandValid: true, SnapshotValid: false, Command: applyEntries[i].Command, CommandIndex: applyEntries[i].Index&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		//log.Printf(&quot;peer:%v try to applyEntry，完成发送&quot;, rf.me)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="2-在收到比自己更新（Term更大）的请求-响应时，应立即修改状态，返回请求"><a href="#2-在收到比自己更新（Term更大）的请求-响应时，应立即修改状态，返回请求" class="headerlink" title="2. 在收到比自己更新（Term更大）的请求/响应时，应立即修改状态，返回请求"></a>2. 在收到比自己更新（Term更大）的请求/响应时，应立即修改状态，返回请求</h5><p>上述机制保证了过期的raft结点不会落后太多，如果在某些地方少考虑了这一要求，会出现意想不到的bug</p>
+<h5 id="3-Leader只能提交自己任期内的日志（重点）"><a href="#3-Leader只能提交自己任期内的日志（重点）" class="headerlink" title="3. Leader只能提交自己任期内的日志（重点）"></a>3. Leader只能提交自己任期内的日志（重点）</h5><p>这一点在看论文的时候有点难理解，导致在实现过程中容易忘记这一点，如果不按照这一点实现，测试时会出现日志不一致的情况</p>
+<h5 id="4-nextIndex会回退，matchIndex不会回退"><a href="#4-nextIndex会回退，matchIndex不会回退" class="headerlink" title="4. nextIndex会回退，matchIndex不会回退"></a>4. nextIndex会回退，matchIndex不会回退</h5><p>这一点结合课程guidance思考了很久才想到，导致了之前一直存在的bug<strong>appendEntries发送端当prelogIndex冲突时只用改nextIndex，不用改matchIndex</strong></p>
+<ul>
+<li>matchIndex指向已经成功写入log，nextIndex回退不可能小于等于matchIndex</li>
+<li>发送appendEnties是之所以会发生prelogIndex冲突，是由于Leader初始化时将nextIndex设置为自己的日志长度</li>
+</ul>
+<h5 id="5-日志复制请求由于网络问题会存在先发送后到达的情况"><a href="#5-日志复制请求由于网络问题会存在先发送后到达的情况" class="headerlink" title="5.日志复制请求由于网络问题会存在先发送后到达的情况"></a>5.日志复制请求由于网络问题会存在先发送后到达的情况</h5><p>在做实验3时测试发现了这个bug，Leader向follower先发送的日志复制请求反而后到，导致nextIndex不是因为日志冲突回退，而是因为历史请求延迟返回错误回退，之前没有考虑到这个情况</p>
+<ul>
+<li>例如：连续发送两个prelogIndex=12的appendEntry请求,第一个请求返回成功推进，第二个请求延迟，此时Leader发送prelogIndex=19的appendEntry请求，成功将nextIndex推进到29后，第二个请求返回，又将nextIndex回退到19</li>
+<li>上述情况在不不使用快照的情况下不会影响正确性，只会影响系统性能；使用快照后，client在收到prelogIndex=19的appendEntry后第二个情况返回之前可能会进行快照，结果导致<strong>client认为日志提交到了29以后，将29之前的日志均快照压缩，Leader由于延迟请求将nextIndex回退到了19，下次发送perlogIndex=19的日志复制请求时，client端已经不包含perlogIndex=19的日志</strong>。</li>
+</ul>
+<p>针对以上<strong>历史请求定义为</strong>：存在比当前请求后发送，但是先被接收到/返回的请求。对此解决方案为:</p>
+<ol>
+<li><p>在follower接收端过滤历史请求</p>
+<ul>
+<li>无法全部过滤，因为follower无法判断请求是否为历史的，只能通过第一个index过滤一部分</li>
+<li>执行历史请求在follower端是不影响正确性的，所以没有采用commitIndex等的更加复杂的判断逻辑</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//判断是否过时，如果过时直接返回</span></span><br><span class="line"><span class="keyword">if</span> args.Term &lt; rf.currentTerm || args.PreLogIndex &lt; rf.log[<span class="number">0</span>].Index &#123;</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在leader端发送请求返回处理时，过滤历史请求</p>
+<ul>
+<li>判断term和nextIndex是否为发送时的值，term不同说明发生了重新选举，nextIndex不同说明当前请求返回前，有其他后发出的请求返回，两种情况都应丢弃当前返回结果</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> rf.currentTerm == args.Term &amp;&amp; rf.nextIndex[server]<span class="number">-1</span> &gt;= <span class="number">0</span> &amp;&amp; args.PreLogIndex == rf.log[rf.nextIndex[server]<span class="number">-1</span>].Index &#123;</span><br><span class="line">    <span class="comment">//......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<ul>
+<li>能够直接过滤历史请求的原因，在于新请求的成功执行代表了老请求+新信息的共同成功执行，即<strong>新请求包括了老请求的所有信息</strong></li>
+</ul>
+<h3 id="测试和总结"><a href="#测试和总结" class="headerlink" title="测试和总结"></a>测试和总结</h3><p>实现不保证不存在bug，在完成代码之后，运行了400次测试用例，全部pass，可以证明整体上的逻辑没有大问题，实验中我得到的收获有以下几点：</p>
+<ol>
+<li>并发控制很好玩，就是死锁太磨人</li>
+<li>解决问题的成就感是遭受折磨的最大回报（<del>如果实验室的项目能给我带来这种成就感，我可能就不会骂他垃圾了，或者说我的水平不足以坚持到能够给我提供成就感的时候</del>）</li>
+</ol>
+<p><img src="MIT6.824实验总结/image-20220821150706818.png" alt="image-20220821150706818" style="zoom:67%;" /></p>
+<h2 id="Lab3-基于Raft的KV数据库实现"><a href="#Lab3-基于Raft的KV数据库实现" class="headerlink" title="Lab3:基于Raft的KV数据库实现"></a>Lab3:基于Raft的KV数据库实现</h2><p>实验三的任务是实现一个基于Raft的多副本kv数据库，在能够保证Raft实现正确性的情况下，实现KV数据库不算太难，在实际的调试中，大部分问题来自于Raft之前实现的小bug，说明ab2的测试还是不够完善，经过修改和重新测试后，通过了lab2和lab3的所有测试。</p>
+<h3 id="实现架构"><a href="#实现架构" class="headerlink" title="实现架构"></a>实现架构</h3><p>该KV数据库满足典型的客户端-服务器的CS实现架构，客户通过Client向发出读写请求，Server接收并执行Client请求，Raft负责实现副本之间操作顺序的共识，client/server/raft之间的具体结构以及交互关系如<a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.824/notes/raft_diagram.pdf">MIT6.824课程资料中的raft_diagram.pdf</a>所示:</p>
+<ol>
+<li>多个Client，每个Client内部请求逐个发送，即单个Client内不会出现操作并发的情况（这一点很重要，一定程度降低了实现难度）</li>
+<li>多个KV Server，每个Server对应一个Raft peer，不同Server存储相同内容，互为备份，通过Raft实现一致状态保证</li>
+</ol>
+<p>一个典型的写操作流程，可以定义为如下流程：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sequenceDiagram</span><br><span class="line">    Client-&gt;&gt;Leader Server: 1.发送写请求</span><br><span class="line">    Leader Server-&gt;&gt;Leader Raft: 2.生成操作日志，发送到Raft层</span><br><span class="line">    Leader Raft -&gt;&gt; Leader Raft: 3.在Raft节点群内备份日志，达到多数后提交日志</span><br><span class="line">    Leader Raft -&gt;&gt; Leader Server: 5.提交日之后，通知server应用操作，修改状态</span><br><span class="line">    Leader Server -&gt;&gt; Client: 5.返回操作执行结果</span><br></pre></td></tr></table></figure>
+<p>其中<strong>每个server对应一个raft peer</strong>，<strong>Leader Raft对应Leader Server</strong>:</p>
+<h3 id="线性一致性和容错"><a href="#线性一致性和容错" class="headerlink" title="线性一致性和容错"></a>线性一致性和容错</h3><h4 id="读线性一致性"><a href="#读线性一致性" class="headerlink" title="读线性一致性"></a>读线性一致性</h4><p>基于Raft的WAL机制下，写请求自然是满足线性一致性的，但是对于读请求，如果不进行特殊处理，可能会读到过期数据</p>
+<ul>
+<li><p>例如：当发生网络分区，Client发送请求到了旧Leader，此时新Leader已经执行了部分更新操作，导致旧Leader返回过期数据，导致不满足读写的线性一致性</p>
+</li>
+<li><p>对于此问题，Raft论文中提出了在响应只读请求之前，与大部分raft peer交互同步，确实自己状态是否已经过期。</p>
+<blockquote>
+<p>Raft handles this by having the leader exchange heartbeat messages with a majority of the cluster before responding<br>to read-only requests.</p>
+</blockquote>
+</li>
+</ul>
+<p>对于raft读操作线性一致性保证，存在其他的效率更高的实现方式（以后进行总结）：</p>
+<ol>
+<li>Read Index</li>
+<li>Lease Read</li>
+</ol>
+<p>同步的方法性能较差，但是实现起来较为简单，结合以上思路系统读写操作实现为：<strong>所有的读写操作均通过leader进行，在应用到本地状态机之前首先提交Raft日志，日志提交后才进行状态变更</strong></p>
+<h4 id="容错"><a href="#容错" class="headerlink" title="容错"></a>容错</h4><blockquote>
+<p>To achieve linearizability in Raft, servers must filter out duplicate requests. The basic idea is that servers save the results of client operations and use them to skip executing the same request multiple times. To implement this, each client is given a unique identifier, and clients assign unique serial numbers to every command. Each server’s state machine maintains a session for each client. The session tracks the latest serial number processed for the client, along with the associated response. If a server receives a command whose serial number has already been executed, it responds immediately without re-executing the request.  - raft论文中容错思路</p>
+</blockquote>
+<p>由于KV层状态机状态以及状态变更基于Raft容错，所以可认为是可靠的，此时需要解决的容错问题其实仅限于请求响应的丢失，即请求成功执行但是客户端未收到响应，针对此问题的容错方案为：</p>
+<ol>
+<li>Client在未收到正确的响应之前，不断重试发送请求</li>
+<li>Server需要对成功执行的请求进行缓存，应对Client的请求重发（Server并不知道一个成功的请求响应是否被Client收到，必须记录）</li>
+</ol>
+<p>由于每个Client的请求串行执行，上述容错方案可以实现为：</p>
+<ol>
+<li>每个Client为每个操作编号，一个操作可以通过 Client号+Operation号唯一标识</li>
+<li>Server为每个Client缓存最新操作的执行结果，接收到操作时通过缓存判断是否为已执行过操作</li>
+</ol>
+<p>上述机制存在一个漏洞即某操作对应Raft日志成功提交，但是可能由于Raft共识达成过于缓慢，在应用到状态机之前，Client认为请求执行超时，重新发送请求，此时同一个操作在Raft中对应两条日志项，针对此中情况增加过滤：</p>
+<ul>
+<li><strong>一条操作可以有多条日志，但是只有一条日志操作会应用到状态机上</strong>了，应用到状态机以后即缓存操作结果</li>
+<li>在应用日志时，通过缓存判断是否为已执行过操作</li>
+</ul>
+<p><strong>小总结：缓存+双重过滤实现了响应丢失的容错，同时避免了重复执行一个相同操作破坏线性一致性</strong></p>
+<p>另外由于实验中Client串行发送请求，导致Server只需要存储每个Client最新操作执行结果，如果Client能够并发发送操作请求，则缓存需要基于滑动窗口的方式(来自<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/278551592">知乎回答</a>),简单总结加深印象：</p>
+<ul>
+<li>Server为每个Client缓存可能需要的请求结果窗口:[op_uncheck1,op_uncheck2,……op_latest]</li>
+<li>Client请求会携带其确认已经接收最大操作号，导致请求结果窗口左边界推进</li>
+<li>Client新请求导致请求结果窗口右边界推进</li>
+</ul>
+<h3 id="功能实现-1"><a href="#功能实现-1" class="headerlink" title="功能实现"></a>功能实现</h3><p>功能实现部分主要分为两部分进行总结：</p>
+<ol>
+<li>KV Client 请求发送逻辑</li>
+<li>KV Server 请求处理逻辑</li>
+</ol>
+<h4 id="KV-Client-请求发送逻辑"><a href="#KV-Client-请求发送逻辑" class="headerlink" title="KV Client 请求发送逻辑"></a>KV Client 请求发送逻辑</h4><p>Client由于请求串行执行，请求处理逻辑较为简单，主要是请求结果处理以及请求初始，以PutAppend操作代码为例：</p>
+<ul>
+<li>初始化请求体是设置操作编号，操作执行成功后才进行操作编号自增</li>
+<li>请求server初始随机访问，按照轮询的方式寻找leader，直到操作成功执行</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(ck *Clerk)</span> <span class="title">PutAppend</span><span class="params">(key <span class="keyword">string</span>, value <span class="keyword">string</span>, op <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">// You will have to modify this function.</span></span><br><span class="line">	args := PutAppendArgs&#123;ClientStamp: ck.clentStamp, OpStamp: ck.opStamp, Key: key, Value: value, Op: op&#125;</span><br><span class="line">	<span class="keyword">for</span> i := ck.leaderServer; ; i = (i + <span class="number">1</span>) % <span class="built_in">len</span>(ck.servers) &#123;</span><br><span class="line">		reply := PutAppendReply&#123;&#125;</span><br><span class="line">		ok := ck.servers[i].Call(<span class="string">&quot;KVServer.PutAppend&quot;</span>, &amp;args, &amp;reply)</span><br><span class="line">		<span class="keyword">if</span> ok &#123;</span><br><span class="line">			<span class="keyword">if</span> reply.Err == ErrTimeOut &#123;</span><br><span class="line">			&#125; <span class="keyword">else</span> <span class="keyword">if</span> reply.Err == ErrWrongLeader &#123;</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				<span class="keyword">if</span> reply.Err == ErrNoKey &#123;</span><br><span class="line">					<span class="keyword">break</span></span><br><span class="line">				&#125;</span><br><span class="line">				<span class="comment">//修改leaderServer</span></span><br><span class="line">				ck.leaderServer = i</span><br><span class="line">				<span class="keyword">break</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125; </span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//最后操作符加一</span></span><br><span class="line">	ck.opStamp++</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Client在初始化随机设置clientId:</p>
+<ul>
+<li>采用实验代码中提供的nrand()函数，由于随机数范围较大，出现重叠的概率较小</li>
+<li>常用的分布式全局不重复ID生成方法为：DB自增、时间戳、snowflake算法（需要进一步学习）</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">MakeClerk</span><span class="params">(servers []*labrpc.ClientEnd)</span> *<span class="title">Clerk</span></span> &#123;</span><br><span class="line">	ck := <span class="built_in">new</span>(Clerk)</span><br><span class="line">	ck.servers = servers</span><br><span class="line">	<span class="comment">// You&#x27;ll have to add code here.</span></span><br><span class="line">	ck.clentStamp = nrand() <span class="comment">//随机生成当前client编号</span></span><br><span class="line">	ck.opStamp = <span class="number">0</span>          <span class="comment">//操作编号初始化为0</span></span><br><span class="line">	bigx, _ := rand.Int(rand.Reader, big.NewInt(<span class="keyword">int64</span>(<span class="built_in">len</span>(servers))))</span><br><span class="line">	ck.leaderServer = <span class="keyword">int</span>(bigx.Int64()) <span class="comment">//随机初始化当前leader，server</span></span><br><span class="line">	<span class="keyword">return</span> ck</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="KV-Server-处理逻辑"><a href="#KV-Server-处理逻辑" class="headerlink" title="KV Server 处理逻辑"></a>KV Server 处理逻辑</h4><p>Server端在接收请求，应用请求变更、返回请求结果之前，首先写入Raft日志：</p>
+<ul>
+<li>基本流程：缓存去重-&gt;提交日志-&gt;等待chan通知 <strong>或</strong> 超时-&gt;返回结果</li>
+<li>其中接收到chan通知后，需要判断此时操作缓存中操作号是否为当前操作号<ul>
+<li>原因：在我的实现中<strong>允许非leader向用户</strong>返回结果，即只要日志提交，且当前server有client在等待返回结果，即通知client</li>
+<li>如此设计会导致一个bug：如果一个日志提交后，旧leader返回结果给client后崩溃，新leader此时上线，client向新leader发送新请求，建立通知通道，此时新leader执行历史请求，向新请求通知通道通知，导致<strong>执行历史请求通知了新请求的返回</strong></li>
+<li>如何排除此错误：请求返回处理程度接收到通知后，判断缓存中操作是否为历史操作结果，<strong>若为历史操作继续循环等待通知</strong></li>
+</ul>
+</li>
+<li><strong>总结</strong>：是否返回操作结果由<strong>日志是否在超时时间内提交</strong>决定，与leader节点状态是否变化无关（此操作规避了leader变换导致的相同操作日志重复提交问题）</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *KVServer)</span> <span class="title">processOperation</span><span class="params">(op Op)</span> <span class="params">(Err, <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> resultError Err</span><br><span class="line">	resultValue := <span class="string">&quot;&quot;</span></span><br><span class="line">	kv.mu.RLock()</span><br><span class="line">	opRes, ok := kv.opResStore[op.ClientStamp]</span><br><span class="line">	<span class="keyword">if</span> ok &amp;&amp; opRes.OpStamp == op.OpStamp &#123;</span><br><span class="line">		resultError, resultValue = opRes.Err, opRes.Value</span><br><span class="line">		kv.mu.RUnlock()</span><br><span class="line">		<span class="keyword">return</span> resultError, resultValue</span><br><span class="line">	&#125;</span><br><span class="line">	kv.mu.RUnlock()</span><br><span class="line">	kv.mu.Lock()</span><br><span class="line">	_, _, isLeader := kv.rf.Start(op)</span><br><span class="line">	<span class="keyword">if</span> !isLeader &#123;</span><br><span class="line">		kv.mu.Unlock()</span><br><span class="line">		resultError = ErrWrongLeader</span><br><span class="line">		<span class="keyword">return</span> resultError, resultValue</span><br><span class="line">	&#125;</span><br><span class="line">	notifyChan := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">1</span>)</span><br><span class="line">	kv.notifyChanStore[op.ClientStamp] = notifyChan</span><br><span class="line">	kv.mu.Unlock()</span><br><span class="line">	timeout := time.Now().UnixMilli() + MaxWaitTime</span><br><span class="line">	<span class="keyword">for</span> time.Now().UnixMilli() &lt; timeout &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> opRes := &lt;-notifyChan:</span><br><span class="line">			<span class="keyword">if</span> opRes.OpStamp == op.OpStamp &#123;</span><br><span class="line">				kv.mu.Lock()</span><br><span class="line">				kv.notifyChanStore[op.ClientStamp] = <span class="literal">nil</span></span><br><span class="line">				kv.mu.Unlock()</span><br><span class="line">				resultError = opRes.Err</span><br><span class="line">				resultValue = opRes.Value</span><br><span class="line">				<span class="keyword">return</span> resultError, resultValue</span><br><span class="line">			&#125;</span><br><span class="line">		<span class="keyword">default</span>:</span><br><span class="line">			<span class="comment">//休眠10微妙</span></span><br><span class="line">			time.Sleep(<span class="number">10</span> * time.Millisecond)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	resultError = ErrTimeOut</span><br><span class="line">	kv.mu.Lock()</span><br><span class="line">	kv.notifyChanStore[op.ClientStamp] = <span class="literal">nil</span></span><br><span class="line">	kv.mu.Unlock()</span><br><span class="line">	<span class="keyword">return</span> resultError, resultValue</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Server在初始化时，启动一个读取提交信息的线程，负责在日志提交后将操作应用到状态机上：</p>
+<ul>
+<li>log应用也<strong>需要过滤重复操作的原因</strong>：在一致性和容错部分描述过，即一条操作可能会有多条日志，但是只有一条日志操作会应用到状态机上</li>
+<li><strong>进行快照时机</strong>：每次应用日志时，判断此时raft日志大小是否达到上限</li>
+<li><strong>切换快照的时机</strong>：一旦接收到切换快照日志，即进行快照切换（2021版本实验需要用到CondInstallSnapshot函数，而2022版本里推荐不实现该函数，直接返回OK，其中涉及到的同步问题<strong>在raft层解决</strong>，见注意事项<a id="snapshotProblem">1</a>）</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *KVServer)</span> <span class="title">applyCommitLog</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> m := <span class="keyword">range</span> kv.applyCh &#123;</span><br><span class="line">		<span class="keyword">if</span> m.CommandValid &#123;</span><br><span class="line">			opCommand := m.Command.(Op)</span><br><span class="line">			kv.mu.Lock()</span><br><span class="line">			kv.lastAppliedIndex = m.CommandIndex</span><br><span class="line">			opRes, ok := kv.opResStore[opCommand.ClientStamp]</span><br><span class="line">			<span class="keyword">if</span> !ok || opRes.OpStamp != opCommand.OpStamp &#123;</span><br><span class="line">				notifyChan := kv.notifyChanStore[opCommand.ClientStamp]</span><br><span class="line">				kv.mu.Unlock()</span><br><span class="line">				<span class="keyword">if</span> notifyChan != <span class="literal">nil</span> &#123;</span><br><span class="line">					kv.notifyChanStore[opCommand.ClientStamp] = <span class="literal">nil</span></span><br><span class="line">					notifyChan &lt;- <span class="number">1</span></span><br><span class="line">				&#125;</span><br><span class="line">            &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">				kv.mu.Unlock()</span><br><span class="line">            &#125;</span><br><span class="line">			<span class="keyword">if</span> kv.maxraftstate != <span class="number">-1</span> &amp;&amp; kv.rf.GetLogSize() &gt; kv.maxraftstate &#123;</span><br><span class="line">				kv.snapshotStatus()</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> m.SnapshotValid &#123;</span><br><span class="line">			kv.loadSnapshot(m.SnapshotIndex, m.Snapshot)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="遇到的实现问题-1"><a href="#遇到的实现问题-1" class="headerlink" title="遇到的实现问题"></a>遇到的实现问题</h3><h5 id="1-InstallSnapshot引发的上层快照切换时机同步问题"><a href="#1-InstallSnapshot引发的上层快照切换时机同步问题" class="headerlink" title="1.InstallSnapshot引发的上层快照切换时机同步问题"></a><a href="#snapshotProblem">1</a>.InstallSnapshot引发的上层快照切换时机同步问题</h5><p>做lab4在测试多并发时遇到了这个问题，发现自己并没有仔细思考CondInstallSnapshot这个函数存在的意义，简单的认为2022版本丢弃后，直接返回true不做其他处理即可，导致了kv层切换快照和应用日志的不同步引发的系统不满足线性一致性问题</p>
+<p><strong>切换日志同步问题</strong>：调用installSnapshot唤醒上层进行快照切换时，由于将快照切换消息发送到kv层时不占有锁，同时日志commit也在向kv层发送，两者存在争抢问题，即可能由于并发导致顺序出现错误，如下图所示例子</p>
+<ol>
+<li>正确顺序为raft发送Snapshot:10日志后，发送后续Command:11和12日志</li>
+<li>错误情况1：raft层截断日志之后，发送Snapshot:10日志之前，提交日志进程读取新日志，抢先发送Command:11日志</li>
+<li>错误情况2：raft层截断日志之前，提交日志进程正在准备发送Command:9-10的日志，此时raft接收到InstallSnapshot，截断日志，抢在提交日志进程发送之前，发送Snapshot:10日志</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">	subgraph 错误顺序2:不需要日志发送</span><br><span class="line">    7[Snapshot:10] --&gt; 8[/Command:9/]--&gt; 9[/Command:10/]</span><br><span class="line">    end</span><br><span class="line">	subgraph 错误顺序1:未来日志提前发</span><br><span class="line">    4[/Command:11/] --&gt; 5[Snapshot:10]--&gt; 6[/Command:12/]</span><br><span class="line">    end</span><br><span class="line">	subgraph 正确顺序:</span><br><span class="line">    1[Snapshot:10] --&gt; 2[/Command:11/]--&gt; 3[/Command:12/]</span><br><span class="line">    end</span><br></pre></td></tr></table></figure>
+<p>切换日志同步问题并不一定会导致上层kv层出现状态不一致的问题，分情况讨论：</p>
+<ul>
+<li><p>错误情况1：会导致过期Snapshot和kv层跳过执行某些日志两种错误</p>
+<ol>
+<li><p>过期snapshot问题：该问题通过在kv层比较最后应用日志index和快照index来过滤过期快照</p>
+</li>
+<li><p>kv层跳过执行日志问题：按照上图，raft集群提交到了log:11，然而raft节点由于一定原因只执行到了log:8,此时raft leader向peer节点发送installsnapshot，然而发生了上图情况二，导致peer对应kv层直接从log:8跳到执行log:11，并且在1问题解决措施下，认为Snapshot:10过期并过滤，从而导致kv层漏执行log:9和log10，可能导致<strong>不一致问题</strong></p>
+<img src="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/image-20220904105055292.png" class="" title="image-20220904105055292">
+</li>
+</ol>
+</li>
+<li><p>错误情况2：导致kv层收到其认为执行过的历史日志</p>
+<ul>
+<li><p>通过比较日志应用index和raft层传入日志，过滤由于snapshot导致的“历史日志”</p>
+</li>
+<li><p>例如上图：在Snapshot:10日志读取后，更新日志应用index到10，之后接收到Command:9-10均认为过期，直接丢弃</p>
+<img src="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/image-20220904104626216.png" class="" title="image-20220904104626216">
+</li>
+</ul>
+</li>
+</ul>
+<p>综上所属，错误1情况的<strong>跳过执行日志问题</strong>无法在kv层解决，需要在raft层避免情况1的出现，针对此设计一下同步思路：</p>
+<ol>
+<li><p>installSnapshot在释放锁之前，sendSnapshot标记+1，完成发送后sendSnapshot标记-1</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//写入applych</span></span><br><span class="line">rf.startSendingSnapshot()</span><br><span class="line"><span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">    rf.applyCh &lt;- ApplyMsg&#123;CommandValid: <span class="literal">false</span>, SnapshotValid: <span class="literal">true</span>, Snapshot: args.Data,</span><br><span class="line">			SnapshotIndex: args.LastIncludedIndex, SnapshotTerm: args.LastIncludedTerm&#125;</span><br><span class="line">	rf.finishSendingSnapshot()</span><br><span class="line">&#125;()</span><br><span class="line">kv.mu.Unlock()</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>日志应用端，发送日志之前等待sendSnapshot为0</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> rf.isSendingSnapshot() &#123;</span><br><span class="line">    time.Sleep(<span class="number">5</span> * time.Millisecond)</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(applyEntries); i++ &#123;</span><br><span class="line">    rf.applyCh &lt;- ApplyMsg&#123;CommandValid: <span class="literal">true</span>, SnapshotValid: <span class="literal">false</span>, Command: applyEntries[i].Command, CommandIndex: applyEntries[i].Index&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>标记采用原子性操作的整数（没必要使用锁）</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">isSendingSnapshot</span><span class="params">()</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">	z := atomic.LoadInt32(&amp;rf.snapshotMsgSending)</span><br><span class="line">	<span class="keyword">return</span> z == <span class="number">1</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">startSendingSnapshot</span><span class="params">()</span></span> &#123;</span><br><span class="line">	atomic.AddInt32(&amp;rf.snapshotMsgSending, <span class="number">1</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(rf *Raft)</span> <span class="title">finishSendingSnapshot</span><span class="params">()</span></span> &#123;</span><br><span class="line">	atomic.AddInt32(&amp;rf.snapshotMsgSending, <span class="number">-1</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>上述不基于锁实现的同步机制，保证了日志应用端在<strong>确定发送日志之前</strong>执行的InstallSnapshot消息<strong>均能够发送</strong>，问题是<strong>有可能后发生的InstallSnapshot会阻碍与其无关之前日志应用端日志发送</strong>，由于installsnapshot调用频率较低，且执行较快，所以该问题影响不大</p>
+<h3 id="测试和总结-1"><a href="#测试和总结-1" class="headerlink" title="测试和总结"></a>测试和总结</h3><p>由于Raft底层保证+单个Client串行执行操作，实现kv服务的难度并不大，主要难点在于请求去重和遗留bug处理，经过三天时间终于写完并且测试通过代码（测试一百轮）。</p>
+<p><img src="MIT6.824实验总结/image-20220822155923816.png" alt="image-20220822155923816" style="zoom:67%;" /></p>
+<img src="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/image-20220822160313514.png" class="" title="image-20220822160313514">
+<h2 id="Lab4-基于Raft的Sharded-KV-数据库实现"><a href="#Lab4-基于Raft的Sharded-KV-数据库实现" class="headerlink" title="Lab4:基于Raft的Sharded KV 数据库实现"></a>Lab4:基于Raft的Sharded KV 数据库实现</h2><p>lab4主要是在原来的kvServer基础上，添加分片(Shard)机制，从而实现一个真正的分布式容错高性能KV数据库，实现过程中的主要难点在于Shard在不同replicate group之间的交互过程。首先系统主要的功能点可以总结为：</p>
+<ol>
+<li>提供包括<code>put(key, value), append(key, value), get(key)</code>的基本kv数据库功能</li>
+<li>基于Raft共识算法的多服务器备份，实现一致性备份存储，实现了系统容错功能</li>
+<li>基于Raft日志的WAL机制以及系统快照机制，允许系统在失效后通过日志重新执行、加载快照等，快速恢复数据</li>
+<li>通过数据分片和多复制服务器组存储方式，实现了系统的高并发访问性能</li>
+<li>支持存储服务器的动态配置，即可以动态的增加删除存储服务器</li>
+</ol>
+<h3 id="基本实现架构"><a href="#基本实现架构" class="headerlink" title="基本实现架构"></a>基本实现架构</h3><p>如下图所示，系统按照标准的CS架构实现，其中Server端包括一个配置管理集群（Shard Manager）以及多个数据片存储管理集群（KV Server Group）；Client端包括两种类型身份的Client：一种为发送KV数据操作请求的客户端（KV Client）,一种为管理分片信息以及数据片存储集群的客户端（Shard Manage Client）</p>
+<ul>
+<li>Shard Manager Server负责kv server group、数据分片以及分片到kv server映射信息等系统元数据的管理（类似于HDFS Master）</li>
+<li>KV Server Group负责按照分片配置存储对应分片数据以及执行和响应KV客户端操作</li>
+</ul>
+<p><img src="MIT6.824实验总结/image-20220904152037470.png" alt="image-20220904152037470" style="zoom: 50%;" /></p>
+<p>其中<strong>Shard Manager</strong>和每个<strong>KV Server Group</strong>，通过多服务器备份的方式实现数据的可靠性，具体实现架构如下图所示（以KV Server Group为例）：</p>
+<ul>
+<li>每个KV Server Group以及ShardManager内包括三个服务器实例，互为备份服务器</li>
+<li>通过基于Raft日志的WAL机制，保证不同副本之间的状态一致性以及错误恢复（KV Server中状态机为存储数据片、Shard Manager中状态机为系统shard元数据）</li>
+</ul>
+<p><img src="MIT6.824实验总结/image-20220904161454555.png" alt="image-20220904161454555" style="zoom:50%;" /></p>
+<h3 id="分片以及分片分配-sharding"><a href="#分片以及分片分配-sharding" class="headerlink" title="分片以及分片分配(sharding)"></a>分片以及分片分配(sharding)</h3><p>kv数据库中的每个key对相当于关系数据库中表中的条目，且value为单值，区别于关系型数据库条目由多个属性组成，采用Horiziontal Partitioning策略，基于hash的方法对数据进行分片，分片方式如下：</p>
+<ul>
+<li>shardNum为配置的固定分片数量，确定后即不会改变</li>
+</ul>
+<script type="math/tex; mode=display">
+shardId := hash(key) \% shardNum</script><ul>
+<li>确定分片后，根据KV Server Group数量将shard<strong>均匀分配</strong>到KV Server Gruop上，由Shard Manager维护映射关系<script type="math/tex; mode=display">
+shadId->GruopId</script></li>
+</ul>
+<p>上述方法可以总结为：<strong>固定分片策略，动态分配方法</strong>相，优缺点为：</p>
+<ul>
+<li>优点：当KV Server Group配置改变时，涉及到数据迁移时，以shard为单位进行迁移，较于以key直接映射KV Serve Group(如下公式)，降低了涉及到的数据迁移通信量</li>
+<li>缺点：根据key分布进行划分，当key分布不均有或者某些热点key访问量较高时，无法保证不同KV Serve Group之间的负载均衡</li>
+</ul>
+<script type="math/tex; mode=display">
+shardId := hash(key) \% Server Group Num</script><p>未来可以优化的点：</p>
+<ul>
+<li>采用复合划分Composite partitioning策略即：首先基于哈希方法划分，在根据key的分布规律和请求访问，进行基于列表划分（List Partitionning）的二次细粒度划分</li>
+<li>可以基于一致性哈希实现shard-&gt;KV Serve Group的映射管理，降低由于KV Serve Group的增加或者减少shard重分配导致的数据迁移</li>
+</ul>
+<h4 id="分片分配机制"><a href="#分片分配机制" class="headerlink" title="分片分配机制"></a>分片分配机制</h4><p>Shard Manager作为<script type="math/tex">key->kvServerGroup</script>的配置管理查询服务，支持动态增加/删除存储服务器，相关接口如下</p>
+<ul>
+<li><code>Join(servers)</code>：批量增加存储服务器组</li>
+<li><code>Leave(gruopIds)</code>：批量删除存储服务器组</li>
+</ul>
+<p>当kvServerGroup配置发生改变时，Shard Manager会重新在剩余可用Gruop进行shard重分配，基本原则如下：</p>
+<ul>
+<li>保证shard在所有server Group上的<strong>均匀分配</strong>：一部分存储平均数个shard，一部分存储平均数+1个shard</li>
+<li>尽量<strong>减少shard迁移</strong>：重新计算平均数，存储shard大于平均数的group移动到小于平均数的group</li>
+</ul>
+<p>重分配关键代码如下所示：</p>
+<ul>
+<li>根据group数量，计算平均值<code>averagerShard</code>和余数<code>remindShard</code>，<strong>最终分配结果为</strong>：<code>remindShard</code>个server存储<code>averagerShard + 1</code>个shard，其余group存储<code>averagerShard</code>个shard</li>
+<li>分为统计重分配shard和重新分配两个步骤，两步骤思路基本相同</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//首先统计当前gruop数量</span></span><br><span class="line"><span class="keyword">for</span> key, _ := <span class="keyword">range</span> newConfig.Groups &#123;</span><br><span class="line">	groupShardNumMap[key] = <span class="number">0</span></span><br><span class="line">	allGroupId = <span class="built_in">append</span>(allGroupId, key)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//将shard超过average的日志重新分配</span></span><br><span class="line">reallocateShards := <span class="built_in">make</span>([]<span class="keyword">int</span>, <span class="number">0</span>)</span><br><span class="line">averageShard := <span class="built_in">len</span>(newConfig.Shards) / <span class="built_in">len</span>(allGroupId)</span><br><span class="line">remindShard := <span class="built_in">len</span>(newConfig.Shards) % <span class="built_in">len</span>(allGroupId)</span><br><span class="line"><span class="keyword">for</span> shard, group := <span class="keyword">range</span> newConfig.Shards &#123;</span><br><span class="line">	_, ok := newConfig.Groups[group]</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		<span class="comment">//shard所属gruop被删除的情况</span></span><br><span class="line">		reallocateShards = <span class="built_in">append</span>(reallocateShards, shard)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		numShard := groupShardNumMap[group]</span><br><span class="line">		<span class="comment">//如何判断一个group是否超量（关键）：管理shard数量 &gt; averageShard 或者 管理shard数量 == averageShard 且此时可以管理averageShard + 1个shard的机会已经用尽</span></span><br><span class="line">		<span class="keyword">if</span> numShard &gt; averageShard || (numShard == averageShard &amp;&amp; remindShard == <span class="number">0</span>) &#123;</span><br><span class="line">			reallocateShards = <span class="built_in">append</span>(reallocateShards, shard)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="comment">//如果当前group管理shard数量为averageShard，再分配一个shard，当前group管理了averageShard + 1个shard，则需要占用一个管理averageShard + 1的名额</span></span><br><span class="line">			<span class="keyword">if</span> numShard == averageShard &#123;</span><br><span class="line">				remindShard--</span><br><span class="line">			&#125;</span><br><span class="line">			groupShardNumMap[group] += <span class="number">1</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//开始重新分配</span></span><br><span class="line"><span class="comment">//。。。。。。省略重新分配代码，和上部分差异不大</span></span><br></pre></td></tr></table></figure>
+<h3 id="分片迁移实现"><a href="#分片迁移实现" class="headerlink" title="分片迁移实现"></a>分片迁移实现</h3><p>当系统发生Server Gruop的增加或者删除时，会触发shard在不同server之间的变更，虽然整体上思考较为复杂，但是从单个shard迁移的角度考虑，可以将变更过程定义为：多个同时进行的<strong>shard从一个server group 到 另一个server group</strong>的过程，如下图所示：</p>
+<ul>
+<li>对于每个server group来说，在每个配置变更期，要么有一定量移出的shard，要么有一定量等待移入的shard，要么shard不变</li>
+</ul>
+<p><img src="MIT6.824实验总结/image-20220905112323707.png" alt="image-20220905112323707" style="zoom:50%;" /></p>
+<p>在shard迁移过程中，我们必须保证一下几点：</p>
+<ol>
+<li>shard不能丢失：需要迁出shard的server group只有在确保对方成功接收对应shard后，才能安全删除</li>
+<li>shard一旦迁出，不能再提供服务：server group在迁出shard后，不能再服务shard上的数据操作（client端可能为获取到最新配置，导致该问题的出现）</li>
+<li>在配置切换过程中，系统能够继续提供服务</li>
+</ol>
+<p>针对上述问题，为shard定义以下几个状态，迁入迁出过程可以通过状态变更实现：</p>
+<ul>
+<li><code>Normal</code>：默认正常状态（<strong>正常访问操作</strong>）</li>
+<li><code>WaitIn</code>：等待迁入状态（无法访问操作）</li>
+<li><code>In</code>：已经迁入，但还向发送端确认状态（<strong>正常访问操作</strong>）</li>
+<li><code>out</code>：等待迁出状态（无法访问操作）</li>
+<li><code>Delelte</code>：迁出完毕状态，可以进行垃圾回收（无法访问操作）</li>
+</ul>
+<p>如下图以一个shard迁移过程中的状态变更为例，分析变更流程：</p>
+<ul>
+<li>shard接收端读取到新配置后，创建空shard，并设置状态为 <code>WaitIn</code></li>
+<li>不断地向发送端，拉取shard(<strong>由发送端推也一样，只是选择实现了拉</strong>)，不断重试，直到获取到shard，修改状态： <code>WaitIn -&gt; In</code></li>
+<li>完成状态转换后，向发动端发送确认收到RPC，发动端修改shard状态： <code>Out -&gt; Delete</code></li>
+<li>接收端不断地发送确认收到RPC，直到RPC请求返回，携带有发送端已经将对应shard状态变更为<code>Delete</code>或者删除的信息后，停止发送，修改状态：<code>In -&gt; Normal</code></li>
+<li>当server Group的所有shard状态变为<code>Normal</code>或者<code>Delete</code>时，<strong>完成配置变更</strong></li>
+<li>上述所有状态变更操作均首先提交到raft，在<strong>操作日志成功提交后</strong>，执行对应状态变更</li>
+</ul>
+<img src="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/image-20220905145204954.png" class="" title="image-20220905145204954">
+<p>上述设计思路的原因：</p>
+<ol>
+<li><p>为什么需要确认消息，才能将对应shard状态变更<code>Out -&gt; Delete</code></p>
+<ul>
+<li>由于发送端是被拉取方，在接收端发送确认收到消息后，发送端才能保证shard已经发送到接收端且成功存储可以<strong>删除</strong></li>
+</ul>
+</li>
+<li><p>为什么确认收到消息，返回需要携带发动端是否将对应shard状态变更为delete</p>
+<ul>
+<li>接受端发送确认消息的目的是为了通知发送端自己确认收到shard，接收端需要<strong>保证</strong>发送端收到并且成功记录的自己的确认消息，当发送端shard状态变为delete时，接收端可以确定自己的确认消息成功执行</li>
+<li><p>若不按照上述方式执行，可能存在第一次消息确认成功返回，接收端停止发送，但是发送端由于leader切换等，消息确认操作log未成功提交，导致发送端<strong>无限期等待接收端的确认消息</strong></p>
+</li>
+<li><p>上述设计来源于假设：即使请求成功返回，对应操作不一定成功执行，只有操作结果出现（raft保证操作结果不丢失），才能保证操作执行</p>
+</li>
+</ul>
+</li>
+</ol>
+<ul>
+<li><strong>简单总结</strong>：发送端需要保证接收端接收到才能删除shard-&gt;接收端需要通知发送端自己收到了-&gt;接收端需要保证接收端知道了自己成功接收，才能停止通知</li>
+</ul>
+<h4 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h4><p>在具体设计实现过程中，并未采用状态变更与通信绑定的操作，即一个线程执行了状态变更后，进行对应发送请求，具体考虑如下：</p>
+<ul>
+<li>通信可能失败，需要不断重试，状态变更线程不应等待通信，应该继续执行其他操作</li>
+<li>状态变更线程由于互斥需要，往往需要持有锁，由于通信的不确定性（延迟、失败），持有锁时进行RPC通信，可能导致系统性能大幅下降</li>
+</ul>
+<p>综合考虑上述设计问题，采用了状态变更线程+周期性状态检测线程的思路</p>
+<ul>
+<li>状态变更线程：负责读取raft日志，根据日志中操作变更shard状态</li>
+<li>周期性状态检测线程：周期性遍历shard，根据shard状态按照上述交互图，发送消息</li>
+</ul>
+<p><strong>状态变更线程</strong>代码如下所示：</p>
+<ul>
+<li>只负责根据日志操作进行状态变更，不负责状态变更后的操作</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *ShardKV)</span> <span class="title">processConfigOp</span><span class="params">(commandInterface <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> opCommand := commandInterface.(<span class="keyword">type</span>) &#123;</span><br><span class="line">	<span class="keyword">case</span> ConfigOp:</span><br><span class="line">		<span class="comment">//过滤重复的修改配置操作（因为从写入日志到日志提交存在时间差，可能重复提交日志）</span></span><br><span class="line">		<span class="keyword">if</span> opCommand.Config.Num &gt; kv.config.Num &#123;</span><br><span class="line">            <span class="comment">//省略根据配置信息修改shard状态代码</span></span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> InShardOp:</span><br><span class="line">		<span class="keyword">if</span> opCommand.ConfigNum == kv.config.Num &#123;</span><br><span class="line">			<span class="comment">//省略添加shard(去重)</span></span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> DelShardOp:</span><br><span class="line">		<span class="keyword">if</span> opCommand.ConfigNum == kv.config.Num &#123;</span><br><span class="line">			<span class="comment">//省略修改shard状态为out-&gt;delete(需要去重)</span></span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> AckShardOp:</span><br><span class="line">		<span class="keyword">if</span> opCommand.ConfigNum == kv.config.Num &#123;</span><br><span class="line">			<span class="comment">//省略从in状态修改为normal状态(需要去重)</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>周期性检测线程</strong>代码如下所示：</p>
+<ul>
+<li>遍历所有shard，启动单独线程负责通信，主线程等待所有通信线程退出</li>
+<li>所有通信线程推出后，主线程遍历所有shard，判断是否退出配置切换状态</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *ShardKV)</span> <span class="title">updateShardState</span><span class="params">(updateFunc <span class="keyword">func</span>(<span class="keyword">int</span>, <span class="keyword">int</span>, []<span class="keyword">string</span>)</span>, <span class="title">chaeckStatus</span> <span class="title">string</span>)</span> &#123;</span><br><span class="line">	kv.mu.RLock()</span><br><span class="line">	_, isLeader := kv.rf.GetState()</span><br><span class="line">	<span class="comment">//如果在配置</span></span><br><span class="line">	<span class="keyword">if</span> kv.isConfiging() &amp;&amp; isLeader &#123;</span><br><span class="line">		<span class="keyword">var</span> wg sync.WaitGroup</span><br><span class="line">        <span class="comment">//遍历所有shard，根据状态执行对应操作（如：WaitIn状态发起拉取RPC请求，In状态发起确认RPC）</span></span><br><span class="line">		<span class="keyword">for</span> shardId, shard := <span class="keyword">range</span> kv.allShards &#123;</span><br><span class="line">			<span class="keyword">if</span> shard.ShardStatus == chaeckStatus &#123;</span><br><span class="line">				wg.Add(<span class="number">1</span>)</span><br><span class="line">				<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(shardId <span class="keyword">int</span>, configNum <span class="keyword">int</span>, allServers []<span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">					<span class="keyword">defer</span> wg.Done()</span><br><span class="line">					updateFunc(shardId, configNum, allServers)</span><br><span class="line">				&#125;(shardId, kv.config.Num, kv.preConfig.Groups[kv.preConfig.Shards[shardId]])</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">//释放锁，并等待</span></span><br><span class="line">		kv.mu.RUnlock()</span><br><span class="line">		wg.Wait()</span><br><span class="line">        <span class="comment">//上锁，判断当前状态是否可以退出配置状态</span></span><br><span class="line">		kv.mu.RLock()</span><br><span class="line">		completeFlag := <span class="literal">true</span></span><br><span class="line">		<span class="keyword">for</span> _, shard := <span class="keyword">range</span> kv.allShards &#123;</span><br><span class="line">			<span class="keyword">if</span> shard.ShardStatus != ShardNormal &amp;&amp; shard.ShardStatus != ShardDelete &#123;</span><br><span class="line">				completeFlag = <span class="literal">false</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		kv.mu.RUnlock()</span><br><span class="line">		<span class="keyword">if</span> completeFlag &#123;</span><br><span class="line">			kv.changeConfigState(<span class="literal">false</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		kv.mu.RUnlock()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于后台存在多个周期性运行函数（状态检测、垃圾回收），抽取一个<strong>公用的周期循环</strong>方法：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *ShardKV)</span> <span class="title">backRoutine</span><span class="params">(operation <span class="keyword">func</span>()</span>, <span class="title">interval</span> <span class="title">int</span>)</span> &#123;</span><br><span class="line">	<span class="keyword">for</span> !kv.killed() &#123;</span><br><span class="line">		<span class="comment">//执行具体操作</span></span><br><span class="line">		operation()</span><br><span class="line">		time.Sleep(time.Duration(interval) * time.Millisecond)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//传入需要周期运行的方法</span></span><br><span class="line"><span class="keyword">go</span> kv.backRoutine(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; kv.updateShardState(kv.callMigrateShard, ShardWaitIn) &#125;, UpdateShardInterval)</span><br><span class="line"><span class="comment">//启动确认收到对应shard的线程</span></span><br><span class="line"><span class="keyword">go</span> kv.backRoutine(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123; kv.updateShardState(kv.callMigrateShardAck, ShardIn) &#125;, UpdateShardInterval)</span><br></pre></td></tr></table></figure>
+<h4 id="垃圾回收实现"><a href="#垃圾回收实现" class="headerlink" title="垃圾回收实现"></a>垃圾回收实现</h4><p>根据分片迁移实现部分逻辑，仅仅需要回收状态为delete状态的shard，实现逻辑较为简单，采用周期性回收线程的方式，关键代码如下：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *ShardKV)</span> <span class="title">garbageCollect</span><span class="params">()</span></span> &#123;</span><br><span class="line">	kv.mu.Lock()</span><br><span class="line">	<span class="keyword">for</span> shardId, shard := <span class="keyword">range</span> kv.allShards &#123;</span><br><span class="line">		<span class="keyword">if</span> shard.ShardStatus == ShardDelete &#123;</span><br><span class="line">			<span class="comment">//删除对应状态的shard</span></span><br><span class="line">			<span class="built_in">delete</span>(kv.allShards, shardId)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	kv.mu.Unlock()</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//启动垃圾回收线程</span></span><br><span class="line"><span class="keyword">go</span> kv.backRoutine(kv.garbageCollect, GCInterval)</span><br></pre></td></tr></table></figure>
+<h3 id="遇到的实现问题-2"><a href="#遇到的实现问题-2" class="headerlink" title="遇到的实现问题"></a>遇到的实现问题</h3><h5 id="1-同一个类型中的RPC请求-结构体中，由于条件不同请求参数不同，导致大量无用参数"><a href="#1-同一个类型中的RPC请求-结构体中，由于条件不同请求参数不同，导致大量无用参数" class="headerlink" title="1.同一个类型中的RPC请求/结构体中，由于条件不同请求参数不同，导致大量无用参数"></a>1.同一个类型中的RPC请求/结构体中，由于条件不同请求参数不同，导致大量无用参数</h5><p>在实现过程中遇到了一个操作请求对应多种不同操作的情况，不同操作需要携带不同的操作参数，如下代码所示：</p>
+<ul>
+<li>一种操作对应四种类型的操作，传输其他操作时需要占用其他三种操作参数的空间</li>
+</ul>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ShardOp <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">//公共参数</span></span><br><span class="line">	OpType    <span class="keyword">string</span></span><br><span class="line">	ConfigNum <span class="keyword">int</span></span><br><span class="line">	<span class="comment">//修改配置操作参数</span></span><br><span class="line">	Config shardctrler.Config</span><br><span class="line">	<span class="comment">//添加shard操作参数</span></span><br><span class="line">	AddShard <span class="keyword">int</span></span><br><span class="line">	Shard    ShardData</span><br><span class="line">	<span class="comment">//删除操作参数</span></span><br><span class="line">	DelShard <span class="keyword">int</span></span><br><span class="line">	<span class="comment">//确认shard操作参数</span></span><br><span class="line">	AckShard <span class="keyword">int</span> <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>针对以上情况，想出了三种解决方案</p>
+<ol>
+<li><p>发送不特殊处理，接收端根据opType进行处理（不做处理），缺点是：多余参数占用空间</p>
+</li>
+<li><p>修改结构体，使用byte[]存储编码后的参数，发送端编码，接收端根据OpType进行解码，缺点：编解码浪费时间，发送接收端需要确定编码顺序</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ShardOp <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">//公共参数</span></span><br><span class="line">	OpType    <span class="keyword">string</span></span><br><span class="line">	ConfigNum <span class="keyword">int</span></span><br><span class="line">	<span class="comment">//修改配置操作参数</span></span><br><span class="line">	parameters []<span class="keyword">byte</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将结构体拆分，传输不同的结构体，在接收端基于golang反射进行操作，缺点：反射的运行效率较低，影响系统运行效率</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> DelShardOp <span class="keyword">struct</span> &#123;</span><br><span class="line">	ConfigNum <span class="keyword">int</span> <span class="comment">//非切换配置需要使用的去重参数</span></span><br><span class="line">	DelShard  <span class="keyword">int</span> <span class="comment">//迁移出删除shard的参数</span></span><br><span class="line"></span><br><span class="line">	AddShard <span class="keyword">int</span>       <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">	Shard    ShardData <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">type</span> InShardOp <span class="keyword">struct</span> &#123;</span><br><span class="line">	ConfigNum <span class="keyword">int</span>       <span class="comment">//非切换配置需要使用的去重参数</span></span><br><span class="line">	AddShard  <span class="keyword">int</span>       <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">	Shard     ShardData <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">type</span> AckShardOp <span class="keyword">struct</span> &#123;</span><br><span class="line">	ConfigNum <span class="keyword">int</span> <span class="comment">//非切换配置需要使用的去重参数</span></span><br><span class="line">	AckShard  <span class="keyword">int</span> <span class="comment">//迁移进入shard的参数</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//接收端执行操作</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(kv *ShardKV)</span> <span class="title">processConfigOp</span><span class="params">(commandInterface <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> opCommand := commandInterface.(<span class="keyword">type</span>) &#123;</span><br><span class="line">	<span class="keyword">case</span> ConfigOp:</span><br><span class="line">	<span class="keyword">case</span> InShardOp:</span><br><span class="line">	<span class="keyword">case</span> DelShardOp:</span><br><span class="line">	<span class="keyword">case</span> AckShardOp:</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>最后综合考虑<strong>采用第三种方法</strong>，虽然执行效率低，但是实现逻辑上更加清晰，相较于第一种方式减少了空间浪费，降低了网络通信代价</p>
+<h3 id="测试与总结"><a href="#测试与总结" class="headerlink" title="测试与总结"></a>测试与总结</h3><p>测试过程按照以下方式进行：</p>
+<ul>
+<li><p>执行测试脚本，测试200次，每次输出结果写入到文件中</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">for ((i = 0; i &lt; 200; i++)); do echo $i; (go test) &gt; ./res/$i; grep -nr &quot;FAIL.*&quot; res;  done</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>执行完毕，统计通过数量</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grep -nr <span class="string">&quot;PASS&quot;</span> res |wc -l</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>重复执行三轮，共计测试600次</p>
+</li>
+</ul>
+<p>测试结果为：</p>
+<ul>
+<li>测试所有轮次均通过</li>
+</ul>
+<img src="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/image-20220905161251235.png" class="" title="image-20220905161251235">
+<ul>
+<li>其中一次的测试输出为：</li>
+</ul>
+<img src="/2022/09/06/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/image-20220905161743796.png" class="" title="image-20220905161743796">
+<h5 id="总结-4"><a href="#总结-4" class="headerlink" title="总结"></a>总结</h5><p>终于经过了一个多月的视频学习和接近一个月的实验实现，终于完成MIT6.824的学习，现在回看自己的收获可以总结为以下几点：</p>
+<ol>
+<li>对于分布式系统概念以及涉及到的知识点，有了广泛但不一定深入的了解</li>
+<li>掌握了基本golang开发和调试的能力，对于golang的特性和语法有了一定程度的理解</li>
+<li>对于并发编程，RPC通信，线程和进程有了更深的理解</li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>在实现过程中，由于存在部分知识点理解不够透彻，漏看某些实验条件和实验约束，导致部分实验卡壳，实现过程中参考了部分其他实现方案，具体参考如下：</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/463146544">知乎：MIT6.824-2021 Lab4 : MultiRaft</a> 主要参考了shard封装和状态的思路，并从博主其他博客中了解到了其他可用来帮助加深理解Raft等算法的资料</li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/sun-lingyu/p/14591757.html">博客园：MIT6.824 spring21 Lab2D总结记录</a> 根据博客中快照同步的讲解理解了为什么会需要快照同步，不进行快照同步可能带来的bug</li>
+<li><a href="">知乎：MIT6.824_2021_labs</a> 主要和他实现性能进行对比(因为只有他放了结果截图)，基本所有lab实现测试时间小于他的水平（<del>达到心理的满足</del>）</li>
+</ol>
+<p>除此之外，参考其他的大多是golang相关的问题，四个实验从设计到实现<strong>基本上独立完成</strong>，参考较少，没有进行过代码copy。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/09/06/Golang%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/09/06/Golang%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">Golang并发控制总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-09-06 10:17:49 / 修改时间：10:22:12" itemprop="dateCreated datePublished" datetime="2022-09-06T10:17:49+08:00">2022-09-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Golang%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Golang编程</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Golang并发控制总结"><a href="#Golang并发控制总结" class="headerlink" title="Golang并发控制总结"></a>Golang并发控制总结</h2><blockquote>
+<p>写在开头：最近用go做MIT6.824课程作业时，涉及到大量基于golang的并发控制，但是由于不熟悉golang语言以及相关并发控制手段，导致出现了大量的bug，影响了实现进程，因此产生了总结学习golang并发控制的想法</p>
+</blockquote>
+<p>目前大厂的后端开发大量的从java转向go，很大一部分原因是由于go所具备的高并发、高性能、容易开发等性质，可以说go并发控制是学习go内容中最为重要的一部分（<del>java并发我都没学会，直接学go，看出我的诚意了吧</del>），下面的总结学习主要基于golang官网的Effective Go的<a target="_blank" rel="noopener" href="https://go.dev/doc/effective_go#concurrency">cocurrency章节</a>。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/09/06/Golang%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6%E6%80%BB%E7%BB%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">分布式事务总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-07-31 10:31:52 / 修改时间：10:35:31" itemprop="dateCreated datePublished" datetime="2022-07-31T10:31:52+08:00">2022-07-31</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -258,7 +913,7 @@
 <p>分布式事务可以看作事务+分布式环境，即一个执行范围跨越多个通过网络连接的不同主机的事务，分布式事务既然是事务，同样要满足ACID性质，但是由于分布式环境的复杂性，原有的事务性质保证手段在分布式环境下需要进行调整和新的设计。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93/#more" rel="contents">
+              <a class="btn" href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -282,7 +937,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -296,7 +951,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/07/31/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/" class="post-title-link" itemprop="url">Spark：分布式容错的内存计算框架</a>
+            <a href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/" class="post-title-link" itemprop="url">Spark：分布式容错的内存计算框架</a>
         </h2>
 
         <div class="post-meta">
@@ -340,12 +995,12 @@
 <li>不同RDD之间通过操作链接起来，形成一个RDD转换父子关系链</li>
 <li>Spark通过记录RDD转化的父子关系以及操作类型，实现容错（在RDD丢失后，根据计算链重新计算）</li>
 </ul>
-<img src="/2022/07/31/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/image-20220726150407285.png" class="" title="image-20220726150407285">
+<img src="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/image-20220726150407285.png" class="" title="image-20220726150407285">
 <p>系统中通过五个元信息定义一个RDD：一系列分区、一系列父RDD依赖、转化操作、元数据（分区放置、分区信息），依赖关系如下图，分为一对一（narrow）和多对一（wide）。</p>
-<img src="/2022/07/31/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/image-20220726153152468.png" class="" title="image-20220726153152468">
+<img src="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/image-20220726153152468.png" class="" title="image-20220726153152468">
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/07/31/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/#more" rel="contents">
+              <a class="btn" href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -369,7 +1024,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E6%97%A0%E5%A6%A5%E5%8D%8F%E7%9A%84%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E6%97%A0%E5%A6%A5%E5%8D%8F%E7%9A%84%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -383,7 +1038,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/07/31/%E6%97%A0%E5%A6%A5%E5%8D%8F%E7%9A%84%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="post-title-link" itemprop="url">FaRM:无妥协的强一致性分布式数据库</a>
+            <a href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E6%97%A0%E5%A6%A5%E5%8D%8F%E7%9A%84%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="post-title-link" itemprop="url">FaRM:无妥协的强一致性分布式数据库</a>
         </h2>
 
         <div class="post-meta">
@@ -433,7 +1088,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/07/31/%E6%97%A0%E5%A6%A5%E5%8D%8F%E7%9A%84%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/#more" rel="contents">
+              <a class="btn" href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E6%97%A0%E5%A6%A5%E5%8D%8F%E7%9A%84%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -457,7 +1112,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -471,7 +1126,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="post-title-link" itemprop="url">Spanner：“真”分布式数据库</a>
+            <a href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="post-title-link" itemprop="url">Spanner：“真”分布式数据库</a>
         </h2>
 
         <div class="post-meta">
@@ -517,7 +1172,7 @@
 <p>针对以上问题，一个支持更强关系模式的多时间版本的数据库-Spanner诞生了。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/07/31/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/#more" rel="contents">
+              <a class="btn" href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -879,171 +1534,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E7%BA%BF%E6%AE%B5%E6%A0%91%E6%95%B4%E7%90%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/13/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E7%BA%BF%E6%AE%B5%E6%A0%91%E6%95%B4%E7%90%86/" class="post-title-link" itemprop="url">线段树整理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-07-13 17:04:19 / 修改时间：17:06:55" itemprop="dateCreated datePublished" datetime="2022-07-13T17:04:19+08:00">2022-07-13</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">算法整理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="线段树总结"><a href="#线段树总结" class="headerlink" title="线段树总结"></a>线段树总结</h2><p>学完树状数组，很难控制住自己不学线段树，线段树是一种可以在$O(logN)$ 时间复杂度内实现区间和单点操作的数据结构：</p>
-<ol>
-<li>单点修改/查询</li>
-<li>区间修改/查询</li>
-</ol>
-<p>与树状数组的区别在于：树状数组只能执行 单点修改+区间查询 或 区间修改+单点查询 。线段树能够均能支持，但是复杂度的常数系数显著大于树状数组（ps:能用树状数组就用树状数组）</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/07/13/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E7%BA%BF%E6%AE%B5%E6%A0%91%E6%95%B4%E7%90%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/" class="post-title-link" itemprop="url">如何做研究-第二部分</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-07-13 17:00:36 / 修改时间：17:01:13" itemprop="dateCreated datePublished" datetime="2022-07-13T17:00:36+08:00">2022-07-13</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%A7%91%E7%A0%94%E7%9B%B8%E5%85%B3/" itemprop="url" rel="index"><span itemprop="name">科研相关</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="第二部分-提问题，找答案"><a href="#第二部分-提问题，找答案" class="headerlink" title="第二部分 提问题，找答案"></a>第二部分 提问题，找答案</h2><p>这一部分主要提供如何从兴趣、专业领域中寻找研究问题，并寻找问题答案过程的建议和方法论。</p>
-<h3 id="从话题到问题"><a href="#从话题到问题" class="headerlink" title="从话题到问题"></a>从话题到问题</h3><p>从感兴趣的话题领域到具体的研究问题是一个从大到小的过程</p>
-<ul>
-<li>话题是广泛的，往往涵盖大量的信息和资料，沉浸在一个话题中搜索查找相关信息，虽然能够搜集大量的信息，然而这些信息大部分往往是没有任何用途的，因为缺乏重点，在读者眼里可能仅仅是堆放在一起的事实。</li>
-<li>问题是从话题中产生的，根植于话题的。一个好的问题的好的答案答案能够在一定程度上推进整个领域往前发展</li>
-</ul>
-<p>然而疑问（question）并不等于问题（problem）</p>
-<ul>
-<li>一个好的问题是具有实际价值的”疑问“，解答这个问题能给我们带来一些东西（eg：解决某个工程难题，提升程序运行效率等等）</li>
-<li>通过问我们自己:”不解决这个问题会怎样’’来区分区分疑问和问题的方式，如果答案是”不会怎么样 so what?”，那么这个问题就<strong>不应该成为我们的研究问题</strong></li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1115,20 +1605,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">67</span>
+          <span class="site-state-item-count">69</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-count">42</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
