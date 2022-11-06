@@ -195,6 +195,90 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E9%93%BE%E5%BC%8F%E5%A4%8D%E5%88%B6%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/13/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E9%93%BE%E5%BC%8F%E5%A4%8D%E5%88%B6%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">链式复制论文总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-07-13 17:14:35 / 修改时间：17:15:46" itemprop="dateCreated datePublished" datetime="2022-07-13T17:14:35+08:00">2022-07-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">大数据理论</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="链式复制及其改进"><a href="#链式复制及其改进" class="headerlink" title="链式复制及其改进"></a>链式复制及其改进</h2><p><em>写在前面：CRAQ还涉及到了服务器放置策略等内容，我目前阶段学习并不关心，所以没有深入了解</em></p>
+<blockquote>
+<p>论文：<a target="_blank" rel="noopener" href="https://www.usenix.org/legacy/events/usenix09/tech/full_papers/terrace/terrace.pdf">Object Storage on CRAQ High-throughput chain replication for read-mostly workloads</a></p>
+</blockquote>
+<p>本文主要提出了一种区别于主从备份容错方式的链式复制容错方式，通过将备份服务器组织链结构，实现数据的冗余备份。本文中的CRAQ(Chain Replication with Apportioned Queries) 是在链式复制（Chain Replication）的基础上改进而来的，两者针对对象存储系统设计实现（object-based storage system），对象存储系统主要包括一下两个操作原语：</p>
+<ol>
+<li>write(objID, V)：更新某个obj关联的值</li>
+<li>read(objID): 获取某个obj的值</li>
+</ol>
+<p>对象存储只需要考虑修改读取特定对象的请求顺序，而并不需要考虑整个数据库，降低了保证一致性的成本</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/13/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E9%93%BE%E5%BC%8F%E5%A4%8D%E5%88%B6%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/ZooKeeper%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -558,10 +642,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-06-08 16:36:34 / 修改时间：16:41:51" itemprop="dateCreated datePublished" datetime="2022-06-08T16:36:34+08:00">2022-06-08</time>
+              <time title="创建时间：2022-06-08 16:36:34" itemprop="dateCreated datePublished" datetime="2022-06-08T16:36:34+08:00">2022-06-08</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-09-29 15:46:06" itemprop="dateModified" datetime="2022-09-29T15:46:06+08:00">2022-09-29</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -644,10 +734,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-06-08 16:34:20 / 修改时间：16:40:29" itemprop="dateCreated datePublished" datetime="2022-06-08T16:34:20+08:00">2022-06-08</time>
+              <time title="创建时间：2022-06-08 16:34:20" itemprop="dateCreated datePublished" datetime="2022-06-08T16:34:20+08:00">2022-06-08</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-09-29 15:10:01" itemprop="dateModified" datetime="2022-09-29T15:10:01+08:00">2022-09-29</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -999,92 +1095,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/" class="post-title-link" itemprop="url">基于统计的文档语义表示</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-04-17 19:50:18 / 修改时间：19:53:32" itemprop="dateCreated datePublished" datetime="2022-04-17T19:50:18+08:00">2022-04-17</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="基于统计的文档语义表示"><a href="#基于统计的文档语义表示" class="headerlink" title="基于统计的文档语义表示"></a>基于统计的文档语义表示</h2><p>在深度学习模型到来之前，通常使用统计学方法获得表示的文档语义的特征向量，主要方法包括</p>
-<ol>
-<li>TF-IDF</li>
-<li>基于SVD分解的LSA（潜在语义索引/分析 Latent Semantic Indexing/Analysis）</li>
-<li>LDiA 隐形迪利克雷分布</li>
-</ol>
-<p>其中前两种分布理解较为简单，LDiA涉及比较多的概率分布知识</p>
-<h3 id="TF-IDF"><a href="#TF-IDF" class="headerlink" title="TF-IDF"></a>TF-IDF</h3><p><strong>t</strong>erm <strong>f</strong>requency–<strong>i</strong>nverse <strong>d</strong>ocument <strong>f</strong>requency，用以评估一字词对于一个文件集或一个语料库中的其中一份文件的重要程度。字词的重要性随着它在文件中出现的次数成正比增加（TF），但同时会随着它在语料库中出现的频率成反比下降（IDF）</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1152,20 +1166,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">70</span>
+          <span class="site-state-item-count">71</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-count">14</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">43</span>
+        <span class="site-state-item-count">44</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
