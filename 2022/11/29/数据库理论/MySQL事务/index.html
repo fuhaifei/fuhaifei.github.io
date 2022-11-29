@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="MySQL事务之前在分布式系统的学习中已经系统的整理了事务ACID以及隔离性概念，下面总结在MySQL中的事务，偏向于实现层面，主要内容来自《MySQL技术内幕:InnoDB存储引擎(第2版)》。 事务分类和使用MySQL 默认提交事务（autocommit &#x3D; 1），即执行完SQL一句后立马执行COMMIT操作，也就是所谓的隐性事务。显式事务的开启，需要手动输入事务控制语句，：  START T">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL事务">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="MySQL事务之前在分布式系统的学习中已经系统的整理了事务ACID以及隔离性概念，下面总结在MySQL中的事务，偏向于实现层面，主要内容来自《MySQL技术内幕:InnoDB存储引擎(第2版)》。 事务分类和使用MySQL 默认提交事务（autocommit &#x3D; 1），即执行完SQL一句后立马执行COMMIT操作，也就是所谓的隐性事务。显式事务的开启，需要手动输入事务控制语句，：  START T">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093945536.png">
+<meta property="article:published_time" content="2022-11-29T06:42:40.000Z">
+<meta property="article:modified_time" content="2022-11-29T06:47:06.791Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="InnoDB">
+<meta property="article:tag" content="MVCC">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>MySQL事务 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MySQL事务
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-11-29 14:42:40 / 修改时间：14:47:06" itemprop="dateCreated datePublished" datetime="2022-11-29T14:42:40+08:00">2022-11-29</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="MySQL事务"><a href="#MySQL事务" class="headerlink" title="MySQL事务"></a>MySQL事务</h2><p>之前在分布式系统的学习中已经系统的整理了事务ACID以及隔离性概念，下面总结在MySQL中的事务，偏向于实现层面，主要内容来自<em>《MySQL技术内幕:InnoDB存储引擎(第2版)》</em>。</p>
+<h3 id="事务分类和使用"><a href="#事务分类和使用" class="headerlink" title="事务分类和使用"></a>事务分类和使用</h3><p>MySQL 默认提交事务（<code>autocommit = 1</code>），即执行完SQL一句后立马执行COMMIT操作，也就是所谓的<strong>隐性事务</strong>。显式事务的开启，需要手动输入事务控制语句，：</p>
+<ul>
+<li><code>START TRANSACTION|BEGIN</code>：开启事务</li>
+<li><code>COMMIT</code>：提交事务</li>
+<li><code>ROLLBACK</code>：回滚事务</li>
+<li><code>SAVEPOINT identifier</code>：创建事务中的保存点</li>
+<li><code>REPEASE SAVEPOINT identifier</code>：删除事务中的保存点</li>
+<li><code>ROLLBACK TO[SACEPOINT]indentifier</code>：回滚的指定的保存点</li>
+</ul>
+<p>其中包括DDL等在内的数据库管理和修改操作开启<strong>隐性事务</strong>，无法在显式事务控制中使用。</p>
+<span id="more"></span>
+<p>系统的隔离级别由变量<code>transaction_isolation</code>变量控制，通过以下两种方式修改：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># <span class="number">1.</span>变量修改方式</span><br><span class="line"><span class="keyword">set</span> transaction_isolation <span class="operator">=</span> <span class="string">&#x27;repeatable-read&#x27;</span>;</span><br><span class="line"># <span class="number">2.</span>控制语句形式</span><br><span class="line"><span class="keyword">SET</span> TRANSACTION ISOLATION LEVEL READ COMMITTED</span><br></pre></td></tr></table></figure>
+<p>事务的分类包括：</p>
+<ol>
+<li>扁平事务（Flat Transactions）</li>
+<li>带有保存点的扁平事务（with savepoints）</li>
+<li>链事务（Chained Transactions）</li>
+<li>嵌套事务（Nested Transactions）</li>
+<li>分布式事务（Distributed Transactions）</li>
+</ol>
+<p><strong>链式事务</strong>可以理解为多个连续的事务，一个事务结束其后继事务立刻在相同的隔离级别以及访问模式中继续执行。MySQL中开启方式为</p>
+<ol>
+<li><p>通过全局变量设置<code>completion_type = 2</code></p>
+</li>
+<li><p>结束提交使用<code>COMMIT AND CHAIN</code></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> TRANSACTION ISOLATION LEVEL READ COMMITTED</span><br><span class="line"><span class="keyword">START</span> TRANSACTION;</span><br><span class="line">           UPDATE accounts</span><br><span class="line">              <span class="keyword">SET</span> balance <span class="operator">=</span> balance <span class="operator">-</span> <span class="number">1500</span></span><br><span class="line">            <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line">           UPDATE accounts</span><br><span class="line">              <span class="keyword">SET</span> balance <span class="operator">=</span> balance <span class="operator">+</span> <span class="number">1500</span></span><br><span class="line">            <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">2</span>;</span><br><span class="line"> <span class="keyword">COMMIT</span> <span class="keyword">AND</span> CHAIN;</span><br><span class="line">           UPDATE accounts</span><br><span class="line">              <span class="keyword">SET</span> balance <span class="operator">=</span> balance <span class="operator">-</span> <span class="number">1000</span></span><br><span class="line">            <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">2</span>;</span><br><span class="line">           UPDATE accounts</span><br><span class="line">              <span class="keyword">SET</span> balance <span class="operator">=</span> balance <span class="operator">+</span> <span class="number">1000</span></span><br><span class="line">            <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">3</span>;</span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p><strong>嵌套事务</strong>是一个多个事务按照树状层次结构组成的复合事务</p>
+<ul>
+<li>上层事务控制下层事务的提交和回滚</li>
+<li>MySQL并不直接支持</li>
+</ul>
+<h3 id="原子性-持久性实现"><a href="#原子性-持久性实现" class="headerlink" title="原子性+持久性实现"></a>原子性+持久性实现</h3><p>Mysql中事务的原子性和持久性，基于redo和undo日志实现：</p>
+<ol>
+<li>redo日志：记录事务操作的日志，在事务提交前首先持久化redo日志，以实现事务的持久性</li>
+<li>undo日志：用于撤销事务操作，回滚数据库状态到事务开始之前，实现了事务的原子性</li>
+</ol>
+<h4 id="redo日志"><a href="#redo日志" class="headerlink" title="redo日志"></a>redo日志</h4><p>redo日志保证持久性的原理可以简单理解为：</p>
+<ol>
+<li>受限于磁盘读写性能，每次数据库的增删改操作都写入磁盘，会导致数据库性能较差</li>
+<li>为了解决这一问题，引入了缓冲，先在内存缓冲中执行对应修改操作，在合适的时机写入磁盘</li>
+<li>然而内存中的数据是易失的（volatile），如果内存数据写入磁盘之前丢失，则数据库的持久性遭到破坏</li>
+<li>为了保证持久性，引入redo日志，记录修改操作，并持久化到磁盘</li>
+</ol>
+<p>相当于用<strong>操作记录的持久化成本</strong>替代<strong>操作本身持久化成本</strong>，最终在保证持久性的情况下实现性能的提升。</p>
+<p>然而redo日志本身持久化也类似于数据库持久化问题，也面临着性能和持久化的权衡，InnoDB中分为内存和磁盘两部分：</p>
+<ol>
+<li>Log Buffer：内存中的redo log buffer，事务在执行时实时写入日志到当前位置。</li>
+<li>Redo Log File：磁盘中存储redo log的文件 ，在事务提交前，会将Log Buffer中的日志持久化到Redo Log File中</li>
+</ol>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png" class="" title="image-20221119093517439">
+<p>InnoDB提供了<code>innodb_flush_log_at_trx_commit</code>变量控制Log Buffer持久化时机：</p>
+<ul>
+<li><code>0</code>：事务提交时不进行redo log持久化，此时持久化时机只剩下<code>master thread</code>每1s执行一次的fsync。</li>
+<li><code>1</code>：提交时将redo log写入Redo Log File，且调用fsync，保证真正写入。</li>
+<li><code>2</code>：提交时将redo log写入Redo Log File，但不调用fsync，写入操作系统缓存。</li>
+</ul>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093945536.png" class="" title="image-20221119093945536">
+<p>Log Buffer中的日志刷新到磁盘的时机为：</p>
+<ol>
+<li>事务提交时，具体刷新行为由<code>innodb_flush_log_at_trx_commit</code>控制</li>
+<li>当Log Buffer一半的空间被使用完毕时</li>
+<li>Log checkpoint（包括Master thread Checkpoint等，具体未深入了解）</li>
+</ol>
+<p>另外两个概念控制redo log的扩张收缩：</p>
+<ol>
+<li>LSN（Log Sequence Number）：日志序列号，记录当前redo log数量，其单位为字节数</li>
+<li>Checkpoint：检查点，代表已经完成持久化数据对应的操作号，当脏页刷新到磁盘中时，其已经实现了持久化，对应的redo log也就没必要存在。</li>
+</ol>
+<p>最后补充一点，redo log以512byte大小的block进行存储，大小于磁盘扇区相同，因此不需要<code>doublewrite</code>避免数据损坏。</p>
+<h4 id="undo日志"><a href="#undo日志" class="headerlink" title="undo日志"></a>undo日志</h4><p>undo日志可以说是redo日志的<del>反方向的钟</del>，用来实现事务的回滚操作，两者区别在于：</p>
+<ol>
+<li>undo日志记录逻辑操作，redo日志记录物理操作</li>
+<li>undo日志类似于临时文件，当“不需要回退时”undo日志即可删除，其持久化需要通过redo日志实现</li>
+</ol>
+<p>undo的回退不是时光倒流，而是通过执行逆操作抵消历史操作，即delete-&gt;insert、insert-&gt;delete、update-&gt;update back，产生的时机为：</p>
+<ol>
+<li>用户自定义表上的<code>insert</code>,<code>update</code>,<code>delete</code>操作</li>
+<li>用户定义临时表上的<code>insert</code>,<code>update</code>,<code>delete</code>操作，其中临时表上的undo日志由于不需要错误恢复，不存在对应redo日志</li>
+</ol>
+<p>undo日志的生命流程可以概括为：</p>
+<ol>
+<li>开启事务，每执行一个SQL，产生对应的undo日志（undo日志会产生对应的redo日志）</li>
+<li>当事务提交时，若无其他事务依赖（insert），则undo log直接删除；若存在其他事务依赖（mvvc依赖于undo实现delete、update的隔离），等待依赖事务结束，由<code>purge</code>操作统一回收。</li>
+</ol>
+<p><code>purge</code>操作用来真正的执行<code>delete</code>,<code>update</code>操作，回收对应undo日志</p>
+<ul>
+<li>由于隔离性（或者说mvvc）要求，<code>delete</code> <code>update</code>操作并不真正的执行，而是由<code>purge</code>操作统一处理</li>
+<li><code>purge</code>回收undo日志执行对应的<code>delete</code>,<code>update</code>操作，回收采用了一定的优化，缓解undolog随机读取的性能问题</li>
+</ul>
+<p>undo日志存储按照段形式组织，undo日志存储在undo slot中</p>
+<ol>
+<li><p>两个table space：根据是否为临时表分别将对应undo日志存储在undo table space和global table space</p>
+</li>
+<li><p>128个 rollback segment：每个table space中包括128个回滚段</p>
+</li>
+<li><p>1024个 undo segment：每个rollback segment根据页大小，对应不同数量undo undo segment</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(innodb_page_size / 16) * innodb_rollback_segments * number of undo tablespaces</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h3 id="隔离性实现-锁"><a href="#隔离性实现-锁" class="headerlink" title="隔离性实现-锁"></a>隔离性实现-锁</h3><p>锁是InnoDB中进行并发控制，保证隔离性的手段之一，主要的分类方式有</p>
+<ol>
+<li>锁的粒度：表级锁、行级锁（record lock）、页锁</li>
+<li>锁的排他性：共享（shared）锁和排他(Exclusive)锁</li>
+</ol>
+<p>下面总结InnoDB中主要的锁类型</p>
+<h4 id="Intention-Locks（意向锁）"><a href="#Intention-Locks（意向锁）" class="headerlink" title="Intention Locks（意向锁）"></a>Intention Locks（意向锁）</h4><p>为了实现<code>multiple granularity locking</code>，事务在获取任意行级锁之前，首先获取Intention Locks，意向锁为表级别锁，与普通表级别锁的区别在于：</p>
+<ol>
+<li>意向锁之间并不互斥</li>
+<li>意向锁与其他普通表级锁满足一般的互斥性质</li>
+</ol>
+<p>上述机制实现了<code>多粒度</code>，访问行只获取行级锁，后续当有操作需要获取表级锁时，由于只需要判断是否与意向锁互斥，而<strong>不需要遍历整个表，判断是否存在互斥行级锁</strong>。</p>
+<p>综上所诉，意向锁实际上可以理解为<strong>行锁的表级别标记</strong></p>
+<h4 id="Gap-Locks（间隙锁）"><a href="#Gap-Locks（间隙锁）" class="headerlink" title="Gap Locks（间隙锁）"></a>Gap Locks（间隙锁）</h4><p>结合幻读场景理解，间隙锁对index范围上锁，如下SQL所示，该查询语句对范围<code>10-20</code>区间（开区间）上锁，若要插入一条<code>c1=15</code>的记录，需要等待当前锁释放。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> c1 <span class="keyword">FROM</span> t <span class="keyword">WHERE</span> c1 <span class="keyword">BETWEEN</span> <span class="number">10</span> <span class="keyword">and</span> <span class="number">20</span> <span class="keyword">FOR</span> UPDATE;</span><br></pre></td></tr></table></figure>
+<p>Gap Locks存在的目的是为了阻止其他事务在当前事务涉及到对应区间数据时，向该区间内插入新的数据</p>
+<ul>
+<li>当数据库隔离级别为<code>READ COMMITED</code>时，Gap Locks关闭不再使用</li>
+</ul>
+<h4 id="Next-Key-Locks"><a href="#Next-Key-Locks" class="headerlink" title="Next-Key Locks"></a>Next-Key Locks</h4><p>行锁和间隙锁的结合，锁定一条记录以及其左区间（索引确定的范围），假设表中包含<code>index=10, 11, 13, and 20</code>四条数据，则可能的Next-Key Lock上锁位置可以有</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">(negative infinity, <span class="number">10</span>]</span><br><span class="line">(<span class="number">10</span>, <span class="number">11</span>]</span><br><span class="line">(<span class="number">11</span>, <span class="number">13</span>]</span><br><span class="line">(<span class="number">13</span>, <span class="number">20</span>]</span><br><span class="line">(<span class="number">20</span>, positive infinity)</span><br></pre></td></tr></table></figure>
+<p>InnoDB的<code>REPEATABLE READ</code>隔离级别中通过Next-Key Lock，实现幻读问题的解决</p>
+<h4 id="Insert-Intention-Locks（插入意向锁）"><a href="#Insert-Intention-Locks（插入意向锁）" class="headerlink" title="Insert Intention Locks（插入意向锁）"></a>Insert Intention Locks（插入意向锁）</h4><p>插入意向锁为了解决多个事务插入相同位置（相同主键）的情况，由于目标插入数据项不存在，不能使用普通的行锁解决，只能通过”意向”的方式，实现互斥。案例如下：</p>
+<ol>
+<li><p>事务1获取对应区间的间隙锁</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">begin</span>;</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.00</span> sec)</span><br><span class="line"></span><br><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> test_select <span class="keyword">where</span> id <span class="operator">&gt;</span> <span class="number">4</span> <span class="keyword">for</span> share;</span><br><span class="line"><span class="keyword">Empty</span> <span class="keyword">set</span> (<span class="number">0.00</span> sec)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>事务2此时向对应间隙插入数据，获取插入意向锁与间隙锁互斥，会等待事务1释放锁</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">begin</span>;</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.00</span> sec)</span><br><span class="line"></span><br><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">insert</span> <span class="keyword">into</span> test_select <span class="keyword">values</span>(<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用<code>show engine innodb status</code>命令查看系统当前锁，可以看到事务在等待锁释放</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">insert into test_select values(5,6,7)</span><br><span class="line">------- TRX HAS BEEN WAITING 4 SEC FOR THIS LOCK TO BE GRANTED:</span><br><span class="line">RECORD LOCKS space id 68 page no 4 n bits 72 index PRIMARY of table `test_db`.`test_select` trx id 9758 lock_mode X insert intention waiting</span><br><span class="line">Record lock, heap no 1 PHYSICAL RECORD: n_fields 1; compact format; info bits 0</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h4 id="AUTO-INC-Locks-自增锁"><a href="#AUTO-INC-Locks-自增锁" class="headerlink" title="AUTO-INC Locks(自增锁)"></a>AUTO-INC Locks(自增锁)</h4><p>当表具有自增（Auto Increment）字段时，为了避免并发插入导致的自增字段出现重复，插入前首先获得自增锁，该锁将并发插入变为了顺序插入，保证了自增字段逐个递增。</p>
+<p>由于严格的自增锁会严重的降低并发性能，MySQL提供了<code>innodb_autoinc_lock_mode</code> 参数配置插入的不同机制（这部分内容还有问题，详细参考文档<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/innodb-auto-increment-handling.html#innodb-auto-increment-lock-modes">AUTO_INCREMENT Handling in InnoDB</a>）</p>
+<ol>
+<li><code>0</code>：tradition模式，每个插入语句插入前获取AUTO-INC Lock，插入执行完毕后，释放锁</li>
+<li><code>1</code>：consecutive模式，如果已知insert语句要插入的数据条数，提前分配对应数量的自增值，避免长时间占有锁</li>
+<li><code>2</code>：interleaved模式：不使用表级锁，多个事务可并发插入，保证自增字段的唯一性，但不保证一个插入语句中插入的数据是连续的</li>
+</ol>
+<h4 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h4><p>InnoDB通过<code>死锁检测</code>手段，在发生死锁情况时主动关闭死锁依赖中最小的事务，从而破除思索。有两个参数控制：</p>
+<ol>
+<li><p><code>innodb_deadlock_detect</code>：默认处于开启状态，表示是否进行死锁检测</p>
+</li>
+<li><p><code>innodb_lock_wait_timeout</code>：等待获取锁的超时时间，当一个事务超过一定时间等待锁，InnoDB会终止该事务</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> insert into test_select values(5,6,7);</span></span><br><span class="line">ERROR 1205 (HY000): Lock wait timeout exceeded; try restarting transaction</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h3 id="隔离性实现-MVCC"><a href="#隔离性实现-MVCC" class="headerlink" title="隔离性实现-MVCC"></a>隔离性实现-MVCC</h3><blockquote>
+<p>Multiversion concurrency control (MVCC) is a database optimization technique that creates duplicate copies of records so that data can be safely read and updated at the same time.</p>
+</blockquote>
+<p>MVCC(Multiversion concurrency control) 多版本并发控制是数据库优化并发性能的一种手段，通过创建读副本，在不使用锁的情况下，解决并发读写的冲突问题，整体上简单理解MVCC：</p>
+<ol>
+<li>每个修改（insert、update、delete等）操作都会导致产生一个新版本的数据，并不会影响老版本数据</li>
+<li>读操作会从有限多个版本的数据选择合适的数据进行读取，以满足隔离性要求。</li>
+</ol>
+<p>MVCC虽然有效的避免了读写冲突，提升了并发性能，但存在一定问题</p>
+<ol>
+<li>MVCC机制难以设计和实现</li>
+<li>不同版本的数据清理回收的时机难以确定</li>
+</ol>
+<h4 id="InnoDB-MVCC实现"><a href="#InnoDB-MVCC实现" class="headerlink" title="InnoDB MVCC实现"></a>InnoDB MVCC实现</h4><p>InnoDB的实现并没有采用多个数据版本的形式，而是采用单一数据+undo日志的实现思路</p>
+<ol>
+<li>所有数据行存在两个隐藏属性：<code>trx_id</code>记录最新修改的事务ID，作为并发版本时间戳；<code>roll_pointer</code>指向最新undo log</li>
+<li>所有的写操作（insert，update）直接写入数据，并不是生成一个新版本的数据；删除（delete）操作并不真的删除数据项，等待删除事务提交后，MVCC无需使用时，由<code>purge</code>操作一并回收</li>
+<li><strong>读操作</strong>根据构建<code>ReadView</code>，根据读取事务ID和读取数据行<code>trx_id</code>，判断是否需要基于<code>undo log</code> 回退</li>
+</ol>
+<p><code>ReadView</code>用于维护并发事务的时间戳信息，在读取过程中指导回退操作，主要包括：</p>
+<ol>
+<li><code>creator_trx_id</code>：当前事务ID</li>
+<li><code>trx_ids</code>：与当前事务存在冲突的并发事务ID列表</li>
+<li><code>up_limit_in</code>：最小事务ID<code>min(trx_ids)</code>，用来判断”过去”的事务</li>
+<li><code>low_limit_id</code>：当前事务创建时，未分配的最小事务ID，用来判断”未来”的事务</li>
+</ol>
+<p>判断是否需要回退避免冲突的条件如下：</p>
+<ol>
+<li>可直接访问的情况（待访问数据行的<code>trx_id</code> ）<ul>
+<li><code>trx_id</code> =  <code>creator_trx_id</code>（自己的修改自己能看到）；</li>
+<li><code>trx_id</code> &lt;=  <code>up_limit_in</code>（历史已提交的事务能看到）;</li>
+<li><code>trx_id</code> &lt;<code>low_limit_id</code> 且落在<code>trx_ids</code>外（非未来且和自己非并发的事务能看到）；</li>
+</ul>
+</li>
+<li>需要访问<code>undo log</code>回退到历史数据的情况<ul>
+<li><code>trx_id</code> 落在<code>trx_ids</code>内（和自己并发未提交的修改）</li>
+<li><code>trx_id</code> &gt;=<code>low_limit_id</code> （在自己之后事务修改）</li>
+</ul>
+</li>
+</ol>
+<p>上述判断条件的本质上就是<strong>保证当前事务只能看到历史版本的数据</strong>，Mysql只在两个隔离级别中使用MVVC</p>
+<ol>
+<li><code>Read Committed</code>：一次事务中的每一次读操作都重新生成<code>ReadView</code></li>
+<li><code>Repeatable Read</code>：一次事务只在第一次读取操作时生成<code>ReadView</code></li>
+</ol>
+<p>区别于MySQL，PostgreSQL写新数据时，旧数据不删除，直接插入新数据，新旧数据上保存对应的事务ID，通过新旧数据+事务ID实现MVCC机制</p>
+<h4 id="一个案例展示MVCC"><a href="#一个案例展示MVCC" class="headerlink" title="一个案例展示MVCC"></a>一个案例展示MVCC</h4><p>在MySQL的<code>Repeatable Read</code>隔离级别下，并行执行两个事务：</p>
+<ol>
+<li><p>事务1查询表中所有数据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> select * from test_select;</span></span><br><span class="line">+----+------+------+</span><br><span class="line">| id | age  | sex  |</span><br><span class="line">+----+------+------+</span><br><span class="line">|  1 |    2 |    3 |</span><br><span class="line">|  2 |    3 |    4 |</span><br><span class="line">|  3 |    4 |    5 |</span><br><span class="line">|  4 |    5 |    6 |</span><br><span class="line">+----+------+------+</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>事务2更新<code>id=2</code>的数据，并提交</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; update test_select set age = 10 where id = 2;</span><br><span class="line">Query OK, 1 row affected (0.00 sec)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>事务1查询<code>id=2</code>的数据，<strong>无变化</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> select * from test_select <span class="built_in">where</span> id = 2;</span></span><br><span class="line">+----+------+------+</span><br><span class="line">| id | age  | sex  |</span><br><span class="line">+----+------+------+</span><br><span class="line">|  2 |    3 |    4 |</span><br><span class="line">+----+------+------+</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>事务1更新<code>id=2</code>的数据，并查询结果</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> update test_select <span class="built_in">set</span> age = age + 1 <span class="built_in">where</span> id = 2;</span></span><br><span class="line">Query OK, 1 row affected (0.00 sec)</span><br><span class="line">Rows matched: 1  Changed: 1  Warnings: 0</span><br><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> select * from test_select <span class="built_in">where</span> id = 2;</span></span><br><span class="line">+----+------+------+</span><br><span class="line">| id | age  | sex  |</span><br><span class="line">+----+------+------+</span><br><span class="line">|  2 |   11 |    4 |</span><br><span class="line">+----+------+------+</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>案例的结果表明，<strong>MVCC隔离读写操作，由快照读实现，所有的修改都实时的反映在最新数据上</strong>。</p>
+<h3 id="补充-分布式事务"><a href="#补充-分布式事务" class="headerlink" title="补充-分布式事务"></a>补充-分布式事务</h3><p>MySQL支持分布式事务，称为XA事务，其中XA是由X/Open组织提出的<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=分布式&amp;spm=1001.2101.3001.7020">分布式</a>事务的规范，一个XA事务由一个或者多个资源管理器（数据库）、一个事务管理器以及一个应用程序组成</p>
+<ul>
+<li>基于两阶段提交（two-phase commit）方式实现，事务管理器为事务协调者</li>
+<li>资源管理器相当于分布式事务中参与的一个个数据库</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>从本科开始接触数据库事务这一概念，一带而过没有深入学习，经过这段时间从理论以及MySQL实现角度的学习和总结，对于事务有了一定程度的理解，更能体会并发控制的困难和事务实现设计的巧妙，希望在以后的编码过程中，能够用到事务学习中了解到的并发控制思路。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/MySQL/" rel="tag"><i class="fa fa-tag"></i> MySQL</a>
+              <a href="/tags/InnoDB/" rel="tag"><i class="fa fa-tag"></i> InnoDB</a>
+              <a href="/tags/MVCC/" rel="tag"><i class="fa fa-tag"></i> MVCC</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" rel="prev" title="InnoDB存储引擎">
+      <i class="fa fa-chevron-left"></i> InnoDB存储引擎
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" rel="next" title="MySQL性能调优">
+      MySQL性能调优 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL%E4%BA%8B%E5%8A%A1"><span class="nav-number">1.</span> <span class="nav-text">MySQL事务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%E5%88%86%E7%B1%BB%E5%92%8C%E4%BD%BF%E7%94%A8"><span class="nav-number">1.1.</span> <span class="nav-text">事务分类和使用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%9F%E5%AD%90%E6%80%A7-%E6%8C%81%E4%B9%85%E6%80%A7%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.2.</span> <span class="nav-text">原子性+持久性实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#redo%E6%97%A5%E5%BF%97"><span class="nav-number">1.2.1.</span> <span class="nav-text">redo日志</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#undo%E6%97%A5%E5%BF%97"><span class="nav-number">1.2.2.</span> <span class="nav-text">undo日志</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9A%94%E7%A6%BB%E6%80%A7%E5%AE%9E%E7%8E%B0-%E9%94%81"><span class="nav-number">1.3.</span> <span class="nav-text">隔离性实现-锁</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Intention-Locks%EF%BC%88%E6%84%8F%E5%90%91%E9%94%81%EF%BC%89"><span class="nav-number">1.3.1.</span> <span class="nav-text">Intention Locks（意向锁）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Gap-Locks%EF%BC%88%E9%97%B4%E9%9A%99%E9%94%81%EF%BC%89"><span class="nav-number">1.3.2.</span> <span class="nav-text">Gap Locks（间隙锁）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Next-Key-Locks"><span class="nav-number">1.3.3.</span> <span class="nav-text">Next-Key Locks</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Insert-Intention-Locks%EF%BC%88%E6%8F%92%E5%85%A5%E6%84%8F%E5%90%91%E9%94%81%EF%BC%89"><span class="nav-number">1.3.4.</span> <span class="nav-text">Insert Intention Locks（插入意向锁）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AUTO-INC-Locks-%E8%87%AA%E5%A2%9E%E9%94%81"><span class="nav-number">1.3.5.</span> <span class="nav-text">AUTO-INC Locks(自增锁)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%AD%BB%E9%94%81"><span class="nav-number">1.3.6.</span> <span class="nav-text">死锁</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9A%94%E7%A6%BB%E6%80%A7%E5%AE%9E%E7%8E%B0-MVCC"><span class="nav-number">1.4.</span> <span class="nav-text">隔离性实现-MVCC</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#InnoDB-MVCC%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.4.1.</span> <span class="nav-text">InnoDB MVCC实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%A1%88%E4%BE%8B%E5%B1%95%E7%A4%BAMVCC"><span class="nav-number">1.4.2.</span> <span class="nav-text">一个案例展示MVCC</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A1%A5%E5%85%85-%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1"><span class="nav-number">1.5.</span> <span class="nav-text">补充-分布式事务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.6.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">74</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/fuhaifei" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;fuhaifei" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/fu-hai-fei" title="zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;fu-hai-fei" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : '58a64dcd4d2c9d6cce956693560a90a9',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

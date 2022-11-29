@@ -1639,7 +1639,7 @@ x_t = x_{t-1} - g'_t</script><h3 id="总结"><a href="#总结" class="headerlink
 <li>单机事务 vs 分布式事务</li>
 <li>如何通过并发控制保证单机分布式事务的隔离性</li>
 </ol>
-<h3 id="单机-分布式事务"><a href="#单机-分布式事务" class="headerlink" title="单机/分布式事务"></a>单机/分布式事务</h3><p>事务作为数据库系统读写操作的高层抽象，代表了数据库的基本操作。一个正常提供服务的数据库系统，其事务必须满足ACID四个性质，其中CI两个性质相互关联，是后续课程研究的重点。</p>
+<h3 id="单机-分布式事务"><a href="#单机-分布式事务" class="headerlink" title="单机/分布式事务"></a>单机/分布式事务</h3><p>事务作为数据库系统读写操作的高层抽象，代表了数据库的基本操作。一个正常提供服务的数据库系统，其事务必须满足ACID四个性质，其中CI两个性质相互关联，是事务性质研究的重点。</p>
 <ol>
 <li>Atomic（原子性）：每个事务被看作一个不可分割的单元，要么完全成功要么完全失败，不存在两者的中间状态。数据库系统必须保证任意时刻下事务的原子性</li>
 <li>Consistency（一致性）：一致性是指数据库满足某种预先定义的约束，任何数据库的操作都必须满足一致性，即从一个满足一致性的状态转移到另一个满足一致性的状态（例如：转账事务要满足转出和转入账户总金额不变）</li>
@@ -1745,7 +1745,7 @@ x_t = x_{t-1} - g'_t</script><h3 id="总结"><a href="#总结" class="headerlink
 <li>协调者故障：若协调者故障不会影响正确性，提交的事务不会丢失，未提交的事务不会提交。</li>
 <li>参与者/网络故障：若参与者在准备阶段发送ok之前实现或者ok信息丢失，则协调者需要设置超时机制，超时放弃事务；若参与者在发送ok之后失效，若此时协调者收到了所有ok信息，发送了commit信息，协调者必须等待失效参与者上线、失效参与者也必须能够继续执行提交，否则就会出现部分提交的问题</li>
 </ol>
-<p>其他分布式事务实现机制进行深入研究</p>
+<p>其他分布式事务实现机制以后有机会再继续进行深入研究</p>
 <h3 id="分布式中的一致性"><a href="#分布式中的一致性" class="headerlink" title="分布式中的一致性"></a>分布式中的一致性</h3><p>分布式中的一致性与数据库事务中的概念不同，主要考虑的是多副本之间状态的一致性，其实概念上更加接近ACID中的I，按照一致性从强到弱分为以下集中不同的一致性模型</p>
 <ol>
 <li>线性一致性（Linearizability）：又被称为Strong consistency or Atomic consistency，所有事务全局有序，使得所有的”读“都能读到最近的”写“，使得分布式系统外部看起来就像一个单机系统。（前提是需要建立一个全局时钟或者顺序确定机制）</li>
@@ -1759,10 +1759,8 @@ x_t = x_{t-1} - g'_t</script><h3 id="总结"><a href="#总结" class="headerlink
 </ul>
 </li>
 <li>最终一致性（<strong>Eventually Consistency</strong>）：从出现网络分区时，分布式系统无法同时保证可用性和一致性，因此定义最终一致性这一概念，在执行某个操作后系统的状态可以是不一致的，但是能够保证的是过一段时间系统的状态最终会达到一致性<ul>
-<li>由于最终一致性的系统不同部分会出现状态不一致的情况，需要特定机制进行状态同步<ul>
+<li>由于最终一致性的系统不同部分会出现状态不一致的情况，需要特定机制进行状态同步</li>
 <li>在不同副本之间通信交换更新和状态更变，得到一个一致的最终状态</li>
-</ul>
-</li>
 </ul>
 </li>
 </ol>
@@ -2222,202 +2220,6 @@ k \in [0, i - nums[i]] \cup [i + 1, nums.length - 1]</script></li>
       </categories>
       <tags>
         <tag>其他</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>MySQL索引总结</title>
-    <url>/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/mysql%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<h2 id="索引相关知识总结"><a href="#索引相关知识总结" class="headerlink" title="索引相关知识总结"></a>索引相关知识总结</h2><p>索引作为数据库的重要知识，在本科的数据库学习中基本没有接触过，在大四找工作准备面试笔试时才了解到这个常考的概念，本博客是对于以往索引相关知识缺失的补足和系统整理。</p>
-<h3 id="索引是什么？"><a href="#索引是什么？" class="headerlink" title="索引是什么？"></a>索引是什么？</h3><blockquote>
-<p>A <strong>database index</strong> is a <a href="https://en.wikipedia.org/wiki/Data_structure">data structure</a> that improves the speed of data retrieval operations on a <a href="https://en.wikipedia.org/wiki/Table_(database">database table</a>) at the cost of additional writes and storage space to maintain the index data structure.  -Wikipedia</p>
-</blockquote>
-<p>索引(index)是用来加速数据库表数据检索的一种特殊数据结构，其作用类似于目录，通过减少检索过程中的磁盘IO，提升检索效率，索引的优点可以概括为以下三点</p>
-<ol>
-<li>减少服务器需要扫描的数据量</li>
-<li>避免因检索导致的排序和临时表</li>
-<li>将随机I/O变为顺序I/O</li>
-</ol>
-<span id="more"></span>
-<p>索引缺点总结如下：</p>
-<ol>
-<li>索引来源于数据表中的数据，创建和维护索引需要消耗时间（由数据量决定）</li>
-<li>索引会占用额外的存储空间（InnoDB中每个B+树节点为一个数据页，每个数据页占16KB空间）</li>
-</ol>
-<p>正因为索引以上的缺点，在设计索引时需要在检索性能、索引大小、索引更新性能几个因素之间进行权衡。</p>
-<p>索引按照和数据项的关系可以分为两种：</p>
-<ol>
-<li><strong>聚簇索引</strong>（Clustered）：表数据物理上按照索引的逻辑大小排列存储，即按照索引从小到大存储，具有相邻索引值的表项存储在相邻的位置。<ul>
-<li>由于聚簇索引决定了数据的物理存储方式，<strong>一个表上只能定义一个聚簇索引</strong>。</li>
-<li>聚簇索引对于数据的顺序检索性能有较大的提升，例如排序查找、范围查找等</li>
-<li><strong>缺点</strong>：由于索引即数据，数据的增删改涉及到数据页的合并和拆分，对性能影响较大；非聚簇索引由于实际存储不需要满足索引定义的顺序，相应的修改影响相对较小</li>
-</ul>
-</li>
-<li><strong>非聚簇索引</strong>（not clustered，二级索引、辅助索引）：区别于聚簇索引，表数据的存储方式和索引的逻辑顺序没有关系，可以以任意顺序存储<ul>
-<li>这类索引通常应用于非主键列，用来加速<code>JOIN, WHERE, and ORDER BY</code>等操作</li>
-<li>联合索引（composite index）是一类特殊的非聚簇索引，即索引的逻辑顺序由多个属性共同决定。例如在<code>(fisrt_name, second_name)</code>上创建的联合索引，会首先比较 <code>fisrt_name</code> 然后比较<code>second_name</code>确定索引的顺序</li>
-<li>InnoDB中非聚簇索引叶子节点存储的主键值，使用非聚簇索引需要<code>回表操作</code>，即首先在当前索引检索到对应主键值，再通过主键上的聚簇索引检索到对应的数据项。与之不同的是，MyISAM中非聚簇索引叶子节点存储的是对应数据项的物理存储地址。</li>
-<li>缺点：InnoDB中由于<code>回表</code>操作，检索效率相较于非聚簇索引更差；</li>
-</ul>
-</li>
-</ol>
-<p>按照索引的性质可以分为四类：</p>
-<ol>
-<li><p>普通索引</p>
-</li>
-<li><p>唯一性索引：unique约束会自动建立唯一性索引</p>
-</li>
-<li><p>主键索引：主键上的索引，在InnoDB中主键索引等价于聚簇索引，决定了表数据的存储方式，InnoDB对于主键的处理如下：</p>
-<ul>
-<li><strong>有主键</strong>，聚簇索引即为主键索引</li>
-<li><strong>无主键</strong>，InnoDB会使用第一个唯一非空索引作为聚簇索引（unique not null）</li>
-<li><strong>全无</strong>，InnoDB 会生成一个名为 GEN_CLUST_INDEX（6个字节的长整数） 的隐藏聚簇索引。MyISAM没有聚簇索引。</li>
-</ul>
-</li>
-<li><p>全文索引：用于全文搜索，只能用在<code>CHAR</code>、<code>VARCHAR</code>、<code>TEXT</code>属性列上</p>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> articles <span class="keyword">WHERE</span> <span class="keyword">MATCH</span> (属性列) AGAINST (<span class="string">&#x27;查询字符串&#x27;</span>);</span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>按照排列顺序可以分为：</p>
-<ol>
-<li><p>升序索引</p>
-</li>
-<li><p>降序索引：在MySQL8.0以后开始支持，如果一个查询，需要对多个列进行排序，且顺序要求不一致。在这种场景下，要想避免数据库额外的排序-“filesort”，只能使用降序索引</p>
-<ul>
-<li><p>与索引方向相反，MySQL使用<code>Backward index scan</code></p>
-<blockquote>
-<p> <a href="https://dev.mysql.com/blog-archive/mysql-8-0-labs-descending-indexes-in-mysql/">we can see forward index scans are ~15% better than backward index scans</a></p>
-</blockquote>
-</li>
-<li><p>与索引方向不一致，例如 <code>a asc b dsc</code> 对应检索<code>a dsc b dsc</code> ,需要<code>file sort</code></p>
-</li>
-</ul>
-</li>
-</ol>
-<h3 id="索引的数据结构"><a href="#索引的数据结构" class="headerlink" title="索引的数据结构"></a>索引的数据结构</h3><p>为了加速访问，数据库采用B+Tree作为索引的数据结构，下面分析BTree 和B+Tree的结构和插入删除等操作细节</p>
-<h4 id="B-Tree"><a href="#B-Tree" class="headerlink" title="B-Tree"></a>B-Tree</h4><p>B-Tree是一种自平衡树形数据结构，B-Tree允许节点拥有两个以上的孩子节点，可以理解为多叉平衡搜索树，B-Tree的结构性质使其适用于存储读写大量数据的存储系统，其查找/删除/插入的(最坏)时间复杂度均为<code>log(n)</code></p>
-<p>m叉B-Tree的定义如下：</p>
-<ol>
-<li>每个节点最多有 $m$ 个孩子节点，即最多$m-1$个key</li>
-<li>每个内部节点（非根和叶子节点）至少有$⌈m/2⌉$个孩子节点，即至少有$⌈m/2⌉ - 1$个key</li>
-<li>每个非叶子节点至少有2个孩子节点</li>
-<li>一个包含k-1个key的非叶子节点有k个孩子节点</li>
-</ol>
-<p>B-Tree同样满足搜索树性质，即当前节点key序列中的key大小大于其左边子树元素，小于右边子树元素</p>
-<img src="/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/mysql%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/image-20221101201644340.png" class="" title="image-20221101201644340">
-<p>B+Tree的插入类似于AVL树，只是在树高平衡操作上有一定的区别：</p>
-<ol>
-<li>首先找到插入元素位置的叶子节点，插入到叶子节点key序列的对应位置中</li>
-<li>若此时叶子节点的key个数达到$m$，则需要进行叶子节点分裂操作<ul>
-<li>将叶子节点key序列分为三部分<code>[0...m/2 - 1, m/ 2, m/2 + 1...m]</code>,左右两边差分为两个叶子节点，中间一个key上推到父亲节点</li>
-<li>若上推之后父亲节点key个数达到$m$，同样需要分裂操作</li>
-<li>不断重复分裂-上推的循环， 直到结束分裂</li>
-</ul>
-</li>
-<li>完成插入</li>
-</ol>
-<p>B+Tree的删除类似于插入时的反推，需要当前节点从孩子节点借：</p>
-<ol>
-<li>首先找到插入元素位置，删除对应key，若为非叶子节点需要从下‘借’节点</li>
-<li>从删除key位置的左边子树，或者右边子树上推一个最大/最小key，替代对应被删除的key</li>
-<li>相当于将父节点的删除转化为了子节点删除，不断重复上述过程，直到删除转移到叶子节点</li>
-<li>若叶子节点删除后key为空，则需要进行合并操作，类似于上推的逆操作<ul>
-<li>与相邻叶子节点以及对应的父亲节点合并成为新的叶子节点</li>
-<li>若父亲节点不满足性质2，重复上述过程</li>
-<li>直到向上传递到对应节点满足性质2</li>
-</ul>
-</li>
-</ol>
-<p>B-Tree应用到数据库中作为索引加速访问</p>
-<ul>
-<li>每个key对应一条数据项，每个节点相当于邻近的一系列表项</li>
-<li>假设key之间的比较复杂度为为<code>C</code>，相较于普通的二分查找的复杂度<code>log2(N) * C</code>，m叉B-Tree遍历比较key进行查找的复杂度为<code>logm-1(N) * (m-1) * C</code></li>
-<li>由于内存查找比较的速度远远快于从磁盘中读取数据的数据，两者的查找成本区别在于访问磁盘次数，m叉B-Tree的<code>logm-1(N)</code>次远小于二分查找的<code>log2(N)</code>次</li>
-</ul>
-<img src="/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/mysql%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/image-20221101205630650.png" class="" title="image-20221101205630650">
-<p><strong>B+Tree</strong>是B-Tree的变种，相当于只在叶子节点存储数据的B-Tree，两者的主要区别有</p>
-<ol>
-<li>B+Tree只在叶子节点存储数据，叶子节点按顺序连接成为双向链表</li>
-<li>m阶B+Tree，每个节点最多有 $m$ 个孩子节点，即最多$m$个key</li>
-<li>每个key对应一个孩子节点，孩子节点中的key范围为：<code>[左边key+1,key]</code></li>
-</ol>
-<h4 id="几个概念性问题"><a href="#几个概念性问题" class="headerlink" title="几个概念性问题"></a>几个概念性问题</h4><ol>
-<li>为什么不使用查询插入速度为O(1)的hash索引?<ul>
-<li>hash索引支支持等值比较查询，不支持任何的范围查询，例如<code>where age &gt; 10</code></li>
-<li>若数据分布不均匀，或选取的hash函数不合适，出现大量哈希冲突影响检索和索引维护的成本</li>
-<li>InnoDB不支持hash索引，但是支持自适应哈希索引（类似于缓存），Memory引擎显式支持哈希索引</li>
-</ul>
-</li>
-<li><p>为什么不使用B-Tree而使用B+Tree？</p>
-<ul>
-<li>B-Tree由于非叶子节点同样存储数据，查询可能在叶子节点或者非叶子节点命中，导致查询性能波动较大，无法预测（Mysql8.0删除缓存的原因）</li>
-<li>B-Tree的非叶子节点存储数据占用更多的空间，B+Tree在相同节点大小下，能够存储更多key，也就意味着B+Tree的深度更小，查询成本更低</li>
-<li>B+Tree叶子节点以双向链表形式组织，对于范围查询支持更好</li>
-</ul>
-<h3 id="索引使用"><a href="#索引使用" class="headerlink" title="索引使用"></a>索引使用</h3></li>
-</ol>
-<p>索引的创建分为两种方式</p>
-<ol>
-<li><p>在创建表时声明约束(主键、唯一、外键)会创建对应的索引</p>
-</li>
-<li><p>主动通过<code>CREATE</code>语句在现有的表上添加索引</p>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> [<span class="keyword">UNIQUE</span><span class="operator">|</span>FULLTEXT<span class="operator">|</span>SPATIAL] INDEX indexName <span class="keyword">ON</span> mytable(<span class="keyword">column</span>(length)); </span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>索引操作示例：</p>
-<ol>
-<li><p>创建两个表，查看对应约束</p>
-<ul>
-<li><p>创建表</p>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">create</span> <span class="keyword">table</span> department(</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> dept_id <span class="type">int</span> <span class="keyword">PRIMARY</span> KEY <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> dept_name <span class="type">varchar</span>(<span class="number">100</span>) <span class="keyword">default</span> &quot;待定&quot;</span><br><span class="line">    );</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.06</span> sec)</span><br><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">create</span> <span class="keyword">table</span> empolyee(</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> emp_id <span class="type">int</span> <span class="keyword">PRIMARY</span> KEY,</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> dept_id <span class="type">int</span>, </span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> phone_num <span class="type">int</span> <span class="keyword">UNIQUE</span>,</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> <span class="keyword">CONSTRAINT</span> <span class="keyword">FOREIGN</span> KEY(dept_id) <span class="keyword">REFERENCES</span> department(dept_id)</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> );</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.02</span> sec)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>查看约束：<code>SHOW INDEX FROM 表名</code></p>
-<img src="/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/mysql%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/image-20221104165652781.png" class="" title="image-20221104165652781">
-</li>
-</ul>
-</li>
-<li><p>手动创建索引</p>
-<ul>
-<li>同样可使用<code>ALTER ADD</code></li>
-</ul>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">create</span> index test_index <span class="keyword">on</span> employee(phone_num);</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.01</span> sec)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>删除索引</p>
-<ul>
-<li>同样可使用<code>DROP INDEX index_name ON table_name</code></li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> alter table employee drop index test_index;</span></span><br><span class="line">Query OK, 0 rows affected (0.01 sec)</span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>当检索涉及到指定资源的顺序(order by)、比较(where on等)时，可以考虑使用索引。</p>
-<h3 id="索引失效场景"><a href="#索引失效场景" class="headerlink" title="索引失效场景"></a>索引失效场景</h3><p>并不是在属性列上设置索引后，所有用到对应属性列的查询都能够用到索引，个人总结索引生效的条件为：<strong>检索条件必须为常量</strong>，即能够让数据库根据某个值在B+树上逐层深入，而是需要遍历所有数据项确定是否满足<code>where</code>条件。</p>
-<p>常见的索引失效场景有：</p>
-<ol>
-<li><p>查询条件中存在计算函数、类型转换等</p>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> student <span class="keyword">where</span> <span class="keyword">left</span>(name, <span class="number">4</span>) <span class="operator">=</span> <span class="string">&#x27;wang&#x27;</span></span><br></pre></td></tr></table></figure>
-</li>
-<li><p>不等于(<code>&lt;&gt;</code> ，<code>!=</code>，<code>not like</code>，<code>not null</code>)等条件</p>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> student <span class="keyword">where</span> name <span class="operator">!=</span> <span class="string">&#x27;zhangsan&#x27;</span></span><br></pre></td></tr></table></figure>
-</li>
-<li><p><code>or</code>前后存在非索引列</p>
-<ul>
-<li>因为非索引列需要遍历所有数据项</li>
-</ul>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> student <span class="keyword">where</span> name <span class="operator">=</span> <span class="string">&#x27;zhangsan&#x27;</span> <span class="keyword">or</span> age <span class="operator">=</span> <span class="number">100</span></span><br></pre></td></tr></table></figure>
-</li>
-<li><p>联合索引范围条件右边索引失效</p>
-<ul>
-<li>联合索引<code>index(name, age, home)</code></li>
-<li><code>age</code>范围条件，导致该联合索引只能用到前两个属性，相当于<code>index(name, age)</code></li>
-</ul>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> student <span class="keyword">where</span> name <span class="operator">=</span> <span class="string">&#x27;100&#x27;</span> <span class="keyword">and</span> age <span class="operator">&gt;</span> <span class="number">100</span> <span class="keyword">and</span> home <span class="keyword">like</span> &quot;cn%&quot;</span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-]]></content>
-      <categories>
-        <category>数据库理论</category>
-      </categories>
-      <tags>
-        <tag>MySQL</tag>
       </tags>
   </entry>
   <entry>
@@ -6554,6 +6356,905 @@ shardId := hash(key) \% Server Group Num</script><p>未来可以优化的点：<
       <tags>
         <tag>分布式</tag>
         <tag>MIT6.824</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>InnoDB存储引擎</title>
+    <url>/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/</url>
+    <content><![CDATA[<h2 id="InnoDB架构及物理存储"><a href="#InnoDB架构及物理存储" class="headerlink" title="InnoDB架构及物理存储"></a>InnoDB架构及物理存储</h2><blockquote>
+<p><code>InnoDB</code> is a general-purpose storage engine that balances high reliability and high performance. </p>
+</blockquote>
+<p>InnoDB作为MySQL默认引擎，深入了解InnoDB有助于加深对于数据库系统的理解，下面首先从InnoDB的架构出发，介绍InnoDB的组成以及表数据的物理存储方式，其他例如事务、并发控制等相关内容在本文中不展开。</p>
+<h3 id="InnoDB架构"><a href="#InnoDB架构" class="headerlink" title="InnoDB架构"></a>InnoDB架构</h3><blockquote>
+<p>这部分内容是对<a href="https://dev.mysql.com/doc/refman/8.0/en/">MySQL 8.0 Reference Manual</a>学习自我总结</p>
+</blockquote>
+<p>InnoDB分为内存结构和磁盘结构两部分，其中内存结构主要为了减少磁盘访问，从而让提升访问性能，磁盘结构部分负责InnoDB中数据的实际物理存储。</p>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/image-20221108183750949.png" class="" title="image-20221108183750949">
+<span id="more"></span>
+<h4 id="In-Memory-Structrues"><a href="#In-Memory-Structrues" class="headerlink" title="In-Memory Structrues"></a>In-Memory Structrues</h4><p>内存结构中的主要结构有四个：</p>
+<ol>
+<li><code>Buffer Pool</code>：缓存历史访问数据和索引，用来减少磁盘访问</li>
+<li><code>Change Buffer</code>：缓存对非<code>Buffer pool</code>中数据的修改，当页面加载到<code>Buffer pool</code>中时，会将修改合并到对应页面上</li>
+<li><code>Adaptive hash index(AHI)</code>：自适应哈希索引，对于某些访问”频繁“数据的数据，在内存中建立索引到数据页的直接映射<ul>
+<li>”频繁“定义为：数据页寻路时间长，或者多个SQL命中相同页面</li>
+<li>与<code>Buffer Pool</code>共用空间</li>
+</ul>
+</li>
+<li><code>Log Buffer</code>：缓存<code>redo log</code>数据，默认大小为16MB，周期性刷出到磁盘中</li>
+</ol>
+<p><code>Buffer Pool</code>采用LRU机制进行缓存数据页的汰换，将内存空间划分为了<code>New Sublist</code>（5/8）和<code>Old Sublist</code>（3/8），从上到下数据页的新旧程度变旧，页面汰换策略如下：</p>
+<ul>
+<li><code>Midpoint Insertion</code>新页面插入策略，即每次插入新页面时，插入到<code>New Sublist</code>尾部，<code>Old Sublist</code>头部。为了解决一次查询的结果只使用一次，但是涉及到大量数据页导致缓存大量刷出的情况</li>
+<li>当访问<code>Buffer pool</code>中的旧页时，会将旧页面移动到<code>New Sublist</code>的头节点</li>
+<li>当缓冲区内存够空间不足时，会从<code>Old Sublist</code>尾部踢出页面</li>
+</ul>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/image-20221108185356088.png" class="" title="image-20221108185356088">
+<p><code>Change Buffer</code> 是为了减少磁盘访问的另一手段，当修改数据不在内存中时，将修改缓存在该缓存中，当下次需要访问修改涉及页面是，将数据页读入内存后执行merge操作</p>
+<ul>
+<li>周期性将缓存中的修改写入到对应磁盘中，将大量随机访问转化成了成批次的集中访问，一定程度降低修改的成本。</li>
+<li>当修改操作涉及到读取数据页时，不会写入<code>Change buffer</code>，例如<code>delete***id = 1</code>，因为执行修改操作前数据页面一定已经加载到内存中。</li>
+<li>系统表空间中存有<code>Change Buffer</code> 的备份</li>
+</ul>
+<h4 id="On-Disk-Structures"><a href="#On-Disk-Structures" class="headerlink" title="On-Disk Structures"></a>On-Disk Structures</h4><p>磁盘中的结构主要包括各种表空间和其他文件</p>
+<ul>
+<li>表空间：数据的逻辑存储方式，包括系统表空间、用户表空间、临时表空间等等</li>
+<li>其他文件：二次写文件、redo log文件等</li>
+</ul>
+<p>InnoDB中表的物理存储概念从大到小为：表空间-&gt;段-&gt;区-&gt;页</p>
+<ol>
+<li>表空间（Table space）：物理存储中的一个表。</li>
+<li>段（Segement）：表的逻辑组成部分，一个表一般包括数据段、索引段等，一个段以区为单位进行空间分配。</li>
+<li>区（Extent）：64个数据页组成一个区，由于数据页过小，以页进行分配和访问较为离散，成本较高，因此多个页构建区的概念，方便连续存储和访问。</li>
+<li>页（Page）：磁盘管理的最小数据单位，一个页包含多个数据项，页大小一般为16KB。</li>
+</ol>
+<p>根据上述存储逻辑，一个表空间的空间分配逻辑可以如下理解：</p>
+<ol>
+<li>创建表时首先默认创建两个段，叶子节点段和非叶子节点段</li>
+<li>插入数据时，首先在<strong>碎片区</strong>以页为单位分配存储空间，当某个段占用32个碎片区页面后，再以完整的区为单位，分配存储空间</li>
+<li>此时的段概念等价于：区+碎片区页</li>
+</ol>
+<p>二次写文件对应InnoDB的二次写机制（double write）:</p>
+<ul>
+<li><strong>double write</strong>：将脏页真正写入对应磁盘页之前，首先分两次每次写入1MB到<code>Double Write Buffer</code>也就是二次写文件中，完成该操作后再写入真正的磁盘页中。</li>
+<li>主要为了解决页面写入中途崩溃，导致页面受损无法恢复即<strong>页断裂(partial write)</strong>问题</li>
+<li>为什么不能用redo log解决？本质上是由于不同层IO的粒度不同，其中DB block (8-16K)&gt; OS block (4K)&gt;= IO block &gt; 磁盘 sector(512byte)，redo log针对的整个页面的状态变更，此时页面的一部分损坏，redo log无法处理该程度的损坏</li>
+</ul>
+<p>redo log file在后续事务学习中再进行总结</p>
+<h3 id="物理存储格式"><a href="#物理存储格式" class="headerlink" title="物理存储格式"></a>物理存储格式</h3><p>上文中表存储表空间、段、区并不是真正的物理存储结构，而是一个逻辑上的表和空间分配的单位，InnoDB实际上的物理存储分为页格式和行格式，其中页中存储行，下面分别进行总结</p>
+<h4 id="页格式"><a href="#页格式" class="headerlink" title="页格式"></a>页格式</h4><p>一个InnoDB数据页被划分为7部分：</p>
+<ul>
+<li>File Header（38 Bytes）：文件头，包括页号、到其他页链接、页面类型等的页面信息</li>
+<li>Page Header（56 Bytes）：页头，记录页面内数据信息，例如最新插入位置、事务ID等</li>
+<li>Infimum + Supremum Records（26 Bytes）：最小记录和最大记录 两个虚拟的行记录</li>
+<li>User Records ：存储数据行</li>
+<li>Free Space：空闲空间</li>
+<li>Page Directory：页中的”槽”的相对位置，InnoDB对数据行进行均匀划分称为”槽“</li>
+<li>File Trailer（8 Bytes）：文件尾，和头各有一个校验和和LSN，验证页面的数据完整性</li>
+</ul>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/image-20221108195120063.png" class="" title="image-20221108195120063">
+<p>每个表对应一个表空间，对应<code>data_dir</code>中的一个.ibd文件</p>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/image-20221108195932481.png" class="" title="image-20221108195932481">
+<h4 id="行格式"><a href="#行格式" class="headerlink" title="行格式"></a>行格式</h4><p>表中的每一行对应数据页中<code>User Records</code>区域中的一个数据行，InnoDB中有四种行格式，分别为</p>
+<ol>
+<li>Redundant：最早的默认行格式</li>
+<li>Compact：对Redundant行格式的概念，当前版本的默认行格式</li>
+<li>Compressed和Dynamic：InnoDB1.0.x引入的两种行格式，合称为Barracuda，并将前两种格式合称为Antelope<ul>
+<li>3两种格式与1，2格式的不同点在于其对于<strong>行溢出</strong>的处理。1，2格式在数据大于768byte时，存储前768byte的数据+指针，其余溢出数据存储到<code>off page</code>中；3两种格式对于行溢出只存储指针不存储数据</li>
+<li>Compressed和Dynamic的区别在于前者可以使用zlib库对行数据进行压缩</li>
+</ul>
+</li>
+</ol>
+<p>Compact格式如下图所示（两张格式示意图均来自<a href="https://zhuanlan.zhihu.com/p/266060894">知乎博客</a>）</p>
+<ol>
+<li>变长字段长度列表：按照反向字段顺序放置，当字段长度不超过255byte时，使用1个字节表示；当字段长度大于255byte时，使用2个字节表示</li>
+<li>Null值列表：1bite，01表示对应字段为空，不包括定义非空的字段</li>
+<li>记录头信息：包括如delete_flag、record_type、next_record等记录信息，同一个页中的记录通过next_record连接称为单向链表</li>
+</ol>
+<p><img src="https://pic4.zhimg.com/80/v2-439295784a38d93a17f0d7db590644e7_720w.webp" alt="img"></p>
+<p>Redundant格式与Compact格式基本相同</p>
+<ol>
+<li>字段长度偏移列表：记录每个字段的偏移量（反向字段顺序）</li>
+<li>没有null值列表，在便宜列表中相邻偏移量差为0，代表null</li>
+</ol>
+<p><img src="https://pic2.zhimg.com/v2-de40067a916b9c8055f125eb6e012aad_r.jpg" alt="img"></p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><ol>
+<li><a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-storage-engine.html">MySQL 8.0 Reference Manual The InnoDB Storage Engine</a></li>
+<li><a href="https://www.modb.pro/db/113573">博客：MySQL各种“Buffer”之Adaptive Hash Index</a></li>
+<li><a href="https://blog.jcole.us/2013/01/07/the-physical-structure-of-innodb-index-pages/">博客：The physical structure of InnoDB index pages</a></li>
+<li><a href="https://ioutime.github.io/2021/11/07/InnoDB-Page-Formats/">博客：InnoDB Page Formats</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/266060894">知乎：MySQL之InnoDB存储引擎：Row Format行格式</a></li>
+</ol>
+]]></content>
+      <categories>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>MySQL</tag>
+        <tag>InnoDB</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MySQL索引总结</title>
+    <url>/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<h2 id="索引相关知识总结"><a href="#索引相关知识总结" class="headerlink" title="索引相关知识总结"></a>索引相关知识总结</h2><p>索引作为数据库的重要知识，在本科的数据库学习中基本没有接触过，在大四找工作准备面试笔试时才了解到这个常考的概念，本博客是对于以往索引相关知识缺失的补足和系统整理。</p>
+<h3 id="索引是什么？"><a href="#索引是什么？" class="headerlink" title="索引是什么？"></a>索引是什么？</h3><blockquote>
+<p>A <strong>database index</strong> is a <a href="https://en.wikipedia.org/wiki/Data_structure">data structure</a> that improves the speed of data retrieval operations on a <a href="https://en.wikipedia.org/wiki/Table_(database">database table</a>) at the cost of additional writes and storage space to maintain the index data structure.  -Wikipedia</p>
+</blockquote>
+<p>索引(index)是用来加速数据库表数据检索的一种特殊数据结构，其作用类似于目录，通过减少检索过程中的磁盘IO，提升检索效率，索引的优点可以概括为以下三点</p>
+<ol>
+<li>减少服务器需要扫描的数据量</li>
+<li>避免因检索导致的排序和临时表</li>
+<li>将随机I/O变为顺序I/O</li>
+</ol>
+<span id="more"></span>
+<p>索引缺点总结如下：</p>
+<ol>
+<li>索引来源于数据表中的数据，创建和维护索引需要消耗时间（由数据量决定）</li>
+<li>索引会占用额外的存储空间（InnoDB中每个B+树节点为一个数据页，每个数据页占16KB空间）</li>
+</ol>
+<p>正因为索引以上的缺点，在设计索引时需要在检索性能、索引大小、索引更新性能几个因素之间进行权衡。</p>
+<p>索引按照和数据项的关系可以分为两种：</p>
+<ol>
+<li><strong>聚簇索引</strong>（Clustered）：表数据物理上按照索引的逻辑大小排列存储，即按照索引从小到大存储，具有相邻索引值的表项存储在相邻的位置。<ul>
+<li>由于聚簇索引决定了数据的物理存储方式，<strong>一个表上只能定义一个聚簇索引</strong>。</li>
+<li>聚簇索引对于数据的顺序检索性能有较大的提升，例如排序查找、范围查找等</li>
+<li><strong>缺点</strong>：由于索引即数据，数据的增删改涉及到数据页的合并和拆分，对性能影响较大；非聚簇索引由于实际存储不需要满足索引定义的顺序，相应的修改影响相对较小</li>
+</ul>
+</li>
+<li><strong>非聚簇索引</strong>（not clustered，二级索引、辅助索引）：区别于聚簇索引，表数据的存储方式和索引的逻辑顺序没有关系，可以以任意顺序存储<ul>
+<li>这类索引通常应用于非主键列，用来加速<code>JOIN, WHERE, and ORDER BY</code>等操作</li>
+<li>联合索引（composite index）是一类特殊的非聚簇索引，即索引的逻辑顺序由多个属性共同决定。例如在<code>(fisrt_name, second_name)</code>上创建的联合索引，会首先比较 <code>fisrt_name</code> 然后比较<code>second_name</code>确定索引的顺序</li>
+<li>InnoDB中非聚簇索引叶子节点存储的主键值，使用非聚簇索引需要<code>回表操作</code>，即首先在当前索引检索到对应主键值，再通过主键上的聚簇索引检索到对应的数据项。与之不同的是，MyISAM中非聚簇索引叶子节点存储的是对应数据项的物理存储地址。</li>
+<li>缺点：InnoDB中由于<code>回表</code>操作，检索效率相较于非聚簇索引更差；</li>
+</ul>
+</li>
+</ol>
+<p>按照索引的性质可以分为四类：</p>
+<ol>
+<li><p>普通索引</p>
+</li>
+<li><p>唯一性索引：unique约束会自动建立唯一性索引</p>
+</li>
+<li><p>主键索引：主键上的索引，在InnoDB中主键索引等价于聚簇索引，决定了表数据的存储方式，InnoDB对于主键的处理如下：</p>
+<ul>
+<li><strong>有主键</strong>，聚簇索引即为主键索引</li>
+<li><strong>无主键</strong>，InnoDB会使用第一个唯一非空索引作为聚簇索引（unique not null）</li>
+<li><strong>全无</strong>，InnoDB 会生成一个名为 GEN_CLUST_INDEX（6个字节的长整数） 的隐藏聚簇索引。MyISAM没有聚簇索引。</li>
+</ul>
+</li>
+<li><p>全文索引：用于全文搜索，只能用在<code>CHAR</code>、<code>VARCHAR</code>、<code>TEXT</code>属性列上</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> articles <span class="keyword">WHERE</span> <span class="keyword">MATCH</span> (属性列) AGAINST (<span class="string">&#x27;查询字符串&#x27;</span>);</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>按照排列顺序可以分为：</p>
+<ol>
+<li><p>升序索引</p>
+</li>
+<li><p>降序索引：在MySQL8.0以后开始支持，如果一个查询，需要对多个列进行排序，且顺序要求不一致。在这种场景下，要想避免数据库额外的排序-“filesort”，只能使用降序索引</p>
+<ul>
+<li><p>与索引方向相反，MySQL使用<code>Backward index scan</code></p>
+<blockquote>
+<p> <a href="https://dev.mysql.com/blog-archive/mysql-8-0-labs-descending-indexes-in-mysql/">we can see forward index scans are ~15% better than backward index scans</a></p>
+</blockquote>
+</li>
+<li><p>与索引方向不一致，例如 <code>a asc b dsc</code> 对应检索<code>a dsc b dsc</code> ,需要<code>file sort</code></p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="索引的数据结构"><a href="#索引的数据结构" class="headerlink" title="索引的数据结构"></a>索引的数据结构</h3><p>为了加速访问，数据库采用B+Tree作为索引的数据结构，下面分析BTree 和B+Tree的结构和插入删除等操作细节</p>
+<h4 id="B-Tree"><a href="#B-Tree" class="headerlink" title="B-Tree"></a>B-Tree</h4><p>B-Tree是一种自平衡树形数据结构，B-Tree允许节点拥有两个以上的孩子节点，可以理解为多叉平衡搜索树，B-Tree的结构性质使其适用于存储读写大量数据的存储系统，其查找/删除/插入的(最坏)时间复杂度均为<code>log(n)</code></p>
+<p>m叉B-Tree的定义如下：</p>
+<ol>
+<li>每个节点最多有 $m$ 个孩子节点，即最多$m-1$个key</li>
+<li>每个内部节点（非根和叶子节点）至少有$⌈m/2⌉$个孩子节点，即至少有$⌈m/2⌉ - 1$个key</li>
+<li>每个非叶子节点至少有2个孩子节点</li>
+<li>一个包含k-1个key的非叶子节点有k个孩子节点</li>
+</ol>
+<p>B-Tree同样满足搜索树性质，即当前节点key序列中的key大小大于其左边子树元素，小于右边子树元素</p>
+<img src="/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/image-20221101201644340.png" class="" title="image-20221101201644340">
+<p>B+Tree的插入类似于AVL树，只是在树高平衡操作上有一定的区别：</p>
+<ol>
+<li>首先找到插入元素位置的叶子节点，插入到叶子节点key序列的对应位置中</li>
+<li>若此时叶子节点的key个数达到$m$，则需要进行叶子节点分裂操作<ul>
+<li>将叶子节点key序列分为三部分<code>[0...m/2 - 1, m/ 2, m/2 + 1...m]</code>,左右两边差分为两个叶子节点，中间一个key上推到父亲节点</li>
+<li>若上推之后父亲节点key个数达到$m$，同样需要分裂操作</li>
+<li>不断重复分裂-上推的循环， 直到结束分裂</li>
+</ul>
+</li>
+<li>完成插入</li>
+</ol>
+<p>B+Tree的删除类似于插入时的反推，需要当前节点从孩子节点借：</p>
+<ol>
+<li>首先找到插入元素位置，删除对应key，若为非叶子节点需要从下‘借’节点</li>
+<li>从删除key位置的左边子树，或者右边子树上推一个最大/最小key，替代对应被删除的key</li>
+<li>相当于将父节点的删除转化为了子节点删除，不断重复上述过程，直到删除转移到叶子节点</li>
+<li>若叶子节点删除后key为空，则需要进行合并操作，类似于上推的逆操作<ul>
+<li>与相邻叶子节点以及对应的父亲节点合并成为新的叶子节点</li>
+<li>若父亲节点不满足性质2，重复上述过程</li>
+<li>直到向上传递到对应节点满足性质2</li>
+</ul>
+</li>
+</ol>
+<p>B-Tree应用到数据库中作为索引加速访问</p>
+<ul>
+<li>每个key对应一条数据项，每个节点相当于邻近的一系列表项</li>
+<li>假设key之间的比较复杂度为为<code>C</code>，相较于普通的二分查找的复杂度<code>log2(N) * C</code>，m叉B-Tree遍历比较key进行查找的复杂度为<code>logm-1(N) * (m-1) * C</code></li>
+<li>由于内存查找比较的速度远远快于从磁盘中读取数据的数据，两者的查找成本区别在于访问磁盘次数，m叉B-Tree的<code>logm-1(N)</code>次远小于二分查找的<code>log2(N)</code>次</li>
+</ul>
+<img src="/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/image-20221101205630650.png" class="" title="image-20221101205630650">
+<p><strong>B+Tree</strong>是B-Tree的变种，相当于只在叶子节点存储数据的B-Tree，两者的主要区别有</p>
+<ol>
+<li>B+Tree只在叶子节点存储数据，叶子节点按顺序连接成为双向链表</li>
+<li>m阶B+Tree，每个节点最多有 $m$ 个孩子节点，即最多$m$个key</li>
+<li>每个key对应一个孩子节点，孩子节点中的key范围为：<code>[左边key+1,key]</code></li>
+</ol>
+<h4 id="几个概念性问题"><a href="#几个概念性问题" class="headerlink" title="几个概念性问题"></a>几个概念性问题</h4><ol>
+<li>为什么不使用查询插入速度为O(1)的hash索引?<ul>
+<li>hash索引支支持等值比较查询，不支持任何的范围查询，例如<code>where age &gt; 10</code></li>
+<li>若数据分布不均匀，或选取的hash函数不合适，出现大量哈希冲突影响检索和索引维护的成本</li>
+<li>InnoDB不支持hash索引，但是支持自适应哈希索引（类似于缓存），Memory引擎显式支持哈希索引</li>
+</ul>
+</li>
+<li><p>为什么不使用B-Tree而使用B+Tree？</p>
+<ul>
+<li>B-Tree由于非叶子节点同样存储数据，查询可能在叶子节点或者非叶子节点命中，导致查询性能波动较大，无法预测（Mysql8.0删除缓存的原因）</li>
+<li>B-Tree的非叶子节点存储数据占用更多的空间，B+Tree在相同节点大小下，能够存储更多key，也就意味着B+Tree的深度更小，查询成本更低</li>
+<li>B+Tree叶子节点以双向链表形式组织，对于范围查询支持更好</li>
+</ul>
+<h3 id="索引使用"><a href="#索引使用" class="headerlink" title="索引使用"></a>索引使用</h3></li>
+</ol>
+<p>索引的创建分为两种方式</p>
+<ol>
+<li><p>在创建表时声明约束(主键、唯一、外键)会创建对应的索引</p>
+</li>
+<li><p>主动通过<code>CREATE</code>语句在现有的表上添加索引</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> [<span class="keyword">UNIQUE</span><span class="operator">|</span>FULLTEXT<span class="operator">|</span>SPATIAL] INDEX indexName <span class="keyword">ON</span> mytable(<span class="keyword">column</span>(length)); </span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>索引操作示例：</p>
+<ol>
+<li><p>创建两个表，查看对应约束</p>
+<ul>
+<li><p>创建表</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">create</span> <span class="keyword">table</span> department(</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> dept_id <span class="type">int</span> <span class="keyword">PRIMARY</span> KEY <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> dept_name <span class="type">varchar</span>(<span class="number">100</span>) <span class="keyword">default</span> &quot;待定&quot;</span><br><span class="line">    );</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.06</span> sec)</span><br><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">create</span> <span class="keyword">table</span> empolyee(</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> emp_id <span class="type">int</span> <span class="keyword">PRIMARY</span> KEY,</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> dept_id <span class="type">int</span>, </span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> phone_num <span class="type">int</span> <span class="keyword">UNIQUE</span>,</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> <span class="keyword">CONSTRAINT</span> <span class="keyword">FOREIGN</span> KEY(dept_id) <span class="keyword">REFERENCES</span> department(dept_id)</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> );</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.02</span> sec)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>查看约束：<code>SHOW INDEX FROM 表名</code></p>
+<img src="/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/image-20221104165652781.png" class="" title="image-20221104165652781">
+</li>
+</ul>
+</li>
+<li><p>手动创建索引</p>
+<ul>
+<li>同样可使用<code>ALTER ADD</code></li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">create</span> index test_index <span class="keyword">on</span> employee(phone_num);</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.01</span> sec)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>删除索引</p>
+<ul>
+<li>同样可使用<code>DROP INDEX index_name ON table_name</code></li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> alter table employee drop index test_index;</span></span><br><span class="line">Query OK, 0 rows affected (0.01 sec)</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>当检索涉及到指定资源的顺序(order by)、比较(where on等)时，可以考虑使用索引。</p>
+<h3 id="索引失效场景"><a href="#索引失效场景" class="headerlink" title="索引失效场景"></a>索引失效场景</h3><p>并不是在属性列上设置索引后，所有用到对应属性列的查询都能够用到索引，个人总结索引生效的条件为：<strong>检索条件必须为常量</strong>，即能够让数据库根据某个值在B+树上逐层深入，而是需要遍历所有数据项确定是否满足<code>where</code>条件。</p>
+<p>常见的索引失效场景有：</p>
+<ol>
+<li><p>查询条件中存在计算函数、类型转换等</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> student <span class="keyword">where</span> <span class="keyword">left</span>(name, <span class="number">4</span>) <span class="operator">=</span> <span class="string">&#x27;wang&#x27;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>不等于(<code>&lt;&gt;</code> ，<code>!=</code>，<code>not like</code>，<code>not null</code>)等条件</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> student <span class="keyword">where</span> name <span class="operator">!=</span> <span class="string">&#x27;zhangsan&#x27;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>or</code>前后存在非索引列</p>
+<ul>
+<li>因为非索引列需要遍历所有数据项</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> student <span class="keyword">where</span> name <span class="operator">=</span> <span class="string">&#x27;zhangsan&#x27;</span> <span class="keyword">or</span> age <span class="operator">=</span> <span class="number">100</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>联合索引范围条件右边索引失效</p>
+<ul>
+<li>联合索引<code>index(name, age, home)</code></li>
+<li><code>age</code>范围条件，导致该联合索引只能用到前两个属性，相当于<code>index(name, age)</code></li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> student <span class="keyword">where</span> name <span class="operator">=</span> <span class="string">&#x27;100&#x27;</span> <span class="keyword">and</span> age <span class="operator">&gt;</span> <span class="number">100</span> <span class="keyword">and</span> home <span class="keyword">like</span> &quot;cn%&quot;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>MySQL</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MySQL事务</title>
+    <url>/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/</url>
+    <content><![CDATA[<h2 id="MySQL事务"><a href="#MySQL事务" class="headerlink" title="MySQL事务"></a>MySQL事务</h2><p>之前在分布式系统的学习中已经系统的整理了事务ACID以及隔离性概念，下面总结在MySQL中的事务，偏向于实现层面，主要内容来自<em>《MySQL技术内幕:InnoDB存储引擎(第2版)》</em>。</p>
+<h3 id="事务分类和使用"><a href="#事务分类和使用" class="headerlink" title="事务分类和使用"></a>事务分类和使用</h3><p>MySQL 默认提交事务（<code>autocommit = 1</code>），即执行完SQL一句后立马执行COMMIT操作，也就是所谓的<strong>隐性事务</strong>。显式事务的开启，需要手动输入事务控制语句，：</p>
+<ul>
+<li><code>START TRANSACTION|BEGIN</code>：开启事务</li>
+<li><code>COMMIT</code>：提交事务</li>
+<li><code>ROLLBACK</code>：回滚事务</li>
+<li><code>SAVEPOINT identifier</code>：创建事务中的保存点</li>
+<li><code>REPEASE SAVEPOINT identifier</code>：删除事务中的保存点</li>
+<li><code>ROLLBACK TO[SACEPOINT]indentifier</code>：回滚的指定的保存点</li>
+</ul>
+<p>其中包括DDL等在内的数据库管理和修改操作开启<strong>隐性事务</strong>，无法在显式事务控制中使用。</p>
+<span id="more"></span>
+<p>系统的隔离级别由变量<code>transaction_isolation</code>变量控制，通过以下两种方式修改：</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"># <span class="number">1.</span>变量修改方式</span><br><span class="line"><span class="keyword">set</span> transaction_isolation <span class="operator">=</span> <span class="string">&#x27;repeatable-read&#x27;</span>;</span><br><span class="line"># <span class="number">2.</span>控制语句形式</span><br><span class="line"><span class="keyword">SET</span> TRANSACTION ISOLATION LEVEL READ COMMITTED</span><br></pre></td></tr></table></figure>
+<p>事务的分类包括：</p>
+<ol>
+<li>扁平事务（Flat Transactions）</li>
+<li>带有保存点的扁平事务（with savepoints）</li>
+<li>链事务（Chained Transactions）</li>
+<li>嵌套事务（Nested Transactions）</li>
+<li>分布式事务（Distributed Transactions）</li>
+</ol>
+<p><strong>链式事务</strong>可以理解为多个连续的事务，一个事务结束其后继事务立刻在相同的隔离级别以及访问模式中继续执行。MySQL中开启方式为</p>
+<ol>
+<li><p>通过全局变量设置<code>completion_type = 2</code></p>
+</li>
+<li><p>结束提交使用<code>COMMIT AND CHAIN</code></p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SET</span> TRANSACTION ISOLATION LEVEL READ COMMITTED</span><br><span class="line"><span class="keyword">START</span> TRANSACTION;</span><br><span class="line">           UPDATE accounts</span><br><span class="line">              <span class="keyword">SET</span> balance <span class="operator">=</span> balance <span class="operator">-</span> <span class="number">1500</span></span><br><span class="line">            <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line">           UPDATE accounts</span><br><span class="line">              <span class="keyword">SET</span> balance <span class="operator">=</span> balance <span class="operator">+</span> <span class="number">1500</span></span><br><span class="line">            <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">2</span>;</span><br><span class="line"> <span class="keyword">COMMIT</span> <span class="keyword">AND</span> CHAIN;</span><br><span class="line">           UPDATE accounts</span><br><span class="line">              <span class="keyword">SET</span> balance <span class="operator">=</span> balance <span class="operator">-</span> <span class="number">1000</span></span><br><span class="line">            <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">2</span>;</span><br><span class="line">           UPDATE accounts</span><br><span class="line">              <span class="keyword">SET</span> balance <span class="operator">=</span> balance <span class="operator">+</span> <span class="number">1000</span></span><br><span class="line">            <span class="keyword">WHERE</span> id <span class="operator">=</span> <span class="number">3</span>;</span><br><span class="line"><span class="keyword">COMMIT</span>;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p><strong>嵌套事务</strong>是一个多个事务按照树状层次结构组成的复合事务</p>
+<ul>
+<li>上层事务控制下层事务的提交和回滚</li>
+<li>MySQL并不直接支持</li>
+</ul>
+<h3 id="原子性-持久性实现"><a href="#原子性-持久性实现" class="headerlink" title="原子性+持久性实现"></a>原子性+持久性实现</h3><p>Mysql中事务的原子性和持久性，基于redo和undo日志实现：</p>
+<ol>
+<li>redo日志：记录事务操作的日志，在事务提交前首先持久化redo日志，以实现事务的持久性</li>
+<li>undo日志：用于撤销事务操作，回滚数据库状态到事务开始之前，实现了事务的原子性</li>
+</ol>
+<h4 id="redo日志"><a href="#redo日志" class="headerlink" title="redo日志"></a>redo日志</h4><p>redo日志保证持久性的原理可以简单理解为：</p>
+<ol>
+<li>受限于磁盘读写性能，每次数据库的增删改操作都写入磁盘，会导致数据库性能较差</li>
+<li>为了解决这一问题，引入了缓冲，先在内存缓冲中执行对应修改操作，在合适的时机写入磁盘</li>
+<li>然而内存中的数据是易失的（volatile），如果内存数据写入磁盘之前丢失，则数据库的持久性遭到破坏</li>
+<li>为了保证持久性，引入redo日志，记录修改操作，并持久化到磁盘</li>
+</ol>
+<p>相当于用<strong>操作记录的持久化成本</strong>替代<strong>操作本身持久化成本</strong>，最终在保证持久性的情况下实现性能的提升。</p>
+<p>然而redo日志本身持久化也类似于数据库持久化问题，也面临着性能和持久化的权衡，InnoDB中分为内存和磁盘两部分：</p>
+<ol>
+<li>Log Buffer：内存中的redo log buffer，事务在执行时实时写入日志到当前位置。</li>
+<li>Redo Log File：磁盘中存储redo log的文件 ，在事务提交前，会将Log Buffer中的日志持久化到Redo Log File中</li>
+</ol>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png" class="" title="image-20221119093517439">
+<p>InnoDB提供了<code>innodb_flush_log_at_trx_commit</code>变量控制Log Buffer持久化时机：</p>
+<ul>
+<li><code>0</code>：事务提交时不进行redo log持久化，此时持久化时机只剩下<code>master thread</code>每1s执行一次的fsync。</li>
+<li><code>1</code>：提交时将redo log写入Redo Log File，且调用fsync，保证真正写入。</li>
+<li><code>2</code>：提交时将redo log写入Redo Log File，但不调用fsync，写入操作系统缓存。</li>
+</ul>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093945536.png" class="" title="image-20221119093945536">
+<p>Log Buffer中的日志刷新到磁盘的时机为：</p>
+<ol>
+<li>事务提交时，具体刷新行为由<code>innodb_flush_log_at_trx_commit</code>控制</li>
+<li>当Log Buffer一半的空间被使用完毕时</li>
+<li>Log checkpoint（包括Master thread Checkpoint等，具体未深入了解）</li>
+</ol>
+<p>另外两个概念控制redo log的扩张收缩：</p>
+<ol>
+<li>LSN（Log Sequence Number）：日志序列号，记录当前redo log数量，其单位为字节数</li>
+<li>Checkpoint：检查点，代表已经完成持久化数据对应的操作号，当脏页刷新到磁盘中时，其已经实现了持久化，对应的redo log也就没必要存在。</li>
+</ol>
+<p>最后补充一点，redo log以512byte大小的block进行存储，大小于磁盘扇区相同，因此不需要<code>doublewrite</code>避免数据损坏。</p>
+<h4 id="undo日志"><a href="#undo日志" class="headerlink" title="undo日志"></a>undo日志</h4><p>undo日志可以说是redo日志的<del>反方向的钟</del>，用来实现事务的回滚操作，两者区别在于：</p>
+<ol>
+<li>undo日志记录逻辑操作，redo日志记录物理操作</li>
+<li>undo日志类似于临时文件，当“不需要回退时”undo日志即可删除，其持久化需要通过redo日志实现</li>
+</ol>
+<p>undo的回退不是时光倒流，而是通过执行逆操作抵消历史操作，即delete-&gt;insert、insert-&gt;delete、update-&gt;update back，产生的时机为：</p>
+<ol>
+<li>用户自定义表上的<code>insert</code>,<code>update</code>,<code>delete</code>操作</li>
+<li>用户定义临时表上的<code>insert</code>,<code>update</code>,<code>delete</code>操作，其中临时表上的undo日志由于不需要错误恢复，不存在对应redo日志</li>
+</ol>
+<p>undo日志的生命流程可以概括为：</p>
+<ol>
+<li>开启事务，每执行一个SQL，产生对应的undo日志（undo日志会产生对应的redo日志）</li>
+<li>当事务提交时，若无其他事务依赖（insert），则undo log直接删除；若存在其他事务依赖（mvvc依赖于undo实现delete、update的隔离），等待依赖事务结束，由<code>purge</code>操作统一回收。</li>
+</ol>
+<p><code>purge</code>操作用来真正的执行<code>delete</code>,<code>update</code>操作，回收对应undo日志</p>
+<ul>
+<li>由于隔离性（或者说mvvc）要求，<code>delete</code> <code>update</code>操作并不真正的执行，而是由<code>purge</code>操作统一处理</li>
+<li><code>purge</code>回收undo日志执行对应的<code>delete</code>,<code>update</code>操作，回收采用了一定的优化，缓解undolog随机读取的性能问题</li>
+</ul>
+<p>undo日志存储按照段形式组织，undo日志存储在undo slot中</p>
+<ol>
+<li><p>两个table space：根据是否为临时表分别将对应undo日志存储在undo table space和global table space</p>
+</li>
+<li><p>128个 rollback segment：每个table space中包括128个回滚段</p>
+</li>
+<li><p>1024个 undo segment：每个rollback segment根据页大小，对应不同数量undo undo segment</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">(innodb_page_size / 16) * innodb_rollback_segments * number of undo tablespaces</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h3 id="隔离性实现-锁"><a href="#隔离性实现-锁" class="headerlink" title="隔离性实现-锁"></a>隔离性实现-锁</h3><p>锁是InnoDB中进行并发控制，保证隔离性的手段之一，主要的分类方式有</p>
+<ol>
+<li>锁的粒度：表级锁、行级锁（record lock）、页锁</li>
+<li>锁的排他性：共享（shared）锁和排他(Exclusive)锁</li>
+</ol>
+<p>下面总结InnoDB中主要的锁类型</p>
+<h4 id="Intention-Locks（意向锁）"><a href="#Intention-Locks（意向锁）" class="headerlink" title="Intention Locks（意向锁）"></a>Intention Locks（意向锁）</h4><p>为了实现<code>multiple granularity locking</code>，事务在获取任意行级锁之前，首先获取Intention Locks，意向锁为表级别锁，与普通表级别锁的区别在于：</p>
+<ol>
+<li>意向锁之间并不互斥</li>
+<li>意向锁与其他普通表级锁满足一般的互斥性质</li>
+</ol>
+<p>上述机制实现了<code>多粒度</code>，访问行只获取行级锁，后续当有操作需要获取表级锁时，由于只需要判断是否与意向锁互斥，而<strong>不需要遍历整个表，判断是否存在互斥行级锁</strong>。</p>
+<p>综上所诉，意向锁实际上可以理解为<strong>行锁的表级别标记</strong></p>
+<h4 id="Gap-Locks（间隙锁）"><a href="#Gap-Locks（间隙锁）" class="headerlink" title="Gap Locks（间隙锁）"></a>Gap Locks（间隙锁）</h4><p>结合幻读场景理解，间隙锁对index范围上锁，如下SQL所示，该查询语句对范围<code>10-20</code>区间（开区间）上锁，若要插入一条<code>c1=15</code>的记录，需要等待当前锁释放。</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> c1 <span class="keyword">FROM</span> t <span class="keyword">WHERE</span> c1 <span class="keyword">BETWEEN</span> <span class="number">10</span> <span class="keyword">and</span> <span class="number">20</span> <span class="keyword">FOR</span> UPDATE;</span><br></pre></td></tr></table></figure>
+<p>Gap Locks存在的目的是为了阻止其他事务在当前事务涉及到对应区间数据时，向该区间内插入新的数据</p>
+<ul>
+<li>当数据库隔离级别为<code>READ COMMITED</code>时，Gap Locks关闭不再使用</li>
+</ul>
+<h4 id="Next-Key-Locks"><a href="#Next-Key-Locks" class="headerlink" title="Next-Key Locks"></a>Next-Key Locks</h4><p>行锁和间隙锁的结合，锁定一条记录以及其左区间（索引确定的范围），假设表中包含<code>index=10, 11, 13, and 20</code>四条数据，则可能的Next-Key Lock上锁位置可以有</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">(negative infinity, <span class="number">10</span>]</span><br><span class="line">(<span class="number">10</span>, <span class="number">11</span>]</span><br><span class="line">(<span class="number">11</span>, <span class="number">13</span>]</span><br><span class="line">(<span class="number">13</span>, <span class="number">20</span>]</span><br><span class="line">(<span class="number">20</span>, positive infinity)</span><br></pre></td></tr></table></figure>
+<p>InnoDB的<code>REPEATABLE READ</code>隔离级别中通过Next-Key Lock，实现幻读问题的解决</p>
+<h4 id="Insert-Intention-Locks（插入意向锁）"><a href="#Insert-Intention-Locks（插入意向锁）" class="headerlink" title="Insert Intention Locks（插入意向锁）"></a>Insert Intention Locks（插入意向锁）</h4><p>插入意向锁为了解决多个事务插入相同位置（相同主键）的情况，由于目标插入数据项不存在，不能使用普通的行锁解决，只能通过”意向”的方式，实现互斥。案例如下：</p>
+<ol>
+<li><p>事务1获取对应区间的间隙锁</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">begin</span>;</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.00</span> sec)</span><br><span class="line"></span><br><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> test_select <span class="keyword">where</span> id <span class="operator">&gt;</span> <span class="number">4</span> <span class="keyword">for</span> share;</span><br><span class="line"><span class="keyword">Empty</span> <span class="keyword">set</span> (<span class="number">0.00</span> sec)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>事务2此时向对应间隙插入数据，获取插入意向锁与间隙锁互斥，会等待事务1释放锁</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">begin</span>;</span><br><span class="line">Query OK, <span class="number">0</span> <span class="keyword">rows</span> affected (<span class="number">0.00</span> sec)</span><br><span class="line"></span><br><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">insert</span> <span class="keyword">into</span> test_select <span class="keyword">values</span>(<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用<code>show engine innodb status</code>命令查看系统当前锁，可以看到事务在等待锁释放</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">insert into test_select values(5,6,7)</span><br><span class="line">------- TRX HAS BEEN WAITING 4 SEC FOR THIS LOCK TO BE GRANTED:</span><br><span class="line">RECORD LOCKS space id 68 page no 4 n bits 72 index PRIMARY of table `test_db`.`test_select` trx id 9758 lock_mode X insert intention waiting</span><br><span class="line">Record lock, heap no 1 PHYSICAL RECORD: n_fields 1; compact format; info bits 0</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h4 id="AUTO-INC-Locks-自增锁"><a href="#AUTO-INC-Locks-自增锁" class="headerlink" title="AUTO-INC Locks(自增锁)"></a>AUTO-INC Locks(自增锁)</h4><p>当表具有自增（Auto Increment）字段时，为了避免并发插入导致的自增字段出现重复，插入前首先获得自增锁，该锁将并发插入变为了顺序插入，保证了自增字段逐个递增。</p>
+<p>由于严格的自增锁会严重的降低并发性能，MySQL提供了<code>innodb_autoinc_lock_mode</code> 参数配置插入的不同机制（这部分内容还有问题，详细参考文档<a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-auto-increment-handling.html#innodb-auto-increment-lock-modes">AUTO_INCREMENT Handling in InnoDB</a>）</p>
+<ol>
+<li><code>0</code>：tradition模式，每个插入语句插入前获取AUTO-INC Lock，插入执行完毕后，释放锁</li>
+<li><code>1</code>：consecutive模式，如果已知insert语句要插入的数据条数，提前分配对应数量的自增值，避免长时间占有锁</li>
+<li><code>2</code>：interleaved模式：不使用表级锁，多个事务可并发插入，保证自增字段的唯一性，但不保证一个插入语句中插入的数据是连续的</li>
+</ol>
+<h4 id="死锁"><a href="#死锁" class="headerlink" title="死锁"></a>死锁</h4><p>InnoDB通过<code>死锁检测</code>手段，在发生死锁情况时主动关闭死锁依赖中最小的事务，从而破除思索。有两个参数控制：</p>
+<ol>
+<li><p><code>innodb_deadlock_detect</code>：默认处于开启状态，表示是否进行死锁检测</p>
+</li>
+<li><p><code>innodb_lock_wait_timeout</code>：等待获取锁的超时时间，当一个事务超过一定时间等待锁，InnoDB会终止该事务</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> insert into test_select values(5,6,7);</span></span><br><span class="line">ERROR 1205 (HY000): Lock wait timeout exceeded; try restarting transaction</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h3 id="隔离性实现-MVCC"><a href="#隔离性实现-MVCC" class="headerlink" title="隔离性实现-MVCC"></a>隔离性实现-MVCC</h3><blockquote>
+<p>Multiversion concurrency control (MVCC) is a database optimization technique that creates duplicate copies of records so that data can be safely read and updated at the same time.</p>
+</blockquote>
+<p>MVCC(Multiversion concurrency control) 多版本并发控制是数据库优化并发性能的一种手段，通过创建读副本，在不使用锁的情况下，解决并发读写的冲突问题，整体上简单理解MVCC：</p>
+<ol>
+<li>每个修改（insert、update、delete等）操作都会导致产生一个新版本的数据，并不会影响老版本数据</li>
+<li>读操作会从有限多个版本的数据选择合适的数据进行读取，以满足隔离性要求。</li>
+</ol>
+<p>MVCC虽然有效的避免了读写冲突，提升了并发性能，但存在一定问题</p>
+<ol>
+<li>MVCC机制难以设计和实现</li>
+<li>不同版本的数据清理回收的时机难以确定</li>
+</ol>
+<h4 id="InnoDB-MVCC实现"><a href="#InnoDB-MVCC实现" class="headerlink" title="InnoDB MVCC实现"></a>InnoDB MVCC实现</h4><p>InnoDB的实现并没有采用多个数据版本的形式，而是采用单一数据+undo日志的实现思路</p>
+<ol>
+<li>所有数据行存在两个隐藏属性：<code>trx_id</code>记录最新修改的事务ID，作为并发版本时间戳；<code>roll_pointer</code>指向最新undo log</li>
+<li>所有的写操作（insert，update）直接写入数据，并不是生成一个新版本的数据；删除（delete）操作并不真的删除数据项，等待删除事务提交后，MVCC无需使用时，由<code>purge</code>操作一并回收</li>
+<li><strong>读操作</strong>根据构建<code>ReadView</code>，根据读取事务ID和读取数据行<code>trx_id</code>，判断是否需要基于<code>undo log</code> 回退</li>
+</ol>
+<p><code>ReadView</code>用于维护并发事务的时间戳信息，在读取过程中指导回退操作，主要包括：</p>
+<ol>
+<li><code>creator_trx_id</code>：当前事务ID</li>
+<li><code>trx_ids</code>：与当前事务存在冲突的并发事务ID列表</li>
+<li><code>up_limit_in</code>：最小事务ID<code>min(trx_ids)</code>，用来判断”过去”的事务</li>
+<li><code>low_limit_id</code>：当前事务创建时，未分配的最小事务ID，用来判断”未来”的事务</li>
+</ol>
+<p>判断是否需要回退避免冲突的条件如下：</p>
+<ol>
+<li>可直接访问的情况（待访问数据行的<code>trx_id</code> ）<ul>
+<li><code>trx_id</code> =  <code>creator_trx_id</code>（自己的修改自己能看到）；</li>
+<li><code>trx_id</code> &lt;=  <code>up_limit_in</code>（历史已提交的事务能看到）;</li>
+<li><code>trx_id</code> &lt;<code>low_limit_id</code> 且落在<code>trx_ids</code>外（非未来且和自己非并发的事务能看到）；</li>
+</ul>
+</li>
+<li>需要访问<code>undo log</code>回退到历史数据的情况<ul>
+<li><code>trx_id</code> 落在<code>trx_ids</code>内（和自己并发未提交的修改）</li>
+<li><code>trx_id</code> &gt;=<code>low_limit_id</code> （在自己之后事务修改）</li>
+</ul>
+</li>
+</ol>
+<p>上述判断条件的本质上就是<strong>保证当前事务只能看到历史版本的数据</strong>，Mysql只在两个隔离级别中使用MVVC</p>
+<ol>
+<li><code>Read Committed</code>：一次事务中的每一次读操作都重新生成<code>ReadView</code></li>
+<li><code>Repeatable Read</code>：一次事务只在第一次读取操作时生成<code>ReadView</code></li>
+</ol>
+<p>区别于MySQL，PostgreSQL写新数据时，旧数据不删除，直接插入新数据，新旧数据上保存对应的事务ID，通过新旧数据+事务ID实现MVCC机制</p>
+<h4 id="一个案例展示MVCC"><a href="#一个案例展示MVCC" class="headerlink" title="一个案例展示MVCC"></a>一个案例展示MVCC</h4><p>在MySQL的<code>Repeatable Read</code>隔离级别下，并行执行两个事务：</p>
+<ol>
+<li><p>事务1查询表中所有数据</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> select * from test_select;</span></span><br><span class="line">+----+------+------+</span><br><span class="line">| id | age  | sex  |</span><br><span class="line">+----+------+------+</span><br><span class="line">|  1 |    2 |    3 |</span><br><span class="line">|  2 |    3 |    4 |</span><br><span class="line">|  3 |    4 |    5 |</span><br><span class="line">|  4 |    5 |    6 |</span><br><span class="line">+----+------+------+</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>事务2更新<code>id=2</code>的数据，并提交</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mysql&gt; update test_select set age = 10 where id = 2;</span><br><span class="line">Query OK, 1 row affected (0.00 sec)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>事务1查询<code>id=2</code>的数据，<strong>无变化</strong></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> select * from test_select <span class="built_in">where</span> id = 2;</span></span><br><span class="line">+----+------+------+</span><br><span class="line">| id | age  | sex  |</span><br><span class="line">+----+------+------+</span><br><span class="line">|  2 |    3 |    4 |</span><br><span class="line">+----+------+------+</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>事务1更新<code>id=2</code>的数据，并查询结果</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> update test_select <span class="built_in">set</span> age = age + 1 <span class="built_in">where</span> id = 2;</span></span><br><span class="line">Query OK, 1 row affected (0.00 sec)</span><br><span class="line">Rows matched: 1  Changed: 1  Warnings: 0</span><br><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> select * from test_select <span class="built_in">where</span> id = 2;</span></span><br><span class="line">+----+------+------+</span><br><span class="line">| id | age  | sex  |</span><br><span class="line">+----+------+------+</span><br><span class="line">|  2 |   11 |    4 |</span><br><span class="line">+----+------+------+</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>案例的结果表明，<strong>MVCC隔离读写操作，由快照读实现，所有的修改都实时的反映在最新数据上</strong>。</p>
+<h3 id="补充-分布式事务"><a href="#补充-分布式事务" class="headerlink" title="补充-分布式事务"></a>补充-分布式事务</h3><p>MySQL支持分布式事务，称为XA事务，其中XA是由X/Open组织提出的<a href="https://so.csdn.net/so/search?q=分布式&amp;spm=1001.2101.3001.7020">分布式</a>事务的规范，一个XA事务由一个或者多个资源管理器（数据库）、一个事务管理器以及一个应用程序组成</p>
+<ul>
+<li>基于两阶段提交（two-phase commit）方式实现，事务管理器为事务协调者</li>
+<li>资源管理器相当于分布式事务中参与的一个个数据库</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>从本科开始接触数据库事务这一概念，一带而过没有深入学习，经过这段时间从理论以及MySQL实现角度的学习和总结，对于事务有了一定程度的理解，更能体会并发控制的困难和事务实现设计的巧妙，希望在以后的编码过程中，能够用到事务学习中了解到的并发控制思路。</p>
+]]></content>
+      <categories>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>MySQL</tag>
+        <tag>InnoDB</tag>
+        <tag>MVCC</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MySQL性能调优</title>
+    <url>/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/</url>
+    <content><![CDATA[<h2 id="MySQL性能调优"><a href="#MySQL性能调优" class="headerlink" title="MySQL性能调优"></a>MySQL性能调优</h2><p>MySQL性能调优流程从低到高分别为：</p>
+<ol>
+<li><strong>查询及索引优化</strong>：SQL优化以及索引优化</li>
+<li><strong>库表优化</strong>：设计优化以及分库分表等操作</li>
+<li>MySQL参数/服务器优化：分为硬件调优和MySQL参数调优</li>
+<li>分库分表横向扩展优化</li>
+</ol>
+<h3 id="查询优化"><a href="#查询优化" class="headerlink" title="查询优化"></a>查询优化</h3><p>SQL作为访问操作数据库的主要手段，采用一定的优化手段提升SQL性能，对于提高数据库整体性能具有重要意义，下面内容为对于SQL性能优化的学习和总结，主要内容来自：<a href="https://www.bilibili.com/video/BV1iq4y1u7vj?p=150&amp;vd_source=69aca4985c128187979e0f8d4604125f">尚硅谷mysql教程</a>，<a href="https://dev.mysql.com/doc/refman/8.0/en/select-optimization.html">MySQL 8.0 Reference Manual Optimizing SELECT Statements</a>。</p>
+<span id="more"></span>
+<h4 id="SQL性能监控"><a href="#SQL性能监控" class="headerlink" title="SQL性能监控"></a>SQL性能监控</h4><p>写出在进行数据库性能优化前首先应通过一些性能监控手段，分析MySQL目前出现性能瓶颈的原因，针对原因采用对应的调优策略，性能监控手段主要包括：</p>
+<ol>
+<li>通过<code>show status</code>查看一些记录在全局变量中的性能参数，例如<code>slow_queries</code>，<code>last_query_cost</code>等。</li>
+<li>通过慢查询日志定位执行较慢的SQL。</li>
+<li>使用<code>show profile</code>查看SQL执行成本。</li>
+<li>使用<code>EXPLAIN</code>分析查询语句。</li>
+<li>Performance Schema 以及 sys Schema两个参数数据库。</li>
+</ol>
+<p>由于性能监控脱离实际的应用场景难以加以实践以达到深入了解，下面的总结偏向理论上的了解，在以后遇到实际问题时能够有一定的准备。</p>
+<h5 id="慢查询"><a href="#慢查询" class="headerlink" title="慢查询"></a>慢查询</h5><p>MySQL会将执行时间缓慢的SQL记录在日志中，即慢查询日志，慢查询日志中的SQL时分析目前系统性能瓶颈的入口之一。</p>
+<p>慢查询日志默认关闭，通过修改全局变量<code>slow_query_log</code>开启:</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> show variables like <span class="string">&#x27;%slow_query_log&#x27;</span>;</span></span><br><span class="line">+----------------+-------+</span><br><span class="line">| Variable_name  | Value |</span><br><span class="line">+----------------+-------+</span><br><span class="line">| slow_query_log | OFF   |</span><br><span class="line">+----------------+-------+</span><br><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> show variables like <span class="string">&#x27;%slow_query_log%&#x27;</span>;</span></span><br><span class="line">+---------------------+---------------------------------+</span><br><span class="line">| Variable_name       | Value                           |</span><br><span class="line">+---------------------+---------------------------------+</span><br><span class="line">| slow_query_log      | ON                              |</span><br><span class="line">| slow_query_log_file | /var/lib/mysql/hadoop1-slow.log |</span><br><span class="line">+---------------------+---------------------------------+</span><br><span class="line">2 rows in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+<p>慢查询SQL的阈值存储在全局变量<code>long_query_time</code>中，默认为10秒</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> show variables like <span class="string">&#x27;%long_query_time%&#x27;</span>;</span></span><br><span class="line">+-----------------+-----------+</span><br><span class="line">| Variable_name   | Value     |</span><br><span class="line">+-----------------+-----------+</span><br><span class="line">| long_query_time | 10.000000 |</span><br><span class="line">+-----------------+-----------+</span><br></pre></td></tr></table></figure>
+<p>通过<code>slow_queries</code>全局变量，即可获得慢查询SQL的数量：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> show status like <span class="string">&#x27;slow_queries&#x27;</span>;</span></span><br><span class="line">+---------------+-------+</span><br><span class="line">| Variable_name | Value |</span><br><span class="line">+---------------+-------+</span><br><span class="line">| Slow_queries  | 2     |</span><br><span class="line">+---------------+-------+</span><br><span class="line">1 row in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+<p>对于慢查询日志的分析可使用<code>mysqldumpslow</code>工具</p>
+<h5 id="Show-profiling"><a href="#Show-profiling" class="headerlink" title="Show profiling"></a>Show profiling</h5><p>通过<code>show profiling</code>查看最近执行sql在不同执行阶段耗费的时间，能够较为详细的展示一条SQL的执行成本，默认关闭：</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">show</span> variables <span class="keyword">like</span> <span class="string">&#x27;profiling%&#x27;</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">------------------------+-------+</span></span><br><span class="line"><span class="operator">|</span> Variable_name          <span class="operator">|</span> <span class="keyword">Value</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------------------+-------+</span></span><br><span class="line"><span class="operator">|</span> profiling              <span class="operator">|</span> OFF   <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> profiling_history_size <span class="operator">|</span> <span class="number">15</span>    <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------------------+-------+</span></span><br><span class="line"><span class="number">2</span> <span class="keyword">rows</span> <span class="keyword">in</span> <span class="keyword">set</span>, <span class="number">1</span> warning (<span class="number">0.00</span> sec)</span><br></pre></td></tr></table></figure>
+<p>开启后自动记录最近的几条sql，使用<code>show profiles</code>查看：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> show profiles;</span></span><br><span class="line">+----------+------------+-----------------------------------------+</span><br><span class="line">| Query_ID | Duration   | Query                                   |</span><br><span class="line">+----------+------------+-----------------------------------------+</span><br><span class="line">|        1 | 0.00060375 | select * from customers                 |</span><br><span class="line">|        2 | 0.00121350 | show tables                             |</span><br><span class="line">|        3 | 0.00014175 | show create employees                   |</span><br><span class="line">|        4 | 0.01286675 | show create table employees             |</span><br><span class="line">|        5 | 0.00246975 | select distinct(company) from employees |</span><br><span class="line">+----------+------------+-----------------------------------------+</span><br><span class="line">5 rows in set, 1 warning (0.00 sec)</span><br></pre></td></tr></table></figure>
+<p>使用<code>show prfoile for query x</code>查看某条sql的详细执行成本</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> show profile <span class="keyword">for</span> query 5;</span></span><br><span class="line">+--------------------------------+----------+</span><br><span class="line">| Status                         | Duration |</span><br><span class="line">+--------------------------------+----------+</span><br><span class="line">| starting                       | 0.000051 |</span><br><span class="line">| Executing hook on transaction  | 0.000003 |</span><br><span class="line">| starting                       | 0.000005 |</span><br><span class="line">| checking permissions           | 0.000004 |</span><br><span class="line">| Opening tables                 | 0.000026 |</span><br><span class="line">| init                           | 0.000003 |</span><br><span class="line">| System lock                    | 0.000006 |</span><br><span class="line">| optimizing                     | 0.000003 |</span><br><span class="line">| statistics                     | 0.000028 |</span><br><span class="line">| preparing                      | 0.000363 |</span><br><span class="line">| executing                      | 0.001700 |</span><br><span class="line">| end                            | 0.000005 |</span><br><span class="line">| query end                      | 0.000003 |</span><br><span class="line">| waiting for handler commit     | 0.000212 |</span><br><span class="line">| closing tables                 | 0.000012 |</span><br><span class="line">| freeing items                  | 0.000036 |</span><br><span class="line">| cleaning up                    | 0.000012 |</span><br><span class="line">+--------------------------------+----------+</span><br></pre></td></tr></table></figure>
+<h5 id="EXPLAIN分析查询语句"><a href="#EXPLAIN分析查询语句" class="headerlink" title="EXPLAIN分析查询语句"></a>EXPLAIN分析查询语句</h5><p>通过<code>EXPLAIN</code>能够查看某个SQL语句的具体执行计划，该执行计划为优化器选择的最优计划，基本使用方式如下：</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">EXPLAIN 增删改<span class="keyword">SQL</span>语句</span><br></pre></td></tr></table></figure>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/image-20221109202942780.png" class="" title="image-20221109202942780">
+<p>输出的参数含义如下：</p>
+<ul>
+<li>其中较为重要的有<code>type</code>、<code>Extra</code></li>
+</ul>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/image-20221111103403987.png" class="" title="image-20221111103403987">
+<p><code>type</code>描述表连接的方式（我理解的是从表中取值的方式），常见的值有</p>
+<ol>
+<li><p><code>system</code>：表中只有一行数据</p>
+</li>
+<li><p><code>const</code>：查询结果最多有一个匹配结果，一般为主键/唯一索引的等值匹配</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> tbl_name <span class="keyword">WHERE</span> primary_key<span class="operator">=</span><span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>eq_ref</code>：连接时，当前表每条数据基于连接key能够确定引用表中一条数据，即连接的key为主键/唯一索引</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> ref_table,other_table</span><br><span class="line">  <span class="keyword">WHERE</span> ref_table.key_column<span class="operator">=</span>other_table.column;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>ref</code>：与<code>eq_ref</code>类似，只是连接/筛选key为普通索引，无法确定一条引用数据</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> ref_table <span class="keyword">WHERE</span> key_column<span class="operator">=</span>expr;</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> ref_table,other_table</span><br><span class="line">  <span class="keyword">WHERE</span> ref_table.key_column<span class="operator">=</span>other_table.column;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>range</code>：索引key上的范围查询： <a href="https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_equal"><code>=</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_not-equal"><code>&lt;&gt;</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_greater-than"><code>&gt;</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_greater-than-or-equal"><code>&gt;=</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_less-than"><code>&lt;</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_less-than-or-equal"><code>&lt;=</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_is-null"><code>IS NULL</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_equal-to"><code>&lt;=&gt;</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_between"><code>BETWEEN</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/string-comparison-functions.html#operator_like"><code>LIKE</code></a>, or <a href="https://dev.mysql.com/doc/refman/8.0/en/comparison-operators.html#operator_in"><code>IN()</code></a> </p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> tbl_name</span><br><span class="line">  <span class="keyword">WHERE</span> key_column <span class="keyword">IN</span> (<span class="number">10</span>,<span class="number">20</span>,<span class="number">30</span>);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>index</code>：遍历扫描整个索引树</p>
+<ul>
+<li>当索引为覆盖索引，即不涉及回表操作时，<code>Extra</code>中会提示<code>using Index</code>。</li>
+</ul>
+</li>
+<li><p><code>ALL</code>：无索引的扫描全部数据。</p>
+</li>
+</ol>
+<p><code>Extra</code>作为补充信息，补充说明SQL的执行信息，取值较多，下面列举几个常见的值：</p>
+<ol>
+<li><p><code>Using index</code>：不需要回表的，index扫描。</p>
+</li>
+<li><p><code>Using index condition</code>：索引下推，即首先通过索引判断是否需要扫描所有数据。</p>
+<ul>
+<li><p>索引定义为：<code>INDEX (zipcode, lastname, firstname)</code></p>
+</li>
+<li><p>SQL基上述index首先在索引上使用<code>WHERE zipcode=&#39;95054&#39; AND lastname LIKE &#39;%etrunia%&#39;</code>过滤数据，取得非过滤数据主键后，再访问真正的行，应用<code>AND address LIKE &#39;%Main Street%&#39;</code></p>
+</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> people</span><br><span class="line">  <span class="keyword">WHERE</span> zipcode<span class="operator">=</span><span class="string">&#x27;95054&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> lastname <span class="keyword">LIKE</span> <span class="string">&#x27;%etrunia%&#x27;</span></span><br><span class="line">  <span class="keyword">AND</span> address <span class="keyword">LIKE</span> <span class="string">&#x27;%Main Street%&#x27;</span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>Using filesort/Using temporary</code>：使用文件排序/临时表，这是两种性能较差的SQL提示</p>
+</li>
+</ol>
+<h5 id="Optimizer-Trace"><a href="#Optimizer-Trace" class="headerlink" title="Optimizer Trace"></a>Optimizer Trace</h5><p><code>optimizer_trace</code> 用来跟踪优化器做出的优化决策，并将追踪结果存储在<code>INFORMATION_SCHEMA .OPTIMIZER_TRACE</code>表中，通过变量<code>optimizer_trace</code>开启：</p>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/image-20221111111005896.png" class="" title="image-20221111111005896">
+<p>其中<code>OPTIMIZER_TRACE</code>表属性列为:</p>
+<ol>
+<li><code>QUERY</code>：监控的SQL语句</li>
+<li><code>TRACE</code>：以json形式存储的追踪数据</li>
+<li><code>MISSING_BYTES_BEYOND_MAX_MEM_SIZE</code>：由于追踪信息大小存在限制，该字段存储省略的追踪信息大小</li>
+<li><code>INSUFFICIENT_PRIVILEGES</code>：表明用户是否有权限查看 trace，0表示无权限，对应<code>TRACE</code>字段为空</li>
+</ol>
+<h5 id="Performance-Schema"><a href="#Performance-Schema" class="headerlink" title="Performance Schema"></a>Performance Schema</h5><blockquote>
+<p> The Performance Schema is a tool to help a DBA do performance tuning by taking real measurements instead of “wild guesses.” </p>
+</blockquote>
+<p>性能数据库中的表主要用来帮助DBA定位性能问题，一般流程为：</p>
+<ol>
+<li>运行用例</li>
+<li>查看对应的性能数据表，分析造成性能问题的原因</li>
+<li>一旦确定原因，采取对应的操作解决问题<ul>
+<li>修改系统参数（缓存、内存等）</li>
+<li>修改查询语句</li>
+<li>修改数据库关系模式(表、索引等)</li>
+</ul>
+</li>
+<li>重复步骤直到完成修复</li>
+</ol>
+<p>MySQL 8.0 Reference Manual提供了如何使用Performance Scherma的文档：</p>
+<ol>
+<li><a href="https://dev.mysql.com/doc/refman/8.0/en/performance-schema-examples.html">Using the Performance Schema to Diagnose Problems</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/8.0/en/performance-schema-quick-start.html">Performance Schema Quick Start</a></li>
+</ol>
+<h5 id="sys-Schema"><a href="#sys-Schema" class="headerlink" title="sys Schema"></a>sys Schema</h5><blockquote>
+<p>MySQL 8.0 includes the <a href="https://dev.mysql.com/doc/refman/8.0/en/sys-schema.html"><code>sys</code></a> schema, a set of objects that helps DBAs and developers interpret data collected by the Performance Schema</p>
+</blockquote>
+<p>用来帮助理解<code>Performance Schema</code>收集到的性能数据，具体使用查看文档：<a href="https://dev.mysql.com/doc/refman/8.0/en/sys-schema.html">Chapter 28 MySQL sys Schema</a></p>
+<h4 id="Optimizer的优化策略"><a href="#Optimizer的优化策略" class="headerlink" title="Optimizer的优化策略"></a>Optimizer的优化策略</h4><h5 id="1-可用index，但是使用全表扫描"><a href="#1-可用index，但是使用全表扫描" class="headerlink" title="1.可用index，但是使用全表扫描"></a>1.可用index，但是使用全表扫描</h5><p>optimizer会根据表大小、查询行数、I/O块大小等因素，确实是否使用索引，若使用索引的成本大于全表扫描的成本，则优化器会选择全表扫描</p>
+<h5 id="2-Index-Dive"><a href="#2-Index-Dive" class="headerlink" title="2. Index Dive"></a>2. Index Dive</h5><p>对于多值范围where条件，采用<code>Index Dive</code>估计实际需要访问的行数（通过估测行数确定执行计划的成本，用于后续不同查询计划的成本比较）</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">where</span> col_name <span class="keyword">IN</span>(val1, ..., valN)</span><br><span class="line"><span class="keyword">where</span> col_name <span class="operator">=</span> val1 <span class="keyword">OR</span> ... <span class="keyword">OR</span> col_name <span class="operator">=</span> valN</span><br></pre></td></tr></table></figure>
+<p>上述查询根据上index的不同分为两种情况</p>
+<ol>
+<li>当对应属性列定义了唯一索引，则对于每个值优化器估计每个值访问行数为1</li>
+<li>否则使用<code>index dive</code>或者<code>index statistics</code>即index使用的统计信息，估测当前条件需要的访问行数</li>
+</ol>
+<p><code>index dive</code> 索引下钻，将元组值转化为区间，使用区间内行数作为访问行数的估计</p>
+<ul>
+<li>例如：<code>in (1, 3, 6)</code>，优化器估计的行数为：<code>(1,3),(3,6)</code>两个区间的行数和</li>
+<li>相较于基于<code>index statistics</code>的行数估计更加精确，但是由于需要访问索引，引入了额外的IO成本</li>
+</ul>
+<p>可通过全局变量<code>eq_range_index_dive_limit</code>设置可使用<code>index dive</code> 的值数量上限</p>
+<ul>
+<li><code>eq_range_index_dive_limit</code>设置为0，表示关闭<code>index dive</code> </li>
+</ul>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/image-20221113154357866.png" class="" title="image-20221113154357866">
+<h5 id="3-Index-Merge-Optimization"><a href="#3-Index-Merge-Optimization" class="headerlink" title="3. Index Merge Optimization"></a>3. Index Merge Optimization</h5><p>如下语句，对于多个索引上的检索条件求<code>and,or</code>的where子句，MySQL分别在对应索引上执行查询后，对查询结果进行求<code>union,intersection</code>并、交实现查询，该操作称为索引合并<code>Index Merge</code></p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> tbl_name <span class="keyword">WHERE</span> key1 <span class="operator">=</span> <span class="number">10</span> <span class="keyword">OR</span> key2 <span class="operator">=</span> <span class="number">20</span>;</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> tbl_name</span><br><span class="line">  <span class="keyword">WHERE</span> (key1 <span class="operator">=</span> <span class="number">10</span> <span class="keyword">OR</span> key2 <span class="operator">=</span> <span class="number">20</span>) <span class="keyword">AND</span> non_key <span class="operator">=</span> <span class="number">30</span>;</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> t1, t2</span><br><span class="line">  <span class="keyword">WHERE</span> (t1.key1 <span class="keyword">IN</span> (<span class="number">1</span>,<span class="number">2</span>) <span class="keyword">OR</span> t1.key2 <span class="keyword">LIKE</span> <span class="string">&#x27;value%&#x27;</span>)</span><br><span class="line">  <span class="keyword">AND</span> t2.key1 <span class="operator">=</span> t1.some_col;</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> t1, t2</span><br><span class="line">  <span class="keyword">WHERE</span> t1.key1 <span class="operator">=</span> <span class="number">1</span></span><br><span class="line">  <span class="keyword">AND</span> (t2.key1 <span class="operator">=</span> t1.some_col <span class="keyword">OR</span> t2.key2 <span class="operator">=</span> t1.some_col2);</span><br></pre></td></tr></table></figure>
+<p><code>Index Merge</code>适用范围限于：</p>
+<ol>
+<li>一张表的不同索引列</li>
+<li>不适用于全文索引</li>
+</ol>
+<p>支持三种算法：</p>
+<ol>
+<li><p><code>Using intersect(...)</code></p>
+</li>
+<li><p><code>Using union(...)</code></p>
+<ul>
+<li>1，2要求索引必须为等值查询，且联合索引必须全部覆盖，只能在主键索引上存在范围，即为了保证查询结果的有序性。</li>
+</ul>
+</li>
+<li><p><code>Using sort_union(...)</code></p>
+<ul>
+<li>3是对2的放宽，不要求等值查询，也不要求全部覆盖联合索引，导致返回结果可能按照索引顺序不满足逐渐顺序。由于求并集去重需要比较主键，此时要求两个集合返回数据是有序的，因为需要排序。</li>
+</ul>
+</li>
+</ol>
+<h5 id="4-Hash-Join-Optimization"><a href="#4-Hash-Join-Optimization" class="headerlink" title="4. Hash Join Optimization"></a>4. Hash Join Optimization</h5><p> MySQL (8.0.18 and later) 添加的新的连接优化方式，当表连接基于等值连接且对应值上不存在索引时，MySQL会自动采用<code>Hash Join</code>实现连接性能优化，基本步骤如下：</p>
+<ol>
+<li><p>首先扫描小表，构建对应字段-&gt;行数据的<code>hash table</code></p>
+</li>
+<li><p>遍历大表中的每一条数据，查询<code>hash table</code>获得连接行，生成结果</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> EXPLAIN FORMAT<span class="operator">=</span>TREE</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> <span class="keyword">SELECT</span> <span class="operator">*</span></span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span>     <span class="keyword">FROM</span> t1</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span>     <span class="keyword">JOIN</span> t2</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span>         <span class="keyword">ON</span> (t1.c1 <span class="operator">=</span> t2.c1 <span class="keyword">AND</span> t1.c2 <span class="operator">&lt;</span> t2.c2)</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span>     <span class="keyword">JOIN</span> t3</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span>         <span class="keyword">ON</span> (t2.c1 <span class="operator">=</span> t3.c1)\G</span><br><span class="line"><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span> <span class="number">1.</span> <span class="type">row</span> <span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span><span class="operator">*</span></span><br><span class="line">EXPLAIN: <span class="operator">-</span><span class="operator">&gt;</span> <span class="keyword">Inner</span> hash <span class="keyword">join</span> (t3.c1 <span class="operator">=</span> t1.c1)  (cost<span class="operator">=</span><span class="number">1.05</span> <span class="keyword">rows</span><span class="operator">=</span><span class="number">1</span>)</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> <span class="keyword">Table</span> scan <span class="keyword">on</span> t3  (cost<span class="operator">=</span><span class="number">0.35</span> <span class="keyword">rows</span><span class="operator">=</span><span class="number">1</span>)</span><br><span class="line">    <span class="operator">-</span><span class="operator">&gt;</span> Hash</span><br><span class="line">        <span class="operator">-</span><span class="operator">&gt;</span> <span class="keyword">Filter</span>: (t1.c2 <span class="operator">&lt;</span> t2.c2)  (cost<span class="operator">=</span><span class="number">0.70</span> <span class="keyword">rows</span><span class="operator">=</span><span class="number">1</span>)</span><br><span class="line">            <span class="operator">-</span><span class="operator">&gt;</span> <span class="keyword">Inner</span> hash <span class="keyword">join</span> (t2.c1 <span class="operator">=</span> t1.c1)  (cost<span class="operator">=</span><span class="number">0.70</span> <span class="keyword">rows</span><span class="operator">=</span><span class="number">1</span>)</span><br><span class="line">                <span class="operator">-</span><span class="operator">&gt;</span> <span class="keyword">Table</span> scan <span class="keyword">on</span> t2  (cost<span class="operator">=</span><span class="number">0.35</span> <span class="keyword">rows</span><span class="operator">=</span><span class="number">1</span>)</span><br><span class="line">                <span class="operator">-</span><span class="operator">&gt;</span> Hash</span><br><span class="line">                    <span class="operator">-</span><span class="operator">&gt;</span> <span class="keyword">Table</span> scan <span class="keyword">on</span> t1  (cost<span class="operator">=</span><span class="number">0.35</span> <span class="keyword">rows</span><span class="operator">=</span><span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>相较于<code>Nested-Loop Join Algorithm</code>和<code>Block Nested-Loop Join Algorithm</code>，<code>Hash Join</code>由于事先需要构建<code>hash</code>表，对于CPU和内存的要求较高</p>
+<ul>
+<li>通过变量<code>join_buffer_size</code>控制<code>Hash Join</code>所能占用的缓存空间</li>
+<li>当<code>Hash table size &gt; join_buffer_size</code>  时，MySQL会将使用磁盘上的文件存储溢出内容</li>
+</ul>
+<p>简单介绍上面提到的两外两种连接方法</p>
+<ol>
+<li><p><code>Nested-Loop Join Algorithm</code>：直觉上的连接方法，双层嵌套循环，外层遍历表1行，内层遍历表2行，逐个连接判断</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> <span class="keyword">each</span> <span class="type">row</span> <span class="keyword">in</span> t1 matching <span class="keyword">range</span> &#123;</span><br><span class="line">  <span class="keyword">for</span> <span class="keyword">each</span> <span class="type">row</span> <span class="keyword">in</span> t2 matching reference key &#123;</span><br><span class="line">    <span class="keyword">for</span> <span class="keyword">each</span> <span class="type">row</span> <span class="keyword">in</span> t3 &#123;</span><br><span class="line">      if <span class="type">row</span> satisfies <span class="keyword">join</span> conditions, send <span class="keyword">to</span> client</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>Block Nested-Loop Join Algorithm</code>：在方法1上的优化，外层循环按照block遍历，每个block中包含多条数据，减少了内层循环数据IO次数， MySQL 8.0.18以后默认使用<code>Hash Join</code>，MySQL 8.0.20不再使用该方法</p>
+</li>
+</ol>
+<h5 id="5-Index-Condition-Pushdown（ICP）"><a href="#5-Index-Condition-Pushdown（ICP）" class="headerlink" title="5. Index Condition Pushdown（ICP）"></a>5. Index Condition Pushdown（ICP）</h5><p>索引条件下推优化，将索引列上的<code>where</code>检索条件<strong>下推到搜索引擎层</strong>面，减少检索涉及到的数据行数</p>
+<ul>
+<li>一般的查询过程：遍历数据项，根据Index<strong>获取数据项后</strong>，根据数据项内容和where条件判断是否过滤数据。</li>
+<li>开启ICP后：遍历数据行，根据where条件+index判断数据项是否过滤，若满足where条件，则获取数据项返回。</li>
+</ul>
+<p>能够引用ICP的条件为：</p>
+<ol>
+<li>ICP只能用于<a href="https://dev.mysql.com/doc/refman/8.0/en/explain-output.html#jointype_range"><code>range</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/explain-output.html#jointype_ref"><code>ref</code></a>, <a href="https://dev.mysql.com/doc/refman/8.0/en/explain-output.html#jointype_eq_ref"><code>eq_ref</code></a>, and <a href="https://dev.mysql.com/doc/refman/8.0/en/explain-output.html#jointype_ref_or_null"><code>ref_or_null</code></a> 等访问类型</li>
+<li>只针对<code>InnoDB</code>和<code>MyISAM</code>表</li>
+<li>ICP目的为了减少数据行的访问，对于<code>InnoDB</code>来说，只用于次级索引，聚簇索引由于数据已经加载到内存中，没有使用ICP的意义</li>
+</ol>
+<p>ICP通过优化器参数参数<code>index_condition_pushdown</code>设置</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SET</span> optimizer_switch <span class="operator">=</span> <span class="string">&#x27;index_condition_pushdown=off&#x27;</span>;</span><br><span class="line"><span class="keyword">SET</span> optimizer_switch <span class="operator">=</span> <span class="string">&#x27;index_condition_pushdown=on&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<h5 id="6-ORDER-BY-Optimization"><a href="#6-ORDER-BY-Optimization" class="headerlink" title="6.ORDER BY Optimization"></a>6.ORDER BY Optimization</h5><p>由于索引中的数据已经排好序，可以基于索引的顺序实现<code>ORDER BY</code>要求返回的排序顺序，如下情况所示：</p>
+<ul>
+<li>由于二级索引检索后，如果需要非索引上的数据，则需要进行回表操作，引入了额外的访问成本，所以即使在可以使用特定索引避免排序时，优化器如果在会全表扫描+排序的成本比较时，效果较差，不会使用该优化策略。</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> t1</span><br><span class="line">  <span class="keyword">ORDER</span> <span class="keyword">BY</span> key_part1, key_part2;</span><br></pre></td></tr></table></figure>
+<p>如果无法使用上述优化测试的情况下，MySQL基于<code>filesort</code>对数据进行排序（涉及到在临时磁盘文件上的外部排序），相关控制参数为</p>
+<ul>
+<li><a href="https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_sort_buffer_size"><code>sort_buffer_size</code></a>：排序时可以用到的缓存大小</li>
+</ul>
+<h5 id="7-GROUP-BY-Optimization"><a href="#7-GROUP-BY-Optimization" class="headerlink" title="7. GROUP BY Optimization"></a>7. GROUP BY Optimization</h5><p>分组操作在没有优化的情况下的执行过程为：扫描整个表，创建一个同组数据相邻的临时表，在此临时表上进行分组聚集操作，其中临时表可能会占用大量的内存，因此提出了基于index的优化手段</p>
+<ol>
+<li><p>Loose Index Scan：借助索引的顺序，避免临时表的创建，直接在索引上进行<code>Group By</code>操作，必须满足的条件为：</p>
+<ul>
+<li><p>检索一个表的数据</p>
+</li>
+<li><p><code>Group by</code> 属性列满足索引最左前缀匹配原则</p>
+</li>
+<li><p>检所涉及到的值要被索引覆盖，且非<code>Group by</code> 属性列必须为常量</p>
+</li>
+<li><p>聚集函数只能包括<code>Min()</code>,<code>MAX()</code>，且如果同时应用两个聚集函数，必须指向同一个列</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> c1, c2 <span class="keyword">FROM</span> t1 <span class="keyword">WHERE</span> c3 <span class="operator">=</span> const <span class="keyword">GROUP</span> <span class="keyword">BY</span> c1, c2;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>Tight Index Scan：放宽了最左前缀原则，<code>Where key = const</code>+  <code>Group key</code> 满足最左前缀匹配即可</p>
+<ul>
+<li>类似于索引下推，首先使用where条件过滤后，再在剩余数据上进行<code>Group By</code></li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"># C2 <span class="operator">=</span> <span class="string">&#x27;a&#x27;</span> 填补了不满足最左前缀匹配</span><br><span class="line"><span class="keyword">SELECT</span> c1, c2, c3 <span class="keyword">FROM</span> t1 <span class="keyword">WHERE</span> c2 <span class="operator">=</span> <span class="string">&#x27;a&#x27;</span> <span class="keyword">GROUP</span> <span class="keyword">BY</span> c1, c3;</span><br><span class="line"><span class="keyword">SELECT</span> c1, c2, c3 <span class="keyword">FROM</span> t1 <span class="keyword">WHERE</span> c1 <span class="operator">=</span> <span class="string">&#x27;a&#x27;</span> <span class="keyword">GROUP</span> <span class="keyword">BY</span> c2, c3;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>另外<code>DISTINCT</code>由于通常与<code>GROUP BY</code>，其优化手段与<code>GROUP BY</code>相同，无<code>GROUP BY</code>的<code>DISTINCT</code>相当于一个组</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> c1, c2, c3 <span class="keyword">FROM</span> t1</span><br><span class="line"><span class="keyword">WHERE</span> c1 <span class="operator">&gt;</span> const;</span><br></pre></td></tr></table></figure>
+<h5 id="8-LIMIT-Query-Optimization"><a href="#8-LIMIT-Query-Optimization" class="headerlink" title="8. LIMIT Query Optimization"></a>8. LIMIT Query Optimization</h5><p>如下SQL语句，在没有优化情况下，访问了200万条数据，却只返回了10条数据</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> stuent <span class="keyword">where</span> nation <span class="operator">=</span> <span class="string">&#x27;cn&#x27;</span> limit <span class="number">2000000</span>,<span class="number">10</span>;</span><br></pre></td></tr></table></figure>
+<p>针对LIMIT查询，MySQL有以下几条优化方案：</p>
+<ol>
+<li>对于<code>LIMIT</code>限定数据条数较少的情况，查询基于聚簇索引而不是全表扫描</li>
+<li>对于需要<code>file sort</code>的<code>LIMIT</code>查询语句，一旦满足<code>LIMIT</code>数量，MySQL不会继续排序</li>
+<li>LIMIT 0直接返回空数据集，不会执行</li>
+</ol>
+<h3 id="库表优化"><a href="#库表优化" class="headerlink" title="库表优化"></a>库表优化</h3><p>库表优化可以分为三种类型：</p>
+<ol>
+<li>在数据库设计阶段，根据ER建模和范式，设计出合理的数据库表，选择合适的表字段类型</li>
+<li>在数据库使用过程中，根据实际需求进行反范式化操作，例如为了方便查询，增加冗余中间表</li>
+<li>当表数据量扩张到一定程度，考虑进行表拆分满足性能需求</li>
+</ol>
+<h4 id="范式化vs反范式化（私货总结）"><a href="#范式化vs反范式化（私货总结）" class="headerlink" title="范式化vs反范式化（私货总结）"></a>范式化vs反范式化（<del>私货总结</del>）</h4><p><strong>范式化</strong>本质上是通过拆分表中具有依赖关系的数据列到不同的表中，从而减少<strong>数据冗余</strong>，降低表空间占用。但是由于查询往往涉及到不同表的关联，一张表的冗余越少，查询涉及到的关联次数越多，导致查询成本较高，因此产生了对应的概念-<strong>反范式化</strong>，通过在表中增加冗余列，减少查询需要的关联次数。</p>
+<ul>
+<li>在设计时根据范式化规则，确定数据库表</li>
+<li>在数据库使用中，根据查询的实际需求，通过反范式化优化数据库查询性能</li>
+</ul>
+<h4 id="字段类型选择优化"><a href="#字段类型选择优化" class="headerlink" title="字段类型选择优化"></a>字段类型选择优化</h4><p>在选择表字段数据类型时，应选择满足需求的空间占用最小的数据类型，下面列举我了解到的常见的选择策略：</p>
+<ol>
+<li>对于既能使用文本类型，又能使用数字类型的字段，使用数字类型，降低存储和比较成本<ul>
+<li>IP地址以数字形式存储，MySQL提供转化数字和ip地址的方法：<code>inet_aton</code>和<code>inet_ntoa</code></li>
+</ul>
+</li>
+<li>能使用<code>TIMESTAMP</code>，就不使用<code>DATATIME</code>，前者以数字形式存储（4byte），后者以字符串形式存储（8byte）</li>
+<li>当存储非负数时，可使用<code>UNSIGNED</code>整数</li>
+<li>涉及到浮点数的精确计算时，使用<code>DECIMAL</code>类型</li>
+</ol>
+<h4 id="表拆分"><a href="#表拆分" class="headerlink" title="表拆分"></a>表拆分</h4><ol>
+<li>读写分离</li>
+<li>垂直拆分：分库/垂直分表</li>
+<li>水平拆分：水平拆分（客户端绑定：Sharding-JDBC，中间件：MyCat）</li>
+</ol>
+<h3 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h3><p>通过主从复制操作实现主服务器提供读写操作、从服务器只读，通过分散读请求到不同服务器，降低主服务器性能瓶颈，从而提升整体性能。</p>
+<p>下面使用两台服务器建立一个简单的主从架构，熟悉主从架构构建过程：</p>
+<ol>
+<li><p>修改配置文件，标识主服务器和从服务器（以及一些其他的配置信息）</p>
+<ul>
+<li><p>主配置</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[mysqld]</span><br><span class="line">#[必选]主服务器唯一ID</span><br><span class="line">server-id=1</span><br><span class="line">#[必选] binlog位置</span><br><span class="line">log-bin=/var/lib/mysql/my_binlog</span><br><span class="line">#[可选] 可选的参数</span><br><span class="line">read_only=0</span><br><span class="line"># binlog_expire_logs_seconds</span><br><span class="line"># 指定同步的数据库，默认为所有</span><br><span class="line">binlog-do-db= test_sync_db</span><br><span class="line"># 设置binlog格式</span><br><span class="line">binlog_format=STATEMENT</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>从配置，server-id不同即可（<del>没有把主服务器IP配置进来有点反直觉</del>）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 从服务器ID</span><br><span class="line">server-id=2</span><br><span class="line">read-only=1</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>主服务器上创建从服务器连接使用的用户，并分配对应权限</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> create user <span class="string">&#x27;readonly_slave&#x27;</span>@<span class="string">&#x27;%&#x27;</span> identified by <span class="string">&#x27;123456&#x27;</span>;</span></span><br><span class="line">Query OK, 0 rows affected (0.00 sec)</span><br><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> grant replication slave on *.* to <span class="string">&#x27;readonly_slave&#x27;</span>@<span class="string">&#x27;%&#x27;</span>;</span></span><br><span class="line">Query OK, 0 rows affected (0.01 sec)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>从服务器配置master信息</p>
+<ul>
+<li><p>配置IP，同步binlog起始点，连接用户名密码等信息</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">CHANGE MASTER <span class="keyword">TO</span> MASTER_HOST<span class="operator">=</span><span class="string">&#x27;192.168.190.100&#x27;</span>, MASTER_PORT<span class="operator">=</span><span class="number">3306</span>, MASTER_USER<span class="operator">=</span><span class="string">&#x27;readonly_slave&#x27;</span>, MASTER_PASSWORD<span class="operator">=</span><span class="string">&#x27;123456&#x27;</span>, MASTER_LOG_FILE<span class="operator">=</span><span class="string">&#x27;my_binlog.000001&#x27;</span>, MASTER_LOG_POS<span class="operator">=</span><span class="number">701</span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>通过<code>show master status</code>展示获取主服务器此时的binlog信息</p>
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/image-20221127191630198.png" class="" title="image-20221127191630198">
+</li>
+</ul>
+</li>
+<li><p>刷新权限，并重启服务器，即可看到同步成功</p>
+<ul>
+<li><p>在从服务器上调用<code>show slave status</code>查看是否同步成功</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> show slave status\G</span></span><br><span class="line">*************************** 1. row ***************************</span><br><span class="line">               Slave_IO_State: Waiting for source to send event</span><br><span class="line">                  Master_Host: 192.168.190.100</span><br><span class="line">                  Master_User: readonly_slave</span><br><span class="line">                  Master_Port: 3306</span><br><span class="line">                Connect_Retry: 60</span><br><span class="line">              Master_Log_File: my_binlog.000002</span><br><span class="line">          Read_Master_Log_Pos: 891</span><br><span class="line">               Relay_Log_File: localhost-relay-bin.000005</span><br><span class="line">                Relay_Log_Pos: 326</span><br><span class="line">        Relay_Master_Log_File: my_binlog.000002</span><br><span class="line">             Slave_IO_Running: Yes</span><br><span class="line">            Slave_SQL_Running: Yes</span><br><span class="line">            	  ...........(省略)</span><br><span class="line">                  Master_UUID: 60f3b167-4f9e-11ed-9e94-000c29502aa1</span><br><span class="line">             Master_Info_File: mysql.slave_master_info</span><br><span class="line">                    SQL_Delay: 0</span><br><span class="line">          SQL_Remaining_Delay: NULL</span><br><span class="line">      Slave_SQL_Running_State: Replica has read all relay log; waiting for more updates</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ol>
+<p>在配置同步的过程中遇到了不少的问题，下面是简单的记录</p>
+<ol>
+<li><p>普通密码无法通过<code>caching_sha2_password</code>验证的问题</p>
+<ul>
+<li><p>错误提示如下：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> show slave status\G</span></span><br><span class="line">*************************** 1. row ***************************</span><br><span class="line">               Slave_IO_State: Connecting to source</span><br><span class="line">            	  ...........(省略)</span><br><span class="line">                Last_IO_Error: error connecting to master &#x27;readonly_slave@192.168.190.100:3306&#x27; - retry-time: 60 retries: 2 message: Authenon plugin &#x27;caching_sha2_password&#x27; reported error: Authentication requires secure connection.</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>原因</strong>：MySQL8.0 将默认身份验证的插件从<code>mysql_native_password</code>换为了<code>caching_sha2_password</code></p>
+</li>
+<li><p><strong>解决方案</strong>：修改密码类型</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> alter user <span class="string">&#x27;readonly_slave&#x27;</span>@<span class="string">&#x27;%&#x27;</span> identified with sha256_password by <span class="string">&#x27;123456&#x27;</span>;</span></span><br><span class="line">Query OK, 0 rows affected (0.01 sec)</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>出现问题</p>
+<ul>
+<li><p>错误提示如下：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> show slave status\G</span></span><br><span class="line">*************************** 1. row ***************************</span><br><span class="line">               Slave_IO_State: Waiting for source to send event</span><br><span class="line">               ...........(省略)</span><br><span class="line">               Last_Error: Coordinator stopped because there were error(s) in the worker(s). The most recent failure being: Worker 1 faxecuting transaction &#x27;ANONYMOUS&#x27; at master log my_binlog.000002, end_log_pos 891. See error log and/or performance_schema.replication_applitus_by_worker table for more details about this failure or others, if any.</span><br><span class="line"><span class="meta">mysql&gt;</span><span class="bash"> select * from performance_schema.replication_applier_status_by_worker\G</span></span><br><span class="line">*************************** 1. row ***************************</span><br><span class="line">               ...........(省略)</span><br><span class="line">		LAST_ERROR_MESSAGE: Worker 1 failed executing transaction &#x27;ANONYMOUS&#x27; at master log my_binlog.000002, g_pos 891; Error &#x27;Table &#x27;test_table&#x27; already exists&#x27; on query. Default database: &#x27;test_sync_db&#x27;. Query: &#x27;create table test_table(id int)&#x27;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>原因：我之前已经在从库中创建了对应的table，同步执行<code>create table test_table</code>时，创建失败导致无法失败</p>
+</li>
+<li><p>解决方案</p>
+<ul>
+<li><p>简单方式：删除从库中的对应表</p>
+</li>
+<li><p>复杂方式：重新设置同步，将同步binlog位置设置到binlog末尾位置，跳过创建表步骤</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 相关命令</span><br><span class="line">stop slave;</span><br><span class="line">reset slave;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p>简单<strong>总结</strong>：</p>
+<ol>
+<li>主从同步对于主服务器来说相当于增加了一个特殊的客户端（从库），该客户端访问的是binlog</li>
+<li>对于<code>statement</code>格式的binlog，主从同步就是简单的SQL重放，因此在从库上执行写入操作会导致主从不一致，但不一定会导致同步失败，只有在重放失败的情况（遇到的问题2）下才会导致同步失败</li>
+</ol>
+<h4 id="binlog补充"><a href="#binlog补充" class="headerlink" title="binlog补充"></a>binlog补充</h4><p>binlog用来记录数据库中的修改操作，例如修改数据项，创建表等操作，因此并不关心例如<code>select</code>，<code>show</code>等不会修改数据的检索语句，按照记录信息的不同分为：</p>
+<ol>
+<li><code>--binlog-format=STATEMENT</code>：<em>statement-based logging</em>，基于SQL语句的binary log，主从复制在涉及到非确定性SQL语句（例如：<code>now()</code>，<code>uuid()</code>）时，可能出现数据不一致问题。</li>
+<li><code>--binlog-format=ROW</code>（默认）： <em>row-based logging</em>，日志记录每一行数据如何被修改，相较于<code>STATEMENT</code>，粒度更细，规避了不一致的问题，但是会导致日志量较大。</li>
+<li><code>--binlog-format=MIXED</code>：混合模式，上述两种模式的组合，当MySQL能够保证操作的确定性时，采用<em>statement-based logging</em>，无法保证时则会采用<em>row-based logging</em>。</li>
+</ol>
+<p>binlog有两个主要的应用场景：</p>
+<ol>
+<li>主从复制</li>
+<li>数据恢复</li>
+</ol>
+<p>类似于redolog，binlog产生伴随着事务中的语句执行，不断的写入binlog cache，直到事务提交，binlog是否刷入磁盘由<code>sync_binlog</code>参数控制。</p>
+<p>由于redo log控制主服务器的持久性，binlog 控制从服务器与主服务器的同步性，当redo log提交成功，binlog提交失败或者相反时，就会导致主从服务器之间的不一致问题，对此解决方案为-两阶段提交：</p>
+<ul>
+<li>在事务提交前，首先将redo log写入磁盘，此时为预提交状态</li>
+<li>将binlog写入磁盘，写入完成后，提交事务</li>
+</ul>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>综上所述，MySQL主从同步原理并不复杂，反而是binlog的实现值得深入研究，因为需要保证主从之间的一致性。</p>
+]]></content>
+      <categories>
+        <category>数据库</category>
+      </categories>
+      <tags>
+        <tag>MySQL</tag>
       </tags>
   </entry>
 </search>
