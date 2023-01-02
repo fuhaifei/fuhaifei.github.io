@@ -41,7 +41,7 @@
 <meta property="og:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png">
 <meta property="og:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093945536.png">
 <meta property="article:published_time" content="2022-11-29T06:42:40.000Z">
-<meta property="article:modified_time" content="2022-11-29T06:47:06.791Z">
+<meta property="article:modified_time" content="2022-11-29T06:52:25.385Z">
 <meta property="article:author" content="NEU-FHF">
 <meta property="article:tag" content="MySQL">
 <meta property="article:tag" content="InnoDB">
@@ -230,7 +230,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-11-29 14:42:40 / 修改时间：14:47:06" itemprop="dateCreated datePublished" datetime="2022-11-29T14:42:40+08:00">2022-11-29</time>
+              <time title="创建时间：2022-11-29 14:42:40 / 修改时间：14:52:25" itemprop="dateCreated datePublished" datetime="2022-11-29T14:42:40+08:00">2022-11-29</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -375,7 +375,7 @@
 <li>意向锁与其他普通表级锁满足一般的互斥性质</li>
 </ol>
 <p>上述机制实现了<code>多粒度</code>，访问行只获取行级锁，后续当有操作需要获取表级锁时，由于只需要判断是否与意向锁互斥，而<strong>不需要遍历整个表，判断是否存在互斥行级锁</strong>。</p>
-<p>综上所诉，意向锁实际上可以理解为<strong>行锁的表级别标记</strong></p>
+<p>综上所述，意向锁实际上可以理解为<strong>行锁的表级别标记</strong></p>
 <h4 id="Gap-Locks（间隙锁）"><a href="#Gap-Locks（间隙锁）" class="headerlink" title="Gap Locks（间隙锁）"></a>Gap Locks（间隙锁）</h4><p>结合幻读场景理解，间隙锁对index范围上锁，如下SQL所示，该查询语句对范围<code>10-20</code>区间（开区间）上锁，若要插入一条<code>c1=15</code>的记录，需要等待当前锁释放。</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> c1 <span class="keyword">FROM</span> t <span class="keyword">WHERE</span> c1 <span class="keyword">BETWEEN</span> <span class="number">10</span> <span class="keyword">and</span> <span class="number">20</span> <span class="keyword">FOR</span> UPDATE;</span><br></pre></td></tr></table></figure>
 <p>Gap Locks存在的目的是为了阻止其他事务在当前事务涉及到对应区间数据时，向该区间内插入新的数据</p>
@@ -583,7 +583,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">74</span>
+          <span class="site-state-item-count">75</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -596,7 +596,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">46</span>
+        <span class="site-state-item-count">47</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -647,7 +647,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2022</span>
+  <span itemprop="copyrightYear">2023</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
