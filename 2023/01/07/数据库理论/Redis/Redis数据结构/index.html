@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Redis数据结构redis有六种主要的数据类型，下面从调用API以及底层实现原理对于Redis中主要数据类型进行总结和整理，主要内容来自redis文档和《Redis设计与实现》。 底层数据结构字符串(simple dynamic string)字符串是Redis中最基本的数据类型，键和值的类型均为字符串类型，底层基于支持动态扩容的简单动态字符串（simple dynamic string,SDS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis数据结构">
+<meta property="og:url" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="Redis数据结构redis有六种主要的数据类型，下面从调用API以及底层实现原理对于Redis中主要数据类型进行总结和整理，主要内容来自redis文档和《Redis设计与实现》。 底层数据结构字符串(simple dynamic string)字符串是Redis中最基本的数据类型，键和值的类型均为字符串类型，底层基于支持动态扩容的简单动态字符串（simple dynamic string,SDS">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/image-20221208084937227.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/image-20221208085158085.png">
+<meta property="article:published_time" content="2023-01-07T02:32:04.000Z">
+<meta property="article:modified_time" content="2023-01-07T02:36:21.430Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="缓存">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/image-20221208084937227.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Redis数据结构 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Redis数据结构
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-01-07 10:32:04 / 修改时间：10:36:21" itemprop="dateCreated datePublished" datetime="2023-01-07T10:32:04+08:00">2023-01-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Redis数据结构"><a href="#Redis数据结构" class="headerlink" title="Redis数据结构"></a>Redis数据结构</h2><p>redis有六种主要的数据类型，下面从调用API以及底层实现原理对于Redis中主要数据类型进行总结和整理，主要内容来自<a target="_blank" rel="noopener" href="https://redis.io/docs/data-types/">redis文档</a>和《Redis设计与实现》。</p>
+<h3 id="底层数据结构"><a href="#底层数据结构" class="headerlink" title="底层数据结构"></a>底层数据结构</h3><h4 id="字符串-simple-dynamic-string"><a href="#字符串-simple-dynamic-string" class="headerlink" title="字符串(simple dynamic string)"></a>字符串(simple dynamic string)</h4><p>字符串是Redis中最基本的数据类型，键和值的类型均为字符串类型，底层基于支持动态扩容的简单动态字符串（simple dynamic string,SDS）实现，其数据结构示例如下：</p>
+<ol>
+<li><code>len</code>：buf数组中已经使用的长度，遵循C语言字符串末尾添加空字符<code>\0</code>的习惯</li>
+<li><code>free</code>：buf数组中还剩余的长度</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sdshdr</span>&#123;</span></span><br><span class="line">    <span class="keyword">int</span> len;</span><br><span class="line">    <span class="keyword">int</span> <span class="built_in">free</span>;</span><br><span class="line">    <span class="keyword">char</span> buf[];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<p>SDS的动态扩容机制类似于java中的ArrayList，当剩余空间不足以装下追加字符串时，SDS回进行扩容操作，多余的空间在有需要时，通过对应API可进行释放：</p>
+<ol>
+<li>若追加后的SDS长度（<code>len</code>）小于1MB，分配和<code>len</code>大小相同的空间</li>
+<li>若追加后的SDS长度（<code>len</code>）大于1MB，只分配1MB空间</li>
+</ol>
+<blockquote>
+<p>A <strong>binary-safe</strong> function is one that treats its input as a raw stream of bytes and ignores every textual aspect it may have. The term is mainly used in the <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/PHP">PHP</a> programming language to describe expected behaviour when passing binary data into <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Subroutines">functions</a> whose main responsibility is text and <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/String_(computer_science">string</a>) manipulating, and is used widely in the official PHP documentation</p>
+</blockquote>
+<p>区别于C字符串，操作SDS的API将其视为二进制数据进行存储和处理，因此Redis字符串可以保存任意大小不超过512MB的二进制数据。</p>
+<h5 id="实现：键值"><a href="#实现：键值" class="headerlink" title="实现：键值"></a>实现：键值</h5><p>除去基本的get、set外，字符串类型还支持获取以及覆盖子串操作：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; get strKey</span><br><span class="line">&quot;newValue&quot;</span><br><span class="line">127.0.0.1:6379&gt; getrange strKey 1 3</span><br><span class="line">&quot;ewV&quot;</span><br><span class="line">127.0.0.1:6379&gt; setrange strKey 4 wwwc</span><br><span class="line">(integer) 8</span><br><span class="line">127.0.0.1:6379&gt; get strKey</span><br><span class="line">&quot;newVwwwc&quot;</span><br></pre></td></tr></table></figure>
+<h4 id="链表-linkedlist"><a href="#链表-linkedlist" class="headerlink" title="链表(linkedlist)"></a>链表(linkedlist)</h4><p>Redis实现了双向无环链表，链表的每个节点存储一个字符串类型的值，最大长度 2^32 - 1 (4,294,967,295)，其数据结构实现示例如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">listNode</span>&#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">listNode</span> *<span class="title">pre</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">listNode</span> *<span class="title">next</span>;</span></span><br><span class="line">    <span class="keyword">void</span> *value;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Reedis列表键、发布订阅监视器等功能都用到了链表实现。</p>
+<h5 id="实现：List-列表"><a href="#实现：List-列表" class="headerlink" title="实现：List(列表)"></a>实现：List(列表)</h5><p>与其说是列表，不如说时双端队列，并不支持随机访问，添加删除API包括<code>l/rpush</code>,<code>l/rpop</code>,<code>lrange</code>,<code>ltrim</code>：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; lpush listKey left1 left2 left 3</span><br><span class="line">(integer) 4</span><br><span class="line">127.0.0.1:6379&gt; rpush listKey right1 right2 right3</span><br><span class="line">(integer) 7</span><br><span class="line">127.0.0.1:6379&gt; llen listKey</span><br><span class="line">(integer) 7</span><br><span class="line">127.0.0.1:6379&gt; lrange listKey 1 3</span><br><span class="line">1) &quot;left&quot;</span><br><span class="line">2) &quot;left2&quot;</span><br><span class="line">3) &quot;left1&quot;</span><br><span class="line">127.0.0.1:6379&gt; lpop listKey</span><br><span class="line">&quot;3&quot;</span><br><span class="line">127.0.0.1:6379&gt; rpop listKey</span><br><span class="line">&quot;right3&quot;</span><br></pre></td></tr></table></figure>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/image-20221208084937227.png" class="" title="image-20221208084937227">
+<p>支持阻塞删除操作，即等到列表中存在元素能够删除返回元素</p>
+<ol>
+<li><code>blpop</code></li>
+<li><code>brpop</code></li>
+</ol>
+<h4 id="字典-hashtable"><a href="#字典-hashtable" class="headerlink" title="字典(hashtable)"></a>字典(hashtable)</h4><p>redis字典即哈希表，基于链地址法解决冲突的哈希表实现，当哈希表的负载因子小/大到一定返回，Redis回进行<code>rehash</code>操作，重新开辟合适大小的哈希表，讲原哈希表上的键值对转移到新hash表上，其<code>rehash</code>的时机为：</p>
+<ol>
+<li>当前服务器没有执行<code>BGSAVE</code>命令或者<code>BGREWRITEAOF</code>命令，且哈希表负载因子大于等于1</li>
+<li>正在执行对应命令，且负载因子大于等于5</li>
+<li>负载因子小于0.1</li>
+</ol>
+<p>负载因子$\alpha$（load factor）的定义为:</p>
+<ul>
+<li>n为哈希表总元素个数，k为哈希表长度</li>
+</ul>
+<script type="math/tex; mode=display">
+load factor(\alpha) = \frac{n}{k}</script><p>由于哈希表中可能存储成千上万个键值对，一次性完成<code>rehash</code>操作成本过高，Redis采用了渐进式的方式实现</p>
+<ol>
+<li>记录当前rehashindex，指向当前即将rehash的位置，不进行rehashindex时设置为-1</li>
+<li>每次对字典执行增删改查操作时，将rehashindex对应位置键值链表转移到新哈希表上</li>
+<li>在rehash过程中，一次键值对访问可能需要访问两个哈希表（不在旧，但是在新）</li>
+</ol>
+<p>rehash开辟新的hash表空间规则如下：</p>
+<ol>
+<li>若是扩展操作，则新哈希表的大小为大于$n * 2$的最小2的幂次，其中n为原哈希表中元素个数</li>
+<li>若是缩小操作，则i性能哈希表大小为大于<code>n</code>的最小2的幂次</li>
+</ol>
+<h5 id="实现：hashes-哈希表"><a href="#实现：hashes-哈希表" class="headerlink" title="实现：hashes(哈希表)"></a>实现：hashes(哈希表)</h5><p>当哈希键包含的键值比较多，或者键值对中的元素都是比较长的字符串时，hashes底层实现基于字典</p>
+<ul>
+<li>hashes对于key的数量没有约束，取决于当前是否存在剩余空间</li>
+</ul>
+<p>常用API有：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; hset hashKey a 1 b 2 c 3</span><br><span class="line">(integer) 3</span><br><span class="line">127.0.0.1:6379&gt; hget hashKey a</span><br><span class="line">&quot;1&quot;</span><br><span class="line">127.0.0.1:6379&gt; hmget hashKey a b c</span><br><span class="line">1) &quot;1&quot;</span><br><span class="line">2) &quot;2&quot;</span><br><span class="line">3) &quot;3&quot;</span><br><span class="line">127.0.0.1:6379&gt; hexists hashKey a</span><br><span class="line">(integer) 1</span><br><span class="line">127.0.0.1:6379&gt; hkeys hashKey</span><br><span class="line">1) &quot;a&quot;</span><br><span class="line">2) &quot;b&quot;</span><br><span class="line">3) &quot;c&quot;</span><br><span class="line">127.0.0.1:6379&gt; hvals hashKey</span><br><span class="line">1) &quot;1&quot;</span><br><span class="line">2) &quot;2&quot;</span><br><span class="line">3) &quot;3&quot;</span><br></pre></td></tr></table></figure>
+<h4 id="跳跃表-skiplist"><a href="#跳跃表-skiplist" class="headerlink" title="跳跃表(skiplist)"></a>跳跃表(skiplist)</h4><p>跳跃表是Redis有序集合的底层实现之一，数据结构原理不再总结，列几条Redis实现细节</p>
+<ol>
+<li>Redis中每个跳表节点层高范围为1-32，在节点创建时随机确定</li>
+<li>跳跃表中的节点大小按照score后key的方式确定</li>
+</ol>
+<h5 id="实现：sorted-sets-有序集合"><a href="#实现：sorted-sets-有序集合" class="headerlink" title="实现：sorted sets(有序集合)"></a>实现：sorted sets(有序集合)</h5><p>当有序集合中的元素数量比较多，或者元素成员为较长的字符串时，有序集合就会采用跳表实现（总结就是“大”），支持的操作和集合基本一致：</p>
+<ol>
+<li>增加元素：<code>zadd</code></li>
+<li>集合操作：<code>zinter</code>,<code>zdiffer</code>,<code>zunion</code></li>
+<li>优先队列操作：<code>zpopmin</code>，<code>zpopmax</code></li>
+</ol>
+<h4 id="整数集合-intset"><a href="#整数集合-intset" class="headerlink" title="整数集合(intset)"></a>整数集合(intset)</h4><p>整数集合是Redis Set的底层实现之一，其存储结构示意如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">intset</span>&#123;</span></span><br><span class="line">	<span class="keyword">unit32_t</span> encoding;</span><br><span class="line">	uint32_rt length;</span><br><span class="line">	<span class="keyword">int8_t</span> contents[];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同时该数据结构支持集合的类型的自动升级和扩容：</p>
+<ul>
+<li><code>encoding</code>属性存储当前集合中的数据类型，当插入大于当前数据类型元素时，集合自动升级</li>
+<li>自动升级方式为：首先将原有数据升级到对应类型（开辟空间，位置右移），再将新插入的值放在开头或者末尾。</li>
+</ul>
+<p>书里没讲清楚的几点是：</p>
+<ol>
+<li>扩容大小是扩容到刚好可以存储所有元素，还是类似于字典的扩容机制？</li>
+<li>是否能向集合中插入字符串，由于set可以插入，如果可以插入，对应的升级机制是什么？</li>
+</ol>
+<h5 id="实现：Set（集合）"><a href="#实现：Set（集合）" class="headerlink" title="实现：Set（集合）"></a>实现：Set（集合）</h5><p>当Set中只包含整数且元素数量较少时，Redis使用整数集合作为Set的底层数据结构</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/image-20221208085158085.png" class="" title="image-20221208085158085">
+<p>相关操作API包括</p>
+<ol>
+<li>添加删除元素：<code>SADD</code>，<code>SREM</code></li>
+<li>集合运算：<code>SINTER</code>，<code>SDIFF</code>，<code>SUNION</code></li>
+<li>集合长度：<code>SCARD</code></li>
+</ol>
+<h4 id="压缩列表（ziplist）"><a href="#压缩列表（ziplist）" class="headerlink" title="压缩列表（ziplist）"></a>压缩列表（ziplist）</h4><p>压缩列表(ziplist)是列表和哈希表键值对类型的底层实现之一，其类似于一个内存上连续存储的链表：</p>
+<ul>
+<li>每个元素不仅存储当前元素的数据，还存储前置元素的字节长度，元素与元素之间不存在间隔，通过字节长度确定元素位置。</li>
+<li>列表头有三个字段：<code>zlbytes</code>,<code>zltail</code>,<code>zllen</code>分别记录压缩列表字节长度、压缩列表尾节点偏移量、压缩列表节点个数。</li>
+</ul>
+<p>上述实现机制导致了压缩链表自能从尾向头遍历，首先访问<code>ztail</code>确定尾部元素位置，之后再不断的根据每个元素存储的前置元素长度，确定前置元素位置向前遍历。</p>
+<p>记录前置元素长度的字段<code>previous_entry_length</code>的长度会基于前置元素长度改变：</p>
+<ol>
+<li>当前置元素长度小于254byte时，使用1byte存储。</li>
+<li>当前置元素长度大于等于254byte时，使用5byte存储，其中第一个byte存储254作为标识符，方便与情况1区别。</li>
+</ol>
+<p>由于列表中的元素长度可修改，导致需要修改对应后置元素<code>previous_entry_length</code>长度变化，可能导致<code>连锁更新</code>问题</p>
+<h3 id="底层与实现之间的关系"><a href="#底层与实现之间的关系" class="headerlink" title="底层与实现之间的关系"></a>底层与实现之间的关系</h3><p>Redis中共有5种常用数据类型，6种底层实现，两种之间通过抽象对象关联起来，定义结构如下：</p>
+<ul>
+<li>k-v键值对类型为对象，对象内<code>ptr</code>指针指向具体的底层实现</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">redisObject</span>&#123;</span></span><br><span class="line">    <span class="keyword">unsigned</span> type;</span><br><span class="line">    <span class="keyword">unsigned</span> encoding;</span><br><span class="line">    vord *ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过对象这一层实现底层数据结构的抽象隔离，使得Redis能够数据结构以及内存管理更加灵活：</p>
+<ol>
+<li>同一种kv值类型根据存储需求不同，可以对应不同的底层实现（数据量小使用小类型，数据量大使用正常类型，中间涉及到转换问题）<ul>
+<li><code>string</code>类型：<code>int</code>，<code>emdstr</code>，<code>raw</code></li>
+<li><code>list</code>类型：<code>ziplist</code>，<code>quicklist</code>(双向链表)</li>
+<li><code>set</code>类型：<code>intset</code>，<code>hashtable</code></li>
+<li><code>zset</code>类型：<code>ziplist</code>，<code>hashtable</code>+<code>skiplist</code></li>
+<li><code>hash</code>类型：<code>ziplist</code>，<code>hashtable</code></li>
+</ul>
+</li>
+<li>基于引用计数（refcount）的内存回收和常量共享机制<ul>
+<li>类型对象设置<code>refcount</code>属性，初始化为1，当程序使用/不再使用时对应加一减一，当<code>refcount = 0</code>时，对象占用内存会被释放</li>
+<li>基于上述机制，Redis对包含整数值的字符串对象进行共享，即不创建新的，只是对<code>refcount+1</code></li>
+</ul>
+</li>
+</ol>
+<h3 id="其他数据类型"><a href="#其他数据类型" class="headerlink" title="其他数据类型"></a>其他数据类型</h3><h4 id="Bitmaps"><a href="#Bitmaps" class="headerlink" title="Bitmaps"></a>Bitmaps</h4><p>string类型的一种拓展，将string当作一个bit数组，执行位操作，类似于动态规划中的状态压缩，通过bit代替原来占用空间更大的状态，实现空间上的压缩，支持的常用API包括</p>
+<ol>
+<li>基本操作：<code>setbit</code>，<code>getbit</code>,<code>bitcount</code></li>
+<li>二进制的逻辑操作：<code>bitop and/or/xor/not</code></li>
+</ol>
+<p>bitmap存储格式为<code>raw</code>即动态字符串，长度似乎是动态分配的，初始化只有1byte，分配基本单位为byte</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; setbit bitKey 1 1</span><br><span class="line">(integer) 0</span><br><span class="line">127.0.0.1:6379&gt; bitcount bitKey</span><br><span class="line">(integer) 1</span><br><span class="line">127.0.0.1:6379&gt; object encoding bitKey</span><br><span class="line">&quot;raw&quot;</span><br><span class="line">127.0.0.1:6379&gt; setbit bitKey 100 1</span><br><span class="line">(integer) 0</span><br><span class="line">127.0.0.1:6379&gt; bitop not newBit bitKey</span><br><span class="line">(integer) 13</span><br><span class="line">127.0.0.1:6379&gt; bitcount newBit</span><br><span class="line">(integer) 102</span><br></pre></td></tr></table></figure>
+<h3 id="HyperLogLog"><a href="#HyperLogLog" class="headerlink" title="HyperLogLog"></a>HyperLogLog</h3><p>为了解决涉及到计数场景下的内存占用与元素个数呈线性关系的基数计数问题（<strong>cardinality counting</strong>），提出的一种基于统计的计数结构。</p>
+<ul>
+<li>例如：统计一个页面在一段时间内不同IP数量，如果使用set，hashtable等类型，如果访问IP数量过多，会导致去重集合占用巨大的空间。</li>
+<li>HyperLogLog是一种基于概率的近似算法，首先对计数元素进行hash，选取二进制首位1作为对应标志位置，判断是否重复（更深入理解见<a target="_blank" rel="noopener" href="https://www.yuque.com/abser/aboutme/nfx0a4">博客</a>）</li>
+</ul>
+<p>底层实现数据结构为<code>raw</code>即动态字符串，基本的操作包括:<code>PFADD</code>,<code>PFCOUNT</code>,<code>PFMERGE</code></p>
+<h3 id="Geospatial"><a href="#Geospatial" class="headerlink" title="Geospatial"></a>Geospatial</h3><p>以经纬度方式存储和查询数据，类似于一个二维的sortedset，支持的结构包括</p>
+<ol>
+<li>插入和查询：<code>GEOADD</code>,<code>GEODIST</code>,<code>GEOPOS</code>,<code>GEOHASH</code></li>
+<li>范围查询：<code>GEOSEARCH</code>,<code>GEORADIUS</code></li>
+</ol>
+<p>存储类型为<code>ziplist</code>,使用示例：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; geoadd henan:city 113.62 34.75 zhengzhou 114.78 34.55 kaifeng 112.47 34.15 luoyang 113.18 33.77 pingdingshan</span><br><span class="line">(integer) 4</span><br><span class="line">127.0.0.1:6379&gt; object encoding henan:city</span><br><span class="line">&quot;ziplist&quot;</span><br><span class="line">127.0.0.1:6379&gt; geopos henan:city zhengzhou</span><br><span class="line">1) 1) &quot;113.62000197172164917&quot;</span><br><span class="line">   2) &quot;34.74999926510690784&quot;</span><br><span class="line">127.0.0.1:6379&gt; georadius henan:city 113.62 34.75 100 km</span><br><span class="line">1) &quot;zhengzhou&quot;</span><br><span class="line">127.0.0.1:6379&gt; georadius henan:city 113.62 34.75 1000 km</span><br><span class="line">1) &quot;pingdingshan&quot;</span><br><span class="line">2) &quot;kaifeng&quot;</span><br><span class="line">3) &quot;zhengzhou&quot;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Redis/" rel="tag"><i class="fa fa-tag"></i> Redis</a>
+              <a href="/tags/%E7%BC%93%E5%AD%98/" rel="tag"><i class="fa fa-tag"></i> 缓存</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/01/02/%E6%9D%82%E6%96%87/2022%E5%B9%B4%E7%BB%88%E6%80%BB%E7%BB%93%E5%92%8C%E6%96%B0%E5%B9%B4%E5%B1%95%E6%9C%9B/" rel="prev" title="2022年终总结和新年展望">
+      <i class="fa fa-chevron-left"></i> 2022年终总结和新年展望
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/" rel="next" title="Redis分布式相关">
+      Redis分布式相关 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">1.</span> <span class="nav-text">Redis数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%95%E5%B1%82%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">1.1.</span> <span class="nav-text">底层数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AD%97%E7%AC%A6%E4%B8%B2-simple-dynamic-string"><span class="nav-number">1.1.1.</span> <span class="nav-text">字符串(simple dynamic string)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9A%E9%94%AE%E5%80%BC"><span class="nav-number">1.1.1.1.</span> <span class="nav-text">实现：键值</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%93%BE%E8%A1%A8-linkedlist"><span class="nav-number">1.1.2.</span> <span class="nav-text">链表(linkedlist)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9AList-%E5%88%97%E8%A1%A8"><span class="nav-number">1.1.2.1.</span> <span class="nav-text">实现：List(列表)</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AD%97%E5%85%B8-hashtable"><span class="nav-number">1.1.3.</span> <span class="nav-text">字典(hashtable)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9Ahashes-%E5%93%88%E5%B8%8C%E8%A1%A8"><span class="nav-number">1.1.3.1.</span> <span class="nav-text">实现：hashes(哈希表)</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B7%B3%E8%B7%83%E8%A1%A8-skiplist"><span class="nav-number">1.1.4.</span> <span class="nav-text">跳跃表(skiplist)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9Asorted-sets-%E6%9C%89%E5%BA%8F%E9%9B%86%E5%90%88"><span class="nav-number">1.1.4.1.</span> <span class="nav-text">实现：sorted sets(有序集合)</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B4%E6%95%B0%E9%9B%86%E5%90%88-intset"><span class="nav-number">1.1.5.</span> <span class="nav-text">整数集合(intset)</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9ASet%EF%BC%88%E9%9B%86%E5%90%88%EF%BC%89"><span class="nav-number">1.1.5.1.</span> <span class="nav-text">实现：Set（集合）</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8E%8B%E7%BC%A9%E5%88%97%E8%A1%A8%EF%BC%88ziplist%EF%BC%89"><span class="nav-number">1.1.6.</span> <span class="nav-text">压缩列表（ziplist）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%95%E5%B1%82%E4%B8%8E%E5%AE%9E%E7%8E%B0%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">1.2.</span> <span class="nav-text">底层与实现之间的关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.3.</span> <span class="nav-text">其他数据类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Bitmaps"><span class="nav-number">1.3.1.</span> <span class="nav-text">Bitmaps</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HyperLogLog"><span class="nav-number">1.4.</span> <span class="nav-text">HyperLogLog</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Geospatial"><span class="nav-number">1.5.</span> <span class="nav-text">Geospatial</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">49</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/fuhaifei" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;fuhaifei" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/fu-hai-fei" title="zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;fu-hai-fei" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : 'af7673fae92afe66260c77be85546fd6',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

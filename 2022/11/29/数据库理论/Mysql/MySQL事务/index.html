@@ -34,12 +34,12 @@
   <meta name="description" content="MySQL事务之前在分布式系统的学习中已经系统的整理了事务ACID以及隔离性概念，下面总结在MySQL中的事务，偏向于实现层面，主要内容来自《MySQL技术内幕:InnoDB存储引擎(第2版)》。 事务分类和使用MySQL 默认提交事务（autocommit &#x3D; 1），即执行完SQL一句后立马执行COMMIT操作，也就是所谓的隐性事务。显式事务的开启，需要手动输入事务控制语句，：  START T">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MySQL事务">
-<meta property="og:url" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/index.html">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/index.html">
 <meta property="og:site_name" content="光与影的个人博客">
 <meta property="og:description" content="MySQL事务之前在分布式系统的学习中已经系统的整理了事务ACID以及隔离性概念，下面总结在MySQL中的事务，偏向于实现层面，主要内容来自《MySQL技术内幕:InnoDB存储引擎(第2版)》。 事务分类和使用MySQL 默认提交事务（autocommit &#x3D; 1），即执行完SQL一句后立马执行COMMIT操作，也就是所谓的隐性事务。显式事务的开启，需要手动输入事务控制语句，：  START T">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png">
-<meta property="og:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093945536.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093945536.png">
 <meta property="article:published_time" content="2022-11-29T06:42:40.000Z">
 <meta property="article:modified_time" content="2022-11-29T06:52:25.385Z">
 <meta property="article:author" content="NEU-FHF">
@@ -47,9 +47,9 @@
 <meta property="article:tag" content="InnoDB">
 <meta property="article:tag" content="MVCC">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png">
 
-<link rel="canonical" href="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/">
+<link rel="canonical" href="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/">
 
 
 <script id="page-configurations">
@@ -206,7 +206,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -313,14 +313,14 @@
 <li>Log Buffer：内存中的redo log buffer，事务在执行时实时写入日志到当前位置。</li>
 <li>Redo Log File：磁盘中存储redo log的文件 ，在事务提交前，会将Log Buffer中的日志持久化到Redo Log File中</li>
 </ol>
-<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png" class="" title="image-20221119093517439">
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093517439.png" class="" title="image-20221119093517439">
 <p>InnoDB提供了<code>innodb_flush_log_at_trx_commit</code>变量控制Log Buffer持久化时机：</p>
 <ul>
 <li><code>0</code>：事务提交时不进行redo log持久化，此时持久化时机只剩下<code>master thread</code>每1s执行一次的fsync。</li>
 <li><code>1</code>：提交时将redo log写入Redo Log File，且调用fsync，保证真正写入。</li>
 <li><code>2</code>：提交时将redo log写入Redo Log File，但不调用fsync，写入操作系统缓存。</li>
 </ul>
-<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093945536.png" class="" title="image-20221119093945536">
+<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/image-20221119093945536.png" class="" title="image-20221119093945536">
 <p>Log Buffer中的日志刷新到磁盘的时机为：</p>
 <ol>
 <li>事务提交时，具体刷新行为由<code>innodb_flush_log_at_trx_commit</code>控制</li>
@@ -501,11 +501,11 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" rel="prev" title="InnoDB存储引擎">
+    <a href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" rel="prev" title="InnoDB存储引擎">
       <i class="fa fa-chevron-left"></i> InnoDB存储引擎
     </a></div>
       <div class="post-nav-item">
-    <a href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" rel="next" title="MySQL性能调优">
+    <a href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" rel="next" title="MySQL性能调优">
       MySQL性能调优 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
@@ -583,7 +583,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">75</span>
+          <span class="site-state-item-count">78</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -596,7 +596,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-count">49</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -803,7 +803,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'MyBlogComment',
       owner       : 'fuhaifei',
       admin       : ['fuhaifei'],
-      id          : '58a64dcd4d2c9d6cce956693560a90a9',
+      id          : '5d15f62a86938e11d713966d831509df',
         language: 'zh-CN',
       distractionFreeMode: true
     });

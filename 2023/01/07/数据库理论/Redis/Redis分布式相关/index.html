@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Redis支持多机多实例部署，通过多实例部署，可以保证服务不受到单个Redis示例宕机的影响，实现服务的数据的可靠性和高可用，下面结合代码和底层原理，加深对于Redis多机部署的理解，主要内容来自Redis设计与实现 主从复制Redis的主从复制在我看来较为轻量级，由从节点向主节点申请成为从节点，主节点不断向从节点发送数据，实现同步，与Mysql主从复制不同的是，即使在同步前主从状态不一致，同步后">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis分布式相关">
+<meta property="og:url" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="Redis支持多机多实例部署，通过多实例部署，可以保证服务不受到单个Redis示例宕机的影响，实现服务的数据的可靠性和高可用，下面结合代码和底层原理，加深对于Redis多机部署的理解，主要内容来自Redis设计与实现 主从复制Redis的主从复制在我看来较为轻量级，由从节点向主节点申请成为从节点，主节点不断向从节点发送数据，实现同步，与Mysql主从复制不同的是，即使在同步前主从状态不一致，同步后">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221185800217.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221185745857.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221155936348.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/%E7%BB%98%E5%9B%BE1.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221200153194.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221195316557.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221201219757.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221201301948.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222172140192.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222180459540.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222180631919.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222181004371.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222181338047.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222181523186.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222181945418.png">
+<meta property="article:published_time" content="2023-01-07T02:33:47.000Z">
+<meta property="article:modified_time" content="2023-01-07T02:42:19.303Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="缓存">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221185800217.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Redis分布式相关 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Redis分布式相关
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-01-07 10:33:47 / 修改时间：10:42:19" itemprop="dateCreated datePublished" datetime="2023-01-07T10:33:47+08:00">2023-01-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Redis支持多机多实例部署，通过多实例部署，可以保证服务不受到单个Redis示例宕机的影响，实现服务的数据的可靠性和高可用，下面结合代码和底层原理，加深对于Redis多机部署的理解，主要内容来自<em>Redis设计与实现</em></p>
+<h3 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h3><p>Redis的主从复制在我看来较为轻量级，由从节点向主节点申请成为从节点，主节点不断向从节点发送数据，实现同步，与Mysql主从复制不同的是，即使在同步前主从状态不一致，同步后也会变为一致。</p>
+<p>通过<code>replicaof</code>命令可制定当前Redis实例为对应实例的从机关系，重启即失效：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> replicaof 主机IP 端口</span></span><br><span class="line">replicaof 192.168.1.1 6379</span><br><span class="line"><span class="meta">#</span><span class="bash"> 取消作为从机</span></span><br><span class="line">replicate no one</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<p>或者在配置文件中永久开启：</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221185800217.png" class="" title="image-20221221185800217">
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221185745857.png" class="" title="image-20221221185745857">
+<p>开启主从备份后，可以在任意Redis实例上通过<code>info replication</code>命令查看同步信息</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221155936348.png" class="" title="image-20221221155936348">
+<p>若主机配置了<code>requirepass</code>，需要在配置文件中添加对应连接密码</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 临时设置</span></span><br><span class="line">config set masterauth &lt;password&gt;</span><br><span class="line"><span class="meta">#</span><span class="bash"> 配置文件中添加</span></span><br><span class="line">masterauth &lt;password&gt;</span><br></pre></td></tr></table></figure>
+<p>其他的相关注意事项有：</p>
+<ol>
+<li>参与主从复制的任意Redis实例宕机，其他Redis实例仍保持原来的身份，导致如果主机宕机丢失数据，在空数据的条件下启动，会导致所有从机同步为空（<del>这一点有悖于复制的初衷</del>）。</li>
+<li>Redis主从复制采用异步复制策略，主机向从机发送操作后并不会等待操作返回。</li>
+<li>对于带有过期时间(TTL)的键值对，从库不会主动删除，等待主机删除后向从机发送同步删除命令，只是根据本地逻辑时钟判断是否向客户端返回空。</li>
+</ol>
+<h4 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h4><p>主从同步的主要操作按照连接状况的不同分为以下几种情况：</p>
+<ol>
+<li>主机与从机正常连接。主机不断地将写操作发送到从机，从机执行操作实现状态同步，这个过程为异步的，主机并不等待从机返回。</li>
+<li>从机与主机完全不同步状态。主机接收到请求后，启动后台线程持久化当前状态到RDB文件中，写入完毕后，发送给从机读取，实现状态同步。</li>
+<li>从机与主机处于部分同步状态。主机根据两者数据之间的差距，发送从机缺失的操作，从机读取执行，实现状态同步，例如从机断线，网络分区等场景导致。</li>
+</ol>
+<p>老版本Redis支支持情况2对应的<strong>完全同步(sync)</strong>操作，对于情况3同样采用完全同步，这导致即使从机只由于网络波动缺失了主机的部分操作，而主机还是需要重新生成RDB文件，造成了效率的下降。为了解决上述问题，新版本Redis引入了<strong>部分同步操作(psync)</strong>，在上述场景中主机能够识别从机缺失部分，直接发送缺失部分操作。</p>
+<p>为了支持部分同步操作，每个主机上添加三个数据结构：</p>
+<ol>
+<li>复制ID（replication ID）：主机启动时初始化一个独一无二的ID（单机自己为主机），用来标识本机数据，同时每个实例记录自己的上一个复制ID，原因在<a target="_blank" rel="noopener" href="https://redis.io/docs/management/replication/">官方文档</a>中描述了。</li>
+<li>主机复制偏移量（replication offset）：每当主机需要从机发送写操作时，在复制偏移量上加上操作对应发送的数据字节长度，可以理解为逻辑上的操作时间戳</li>
+<li>主机复制积压缓冲区（replication backlog）：固定长度的先进先出缓冲区，缓存一定数量的主机向从机发送的最新复制数据，主机在向从机发送复制数据时，也会写入backlog。</li>
+</ol>
+<p>从上面三个数据结构，不难想到Redis是如何实现部分同步操作(psync)：主机复制ID用来比较从机的数据是否与本机来自一个”数据”，复制偏移量用来判断从机相较于主机缺失多少数据，复制挤压缓冲区存历史数据代表主机能够恢复的数据。</p>
+<ol>
+<li>backlog 长度 &gt; 主机 replication offset - 从机 replication offset，主机携带了所有从机缺失的数据，进行<strong>部分同步(psync)</strong></li>
+<li>backlog 长度 &lt; 主机 replication offset - 从机 replication offset，主机无能为例，只能<strong>完全同步(sync)</strong></li>
+</ol>
+<p>replication ID在区别“数据”版本上具有重要作用，其变化时机为：</p>
+<ol>
+<li>实例重新启动时</li>
+<li>当一个从实例被设置为主实例时</li>
+</ol>
+<p>从实例会主动向主服务器发送心跳包，实现检测主服务器网络状态，告知主服务器自身的复制偏移量。</p>
+<h3 id="哨兵模式"><a href="#哨兵模式" class="headerlink" title="哨兵模式"></a>哨兵模式</h3><p>在读写分离的主从复制模式下，如果主节点失效，从节点并不会自己重新选出新的主节点，导致系统陷入只读状态，因此Redis引入了<strong>哨兵模式</strong>：一种特殊的Redis服务器，用来监控主节点的状态，当主节点失效时，该服务器会选择特定的从服务器成为新的主服务器，其他服务器（包括恢复后的老主服务器）修改为新主的从服务器。</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/%E7%BB%98%E5%9B%BE1.png" class="" title="绘图1">
+<p>Sentinel模式实现的基本原理如下（简单概括）：</p>
+<ol>
+<li>Sentinel是运行在特殊模式下的Redis服务器，通过读取指定的配置文件，获悉监视的主服务器IP以及端口。</li>
+<li>通过向主服务器发送请求，获取所有的从服务器信息，保存完整的主从服务器信息。</li>
+<li>Sentinel周期性的向所有主从服务器发送INFO命令，当主服务超过一定时间未有效响应时，即认为主服务器失效，当足够多的Sentinel认为主服务下线时，进入故障切换阶段（基于Raft选主多的Sentinel）。</li>
+<li>主Sentinel选择一个从服务器发送<code>replica no one</code>命令,其他发送<code>replicaof</code>命令，完成新的主服务器切换。</li>
+<li>失效的旧主服务器上限后，主Sentinel也会发送<code>replicaof</code>命令</li>
+</ol>
+<h4 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h4><p>启用Sentinel相关配置项如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 监控的主Redis服务器，最后一个</span></span><br><span class="line">sentinel monitor mymaster 127.0.0.1 6379 2</span><br><span class="line"><span class="meta">#</span><span class="bash"> 判断下线的时间阈值</span></span><br><span class="line">sentinel down-after-milliseconds mymaster 60000</span><br><span class="line"><span class="meta">#</span><span class="bash"> 故障转移阶段超时时间阈值</span></span><br><span class="line">sentinel failover-timeout mymaster 180000</span><br></pre></td></tr></table></figure>
+<p>指定配置文件的方式进行启动：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">redis-sentinel /path/to/sentinel.conf</span><br><span class="line">redis-server /path/to/sentinel.conf --sentinel</span><br></pre></td></tr></table></figure>
+<p>启动成功后，输出监视信息（一主一从）：</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221200153194.png" class="" title="image-20221221200153194">
+<p>手动关闭Salve，查看输出：</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221195316557.png" class="" title="image-20221221195316557">
+<p>启动Slave后，关闭Master查看输出：</p>
+<ul>
+<li>显示完成切换</li>
+</ul>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221201219757.png" class="" title="image-20221221201219757">
+<p>在Slave查看主从备份信息，发现切换成功：</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221221201301948.png" class="" title="image-20221221201301948">
+<h3 id="集群"><a href="#集群" class="headerlink" title="集群"></a>集群</h3><p>Redis集群是Redis的分布式数据库方案，支持数据分片和复制，实现数据库的水平扩展，一个典型的Redis集群组成如下：</p>
+<ol>
+<li>一系列主服务器，存储部分键值对，提供读写服务。</li>
+<li>一系列从服务器，复制主服务器数据，在主服务器失效时替代主服务器提供服务。</li>
+</ol>
+<p>键空间划分为共16384个槽(slot)，将槽分别存储在不同的主服务器上，实现所谓的<strong>分片</strong>（Sharding），采用CRC16算法实现key到slot的映射，其转化计算方式为：</p>
+<ul>
+<li>Node A contains hash slots from 0 to 5500.</li>
+<li>Node B contains hash slots from 5501 to 11000.</li>
+<li>Node C contains hash slots from 11001 to 16383.</li>
+</ul>
+<script type="math/tex; mode=display">
+slot = CRC16(key)\%16384</script><p>Redis集群采用完全去中心化的实现方式，客户端可访问任意集群服务器，当访问操作的键值对不在当前服务器（槽不在当前服务器或者正处于槽迁移阶段）上时，当前服务器返回对应key所在服务器位置，并指导客户端重定向到对应服务器。</p>
+<p>其他包括故障检测、故障恢复等均通过节点间的消息传递实现，当主服务器宕机，基于Raft算法从多个从服务器中选择成为新的主服务器</p>
+<h4 id="使用-1"><a href="#使用-1" class="headerlink" title="使用"></a>使用</h4><p>按照官网教程的方式，采用一台虚拟机多个Redis进程的方式，学习Redis集群的配置和使用。</p>
+<p>首先构建六个配置文件，下面为最小配置内容，不同配置文件需要修改端口号，集群配置文件名</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">port 7000 # 不同节点不同</span><br><span class="line">cluster-enabled yes</span><br><span class="line">cluster-config-file nodes.conf # 不同节点不同</span><br><span class="line">cluster-node-timeout 5000</span><br><span class="line">appendonly yes</span><br></pre></td></tr></table></figure>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222172140192.png" class="" title="image-20221222172140192">
+<p>加载配置文件，启动对应Redis实例</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222180459540.png" class="" title="image-20221222180459540">
+<p>初始化集群，完成集群搭建（六个，三个主，三个从）</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">redis-cli --cluster create 127.0.0.1:7001 127.0.0.1:7002 \</span><br><span class="line">127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005 127.0.0.1:7006 \</span><br><span class="line">--cluster-replicas 1</span><br></pre></td></tr></table></figure>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222180631919.png" class="" title="image-20221222180631919">
+<p>操作集群</p>
+<ol>
+<li><p>访问不在当前节点上的Key</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222181004371.png" class="" title="image-20221222181004371">
+</li>
+<li><p>查看指定键所属的slot</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222181338047.png" class="" title="image-20221222181338047">
+</li>
+<li><p>查看集群信息</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222181523186.png" class="" title="image-20221222181523186">
+</li>
+</ol>
+<p>关闭节点7003后，查看集群状态</p>
+<ul>
+<li><p>可以看出，此时的7003状态为Failed，其从节点7005成为新的主节点</p>
+<img src="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E5%88%86%E5%B8%83%E5%BC%8F%E7%9B%B8%E5%85%B3/image-20221222181945418.png" class="" title="image-20221222181945418"></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Redis/" rel="tag"><i class="fa fa-tag"></i> Redis</a>
+              <a href="/tags/%E7%BC%93%E5%AD%98/" rel="tag"><i class="fa fa-tag"></i> 缓存</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="prev" title="Redis数据结构">
+      <i class="fa fa-chevron-left"></i> Redis数据结构
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%8C%81%E4%B9%85%E5%8C%96/" rel="next" title="Redis持久化">
+      Redis持久化 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="nav-number">1.</span> <span class="nav-text">主从复制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="nav-number">1.1.</span> <span class="nav-text">实现原理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F"><span class="nav-number">2.</span> <span class="nav-text">哨兵模式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8"><span class="nav-number">2.1.</span> <span class="nav-text">使用</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4"><span class="nav-number">3.</span> <span class="nav-text">集群</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-1"><span class="nav-number">3.1.</span> <span class="nav-text">使用</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">49</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/fuhaifei" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;fuhaifei" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/fu-hai-fei" title="zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;fu-hai-fei" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : 'df23694df3ae622423629a9154a17445',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

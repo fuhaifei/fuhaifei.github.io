@@ -195,6 +195,264 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/Golang%E7%BC%96%E7%A8%8B/Golang%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/Golang%E7%BC%96%E7%A8%8B/Golang%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">Golang并发控制总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-09-06 10:17:49 / 修改时间：10:22:12" itemprop="dateCreated datePublished" datetime="2022-09-06T10:17:49+08:00">2022-09-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Golang%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Golang编程</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Golang并发控制总结"><a href="#Golang并发控制总结" class="headerlink" title="Golang并发控制总结"></a>Golang并发控制总结</h2><blockquote>
+<p>写在开头：最近用go做MIT6.824课程作业时，涉及到大量基于golang的并发控制，但是由于不熟悉golang语言以及相关并发控制手段，导致出现了大量的bug，影响了实现进程，因此产生了总结学习golang并发控制的想法</p>
+</blockquote>
+<p>目前大厂的后端开发大量的从java转向go，很大一部分原因是由于go所具备的高并发、高性能、容易开发等性质，可以说go并发控制是学习go内容中最为重要的一部分（<del>java并发我都没学会，直接学go，看出我的诚意了吧</del>），下面的总结学习主要基于golang官网的Effective Go的<a target="_blank" rel="noopener" href="https://go.dev/doc/effective_go#concurrency">cocurrency章节</a>。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/Golang%E7%BC%96%E7%A8%8B/Golang%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6%E6%80%BB%E7%BB%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">分布式事务总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-31 10:31:52" itemprop="dateCreated datePublished" datetime="2022-07-31T10:31:52+08:00">2022-07-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-11-17 09:20:42" itemprop="dateModified" datetime="2022-11-17T09:20:42+08:00">2022-11-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">大数据理论</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="分布式事务总结"><a href="#分布式事务总结" class="headerlink" title="分布式事务总结"></a>分布式事务总结</h2><p>要理解分布式事务首先要明白事务是什么，从单机事务的理解迁移到分布式事务，下面从两个角度总结单机和分布式事务</p>
+<ol>
+<li>单机事务 vs 分布式事务</li>
+<li>如何通过并发控制保证单机分布式事务的隔离性</li>
+</ol>
+<h3 id="单机-分布式事务"><a href="#单机-分布式事务" class="headerlink" title="单机/分布式事务"></a>单机/分布式事务</h3><p>事务作为数据库系统读写操作的高层抽象，代表了数据库的基本操作。一个正常提供服务的数据库系统，其事务必须满足ACID四个性质，其中CI两个性质相互关联，是事务性质研究的重点。</p>
+<ol>
+<li>Atomic（原子性）：每个事务被看作一个不可分割的单元，要么完全成功要么完全失败，不存在两者的中间状态。数据库系统必须保证任意时刻下事务的原子性</li>
+<li>Consistency（一致性）：一致性是指数据库满足某种预先定义的约束，任何数据库的操作都必须满足一致性，即从一个满足一致性的状态转移到另一个满足一致性的状态（例如：转账事务要满足转出和转入账户总金额不变）</li>
+<li>Isolation（隔离性）：一系列并发进程的执行导致数据库的状态改变和按照某种线性顺序执行的状态改变相同（实际上这是serializability的定义）</li>
+<li>Durable（持久性）：事务一旦提交，其对数据状态的改变不会因为意外事件的发生而丢失</li>
+</ol>
+<p>分布式事务可以看作事务+分布式环境，即一个执行范围跨越多个通过网络连接的不同主机的事务，分布式事务既然是事务，同样要满足ACID性质，但是由于分布式环境的复杂性，原有的事务性质保证手段在分布式环境下需要进行调整和新的设计。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/" class="post-title-link" itemprop="url">Spark：分布式容错的内存计算框架</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-07-31 10:27:49 / 修改时间：10:28:58" itemprop="dateCreated datePublished" datetime="2022-07-31T10:27:49+08:00">2022-07-31</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">大数据理论</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Spark-分布式容错的内存计算框架"><a href="#Spark-分布式容错的内存计算框架" class="headerlink" title="Spark:分布式容错的内存计算框架"></a>Spark:分布式容错的内存计算框架</h2><blockquote>
+<p><a target="_blank" rel="noopener" href="https://www.usenix.org/conference/nsdi12/technical-sessions/presentation/zaharia">Resilient Distributed Datasets: A Fault-Tolerant Abstraction forIn-Memory Cluster Computing</a></p>
+</blockquote>
+<p>Spark是目前大数据领域较为火热的批处理框架之一（也支持流处理），经过论文阅读，不难发现Spark的核心原理并不复杂，通过简单的抽象，有效的解决了内存计算问题，我想这就是Spark流行起来的原因之一，如果要理解Spark，最关键一步的是理解RDD这一抽象内存模型。</p>
+<h3 id="RDDs（Resilient-Distributed-Datasets）"><a href="#RDDs（Resilient-Distributed-Datasets）" class="headerlink" title="RDDs（Resilient Distributed Datasets）"></a>RDDs（Resilient Distributed Datasets）</h3><p>Spark中将计算操作的基本内存数据单元抽象为一个只读、分区的数据集-弹性分布数据集（RDD），将一次Spark任务定义为RDD经过一系列操作不断变换状态的过程，如下图所示：</p>
+<ul>
+<li>每一步操作将一个RDD转化为另一个逻辑上的RDD（例如map、filter、join等）</li>
+<li>不同RDD之间通过操作链接起来，形成一个RDD转换父子关系链</li>
+<li>Spark通过记录RDD转化的父子关系以及操作类型，实现容错（在RDD丢失后，根据计算链重新计算）</li>
+</ul>
+<img src="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/image-20220726150407285.png" class="" title="image-20220726150407285">
+<p>系统中通过五个元信息定义一个RDD：一系列分区、一系列父RDD依赖、转化操作、元数据（分区放置、分区信息），依赖关系如下图，分为一对一（narrow）和多对一（wide）。</p>
+<img src="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/image-20220726153152468.png" class="" title="image-20220726153152468">
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spark%EF%BC%9A%E5%88%86%E5%B8%83%E5%BC%8F%E5%AE%B9%E9%94%99%E7%9A%84%E5%86%85%E5%AD%98%E8%AE%A1%E7%AE%97%E6%A1%86%E6%9E%B6/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E6%97%A0%E5%A6%A5%E5%8D%8F%E7%9A%84%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -785,277 +1043,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/" class="post-title-link" itemprop="url">如何做研究-第二部分</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-07-13 17:00:36 / 修改时间：17:01:13" itemprop="dateCreated datePublished" datetime="2022-07-13T17:00:36+08:00">2022-07-13</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%A7%91%E7%A0%94%E7%9B%B8%E5%85%B3/" itemprop="url" rel="index"><span itemprop="name">科研相关</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="第二部分-提问题，找答案"><a href="#第二部分-提问题，找答案" class="headerlink" title="第二部分 提问题，找答案"></a>第二部分 提问题，找答案</h2><p>这一部分主要提供如何从兴趣、专业领域中寻找研究问题，并寻找问题答案过程的建议和方法论。</p>
-<h3 id="从话题到问题"><a href="#从话题到问题" class="headerlink" title="从话题到问题"></a>从话题到问题</h3><p>从感兴趣的话题领域到具体的研究问题是一个从大到小的过程</p>
-<ul>
-<li>话题是广泛的，往往涵盖大量的信息和资料，沉浸在一个话题中搜索查找相关信息，虽然能够搜集大量的信息，然而这些信息大部分往往是没有任何用途的，因为缺乏重点，在读者眼里可能仅仅是堆放在一起的事实。</li>
-<li>问题是从话题中产生的，根植于话题的。一个好的问题的好的答案答案能够在一定程度上推进整个领域往前发展</li>
-</ul>
-<p>然而疑问（question）并不等于问题（problem）</p>
-<ul>
-<li>一个好的问题是具有实际价值的”疑问“，解答这个问题能给我们带来一些东西（eg：解决某个工程难题，提升程序运行效率等等）</li>
-<li>通过问我们自己:”不解决这个问题会怎样’’来区分区分疑问和问题的方式，如果答案是”不会怎么样 so what?”，那么这个问题就<strong>不应该成为我们的研究问题</strong></li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/" class="post-title-link" itemprop="url">如何做研究-第一部分</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-07-13 16:58:42 / 修改时间：17:00:23" itemprop="dateCreated datePublished" datetime="2022-07-13T16:58:42+08:00">2022-07-13</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%A7%91%E7%A0%94%E7%9B%B8%E5%85%B3/" itemprop="url" rel="index"><span itemprop="name">科研相关</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="写在开头"><a href="#写在开头" class="headerlink" title="写在开头"></a>写在开头</h2><p><em>开头废话：终于摆脱了没有前途的项目开始写论文了，虽然写论文不一定比做项目更有前途，但是可以预计的是只要我认真干，达到毕业标准是没问题的，而我目前对于实验室工作的目标就是满足毕业要求，所以说捋起袖子，加油干吧。正好李沐出了这个如何搞研究的视频，我也跟着学一学，不止为了写论文，更多的是从写论文这个经历里，为未来工作中各种报告文档的书写留下一点可用的经验。</em></p>
-<p>跟着李沐的课程学习搞研究的基本概念，主要的学习资料有</p>
-<ol>
-<li>李沐的<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1hY411T7vy">研究的艺术B站视频</a></li>
-<li>研究的艺术中文版第四版</li>
-</ol>
-<p>计划是先自己读一遍中文书的对应章节，再去看李沐的视频，加深印象，下面是第一部分内容。</p>
-<h2 id="研究、研究人员、读者"><a href="#研究、研究人员、读者" class="headerlink" title="研究、研究人员、读者"></a>研究、研究人员、读者</h2><h3 id="什么是研究"><a href="#什么是研究" class="headerlink" title="什么是研究"></a>什么是研究</h3><p>什么是研究？</p>
-<ul>
-<li><p>为了回答/解决某个问题搜集信息就是研究</p>
-</li>
-<li><p>日常生活中我们经常有类似的场景（例如百度小米的CEO是谁），只是我们并不会把这个过程规范化，结论文档化</p>
-</li>
-</ul>
-<p>为什么要把研究内容写下来？</p>
-<ul>
-<li>为了方便记忆（俗话说得好：好记性不如烂笔头）</li>
-<li>为了增进对于研究内容的理解。在梳理论据，描述论点的过程中，会加深自己对于相关内容的理解</li>
-<li>为了检验自己的思想。只说是无法证明自己思想的正确性，写在纸上，通过论据论述，数学公式的证明，为自己的思想进行强有力的证明</li>
-</ul>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/" class="post-title-link" itemprop="url">共识算法-Raft</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-06-08 16:36:34" itemprop="dateCreated datePublished" datetime="2022-06-08T16:36:34+08:00">2022-06-08</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-09-29 15:46:06" itemprop="dateModified" datetime="2022-09-29T15:46:06+08:00">2022-09-29</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="分布式共识算法-Raft"><a href="#分布式共识算法-Raft" class="headerlink" title="分布式共识算法-Raft"></a>分布式共识算法-Raft</h2><p>Raft是基于Paxos改进的共识算法，其最开始的设计目标即为容易理解且容易实行，所以相较于Paxos学起来更容易（<del>确实比Paxos容易，但我还是看不懂啊</del>）。</p>
-<p>Raft中定义了三种角色：</p>
-<ol>
-<li>Leader：唯一的leader，负责与Client交互，在其他follower上备份log日志。</li>
-<li>Follower: 多个Follower，接收Leader的日志备份请求，当Leader出现问题时，选举成为新的leader。</li>
-<li>Candidate: 当Follower认为Leader失效时，Follower状态转换为Candidate，进行Leader的竞选。</li>
-</ol>
-<p>Raft中只包括两种类型的RPC消息</p>
-<ol>
-<li>RequestVote RPC：参与选举的Candidate发送的选举消息</li>
-<li>AppendEntries RPC:  Leader向Follower发送的添加日志信息</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1127,7 +1114,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">75</span>
+          <span class="site-state-item-count">78</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1140,7 +1127,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-count">49</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
