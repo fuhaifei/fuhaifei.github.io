@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Spanner：“真”分布式数据库 Spanner: Google’s Globally Distributed Database  Spanner作为Google开发的全球分布式数据系统，具备外部一致性、支持分布式事务、多副本容错等特性，相较于Aurora，更具“分布式”特征。 从何而来？论文的intro介绍Spanner是从类似于MegaStore的基于BigTable的kv存储系统演化而来的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spanner：“真”分布式数据库">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="Spanner：“真”分布式数据库 Spanner: Google’s Globally Distributed Database  Spanner作为Google开发的全球分布式数据系统，具备外部一致性、支持分布式事务、多副本容错等特性，相较于Aurora，更具“分布式”特征。 从何而来？论文的intro介绍Spanner是从类似于MegaStore的基于BigTable的kv存储系统演化而来的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719155057293.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719160204168.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719163022272.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720142153487.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720155852284.png">
+<meta property="article:published_time" content="2022-07-31T02:23:09.000Z">
+<meta property="article:modified_time" content="2023-02-09T12:09:38.002Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="分布式">
+<meta property="article:tag" content="分布式数据库">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719155057293.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Spanner：“真”分布式数据库 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Spanner：“真”分布式数据库
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-31 10:23:09" itemprop="dateCreated datePublished" datetime="2022-07-31T10:23:09+08:00">2022-07-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:09:38" itemprop="dateModified" datetime="2023-02-09T20:09:38+08:00">2023-02-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Spanner：“真”分布式数据库"><a href="#Spanner：“真”分布式数据库" class="headerlink" title="Spanner：“真”分布式数据库"></a>Spanner：“真”分布式数据库</h2><blockquote>
+<p><a target="_blank" rel="noopener" href="https://dl.acm.org/doi/abs/10.1145/2491245">Spanner: Google’s Globally Distributed Database</a></p>
+</blockquote>
+<p>Spanner作为Google开发的全球分布式数据系统，具备外部一致性、支持分布式事务、多副本容错等特性，相较于Aurora，更具“分布式”特征。</p>
+<h4 id="从何而来？"><a href="#从何而来？" class="headerlink" title="从何而来？"></a>从何而来？</h4><p>论文的intro介绍Spanner是从类似于MegaStore的基于BigTable的kv存储系统演化而来的，MegaStore虽然能够很好得解决大部分客户的数据存储需求，但还存在一部分问题</p>
+<ol>
+<li>对于关系模型的支持较差，难以支持复杂的、经常变化的模型</li>
+<li>无法在使用大范围副本的同时保证强一致性，并且支持分布式事务</li>
+</ol>
+<p>针对以上问题，一个支持更强关系模式的多时间版本的数据库-Spanner诞生了。</p>
+<span id="more"></span>
+<h4 id="基本架构与存储设计"><a href="#基本架构与存储设计" class="headerlink" title="基本架构与存储设计"></a>基本架构与存储设计</h4><p>类似于Aurora,Spanner同样采用了多数据中心+多server的架构模式，一个Spanner部署称为一个universe，一个universe跨越不同的数据中心(Zone)，每个Zone内部有多个span server，其中架构中不同职责角色如下图</p>
+<ul>
+<li>universe maseter：管理所有的zone信息</li>
+<li>palcament driver：负责跨zone的数据移动</li>
+<li>zone master：管理当前Zone的所有span server</li>
+<li>location proxy：通知客户端访问数据所在的spanserver位置</li>
+<li>span server：存储并为客户端提供数据</li>
+</ul>
+<img src="/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719155057293.png" class="" title="image-20220719155057293">
+<p>每个span server的内部组成如下图所示，自下而上进行分析：</p>
+<ul>
+<li><p>底层数据存储在Colossus（基于GFS改进的文件系统）上</p>
+</li>
+<li><p>底层数据以类似于bigtable中<strong>tablet</strong>的数据结构为单位进行存储</p>
+<script type="math/tex; mode=display">(key:string, timestamp:int64) -> string</script></li>
+<li><p>每个server存储100-1000个tablet，每个tablet实现一个基于Paxos的状态机，用来维持副本的一致性，一个tablet的所有副本组成一个<strong>Paxos Group</strong>（意味着同步单位为tablet）</p>
+</li>
+<li><p>每个span server维护一个<strong>lock table</strong>，维护基于两阶段锁实现的并发控制锁信息</p>
+</li>
+<li><p>对于每个Paxos Group中被选为leader的span server，在lock table上层同时会实现一个transaction manager，用来协调和管理分布式事务</p>
+</li>
+</ul>
+<img src="/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719160204168.png" class="" title="image-20220719160204168">
+<h4 id="数据模型"><a href="#数据模型" class="headerlink" title="数据模型"></a>数据模型</h4><p>Spanner的数据库模型来自于BigTable的数据模型，区别关系型数据模型，论文中称为Directory Table（<strong>directory-bucketed key-value mappings</strong>），一种类似于关系模型的kv存储模型</p>
+<ul>
+<li>Directory是一系列key的集合（bulk），是系统放置和同步备份的基本单位</li>
+<li>每个table的列为key，行为key对应value(这点是关系模型的特征)，每个key必须定义name</li>
+<li>每个表由主键+非主键定义，一张表可以理解为是<strong>主键-&gt;非主键的映射关系</strong>(这点是kv模型的特征)</li>
+</ul>
+<p>如下图所示，创建了Users和Albums表，其中Albums表是Users表的子表</p>
+<ul>
+<li>从图中可知，表项按照类似目录的形式进行<strong>交错存储</strong></li>
+<li>交错存储考虑到了不同表之间关系，在分布式存储环境下访问具备<strong>locality</strong>性质（我理解的是通常有关系的表要一起访问，不如就交错存储在一起，论文中一部分出发点是为了magastore对于跨行事务支持较差的问题）</li>
+</ul>
+<img src="/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220719163022272.png" class="" title="image-20220719163022272">
+<h4 id="分布式事务实现"><a href="#分布式事务实现" class="headerlink" title="分布式事务实现"></a>分布式事务实现</h4><p>Spanner中最难理解的一部分内容就在这一点，通过TrueTime API+分布式锁+Paxios的方式实现了满足强一致性的分布式事务支持，其中设计细节和实现细节较多，理解不到位，仅仅整理一下理解到的内容。</p>
+<p><strong>True Time API</strong></p>
+<p>Spanner通过True Time API为分布式系统提供全局时间戳，在全局时间戳的基础上实现了分布式事务的线性一致性（linearizability）。其中True Time API提供如下图的几个接口：</p>
+<ol>
+<li>TT.now()：获取一个当前的时间范围，保证当前时间一定在范围内</li>
+<li>TT.after(t)：判断时间t是否已经过去</li>
+<li>TT.before(t)：判断时间t是否还未到来</li>
+</ol>
+<img src="/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720142153487.png" class="" title="image-20220720142153487">
+<p><strong>分布式事务</strong></p>
+<p>Spanner分布式事务基于两阶段提交的思想，并结合全局时间戳分配+锁实现分布式事务的并发控制，基本的阶段提交过程如下：</p>
+<ol>
+<li>首先由客户端选择一个Coordinator Group(主块)，将提交信息(以及选择的Coordinator Group)和写入内容发送给所有的Participant Group中的leader（简单描述，首先选一个主group，然后告诉所有group我要提交了，且选的主group是他）</li>
+<li>所有的non-coordinator-participant leader首先获取写锁，并生成一个<strong>大于先前所有事务时间戳</strong>的<strong>prepare timestamp</strong>，写入到Paxios日志中后，通知coordinator-participant leader。coordinator-participant leader同时也要获得写锁，但是不生成prepare timestamp</li>
+<li>由coordinator-participant leader根据接收到的prepare timestamp，确定一个commit timestamp后，将commit信息写入Paxios日志中<ul>
+<li>该commit timestamp确保大于所有的准备时间戳且大于coordinator-participant leader收到客户端发送的提交信息时<strong>TT.now().latest</strong>时间（保证事务时间戳单增，且事务开始时间一定大于事务发起时间）</li>
+</ul>
+</li>
+<li>coordinator-participant leader等待直到TT.after(commit timestamp)为true后，发送commit信息给所有的non-coordinator-participant leader，执行提交操作，并将提交信息记录到Paxios日志中，释放锁资源</li>
+</ol>
+<p>上述描述过于复杂，从两阶段提交的角度简单理解为：</p>
+<ol>
+<li>准备阶段：主leader联系所有的协作leader，准备提交事务，获取所有的准备时间戳</li>
+<li>提交阶段：主leader确定提交时间戳后，等到时间过了确定的时间戳后，发送提交信息，完成提交</li>
+</ol>
+<p><strong>考虑时间戳的两阶段提交</strong></p>
+<p>相较于普通的两阶段提交，Spanner的实现中考虑了大量的时间戳分配关系，通过时间戳的分配，保证<strong>性质</strong>：<strong>若事务T2开始于T1提交以后，则其提交时间戳必须小于T1提交时间戳</strong>，该性质由以下两个性质保证</p>
+<ol>
+<li>start：事务开始时间戳不会小于事务到达系统时调用<strong>TT.now().latest</strong>的时间（事务打上开始时间戳时，对应时间保证已经过去）</li>
+<li>commit wait：事务的真正提交（或者说提交结果为客户可见）的时间为TT.after(事务结束时间戳)为true以后（事务真实提交时，保证提交时间戳对应的真实事件已经过去）</li>
+</ol>
+<ul>
+<li>“已经过去”指的是TT.after(t)为True</li>
+</ul>
+<p>简单理解就是</p>
+<ol>
+<li>start性质保证：事物的提交时间戳不会早于开始时间戳</li>
+<li>commit wait性质保证：后续发生事务的开始时间戳不可能小于用户已将看到提交事务的提交的时间戳</li>
+</ol>
+<p>通过以上两个执行保证了<strong>外部一致性</strong></p>
+<p><strong>只读事务的一致性保证</strong></p>
+<p>只读事务保证一致性实际上就是保证在某个时间点上的读读到了当前时间点的最新数据，在Spanner中这一点同样是通过时间戳实现，基本思路如下：</p>
+<ol>
+<li>为只读事务分配时间戳（快照读相当于自带时间戳的只读事务）：若只读事务只涉及一个Paxios Group，则直接由Group leader为其分配时间戳；涉及多个Paxios Group，直接将时间戳设置为最新即TT.now().latest</li>
+<li>根据时间戳查找对应新旧程度的副本，保证读取副本的最新时间戳($t_{safe}$)大于等于当前时间戳（如果没有就需要阻塞更新副本）</li>
+</ol>
+<p>由于以上根据时间戳进行读的特性，RO事务不需要上锁（lock-free），这极大的降低了只读事务的处理速度，同时避免了只读事务影响其他写事务的进行</p>
+<img src="/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/image-20220720155852284.png" class="" title="image-20220720155852284">
+<h4 id="其他实现细节"><a href="#其他实现细节" class="headerlink" title="其他实现细节"></a>其他实现细节</h4><p><strong>选主过程中的时间戳分配问题</strong></p>
+<p>每个Paxios leader带有一个超时时长为10s的lease，由于leader需要维护大量的状态信息（锁表、时间戳等），leader短时间交换的成本得不偿失，Spanner设计的Paxios leader机制在我看来更像是一个长期leader，可通过以下两种方式延长lease:</p>
+<ol>
+<li>每次执行写入事务时，延长lease</li>
+<li>在lease快过期时，leader主动向其他server发送请求延长lease</li>
+</ol>
+<p>由于每个leader维护一个当前最大时间戳，在leader切换时Spanner保证新leader的时间戳与此时间戳重叠</p>
+<ul>
+<li>老Leader在退位之前，必须等待TT.after(最大时间戳)为True，即等到True Time Api不会生成小于等于老Leader维护时间戳的时候，老Leader再进行退位操作</li>
+</ul>
+<h3 id="Spanner-vs-Aurora-vs-Frangampani"><a href="#Spanner-vs-Aurora-vs-Frangampani" class="headerlink" title="Spanner vs Aurora vs Frangampani"></a>Spanner vs Aurora vs Frangampani</h3><p>Spanner最难理解一点是通过True Time API实现的外部一致性，在于Aurora对比思考过程中，发现两个系统均实现了强一致性保证，可Aurora并没有用到Spanner用到的True TIme API也没用到分布式事务涉及到的两阶段提交、分布式锁，这点让我想了很久才明白具体区别点在哪。</p>
+<p>首先还是要明白Linearizability和 Serializability的区别与联系（已经看了多少次了，总是忘记）</p>
+<ul>
+<li>Linearizability（线性一致性）：分布式系统中的概念，强调的是能为分布式系统中的发生事务安排全局认可的一个合理的顺序，因为分布式系统并没有类似单机系统全局时钟等的决定发生在不同机器上的事务的顺序，对应分布式系统CAP中的C。</li>
+<li>Serializability（可序列化）：单机系统中的概念，指的是一系列并发事务之间通过并发控制，使得并发的事务按照一定的顺序（这个顺序是随机的，却决于锁和事务实现机制），执行结果满足数据库约束。</li>
+</ul>
+<p>为什么分布式系统中一点要确定一个合理的执行顺序？分布式系统中如果没有全局顺序，不同机器副本上由于网络延迟、宕机等问题，会导致不同副本上操作执行顺序不一致，访问时可能看到不一致的结果（看到过期数据、看到错误数据等）。</p>
+<p>通过上述定义，我们可以明白两个性质实际上是两个不同的问题，同样也对应着不同的解决方案</p>
+<ol>
+<li>Linearizability（线性一致性）：通过Spanner类似的全局时钟或者Aurora类似的自增日志号，实现分布式事务操作顺序的判断</li>
+<li>Serializability（可序列化）：单机数据库往往通过锁机制实现并发控制，从而实现一定程度的可序列化</li>
+</ol>
+<p>当单机数据库迁移到分布式环境中时，需要解决上述两个问题</p>
+<ol>
+<li>spanner：采用了 全局时钟 + 分布式锁实现</li>
+<li>Aurora：采用全局自增编号解决了Linearizability问题，但是并没有其他机制实现并发控制问题，这是为什么？</li>
+<li>Frangapani：采用了分布式锁实现解决了并发控制问题，但是没有机制实现Linearizability的问题，这是为什么？</li>
+</ol>
+<p>原因就在于:</p>
+<ol>
+<li>Aurora相较于Spanner采用的“伪分布式”，写操作只通过一个server执行，通过log自增即解决了并发控制的问题；</li>
+<li>Frangapani同样是“伪分布式”，虽然写可以分布于不同的server，但是底层存储抽象相当于单机磁盘存储，不涉及多副本同步，所以只控制并发即可</li>
+<li>Spaner的写操作分布于不同的机器之上，是真“分布式”，即“写分布”+“存储分布”，所以即需要分布式控制也需要单机并发控制。</li>
+</ol>
+<h4 id="全局顺序-vs-并发控制"><a href="#全局顺序-vs-并发控制" class="headerlink" title="全局顺序 vs 并发控制"></a>全局顺序 vs 并发控制</h4><p>通过上面总结我们可以得出两种一致性的区别实际上就是全局顺序和并发控制的区别</p>
+<ul>
+<li>相同点：两者的相同点均是为了确定一系列事务的发生顺序</li>
+<li>不同点：全局顺序是为了让分布式环境中不同副本均认可事务的发生顺序（认可的顺序不一定是真正的发生顺序，因为每个副本的时钟不可能同步），并发控制是为了让一系列有“同时发生”的事务按照一定的顺序执行</li>
+</ul>
+<p>其中如果不需要多个副本认可即不需要全局顺序（Frangapani），如果通过全局顺序能够间接实现并发控制（Aurora）即不需要采用类似锁的机制进行并发控制，这两个系统都通过部分<strong>“非分布式”</strong>降低了所谓的<strong>一致性实现</strong>难度</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>数据库知识对于目前阶段的我来说还是有点心有余而力不足，尽力而为。</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><ol>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Serializability">wikipedia Serializability</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/57579023">知乎：Transaction management：可串行性（serializability）</a></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag"><i class="fa fa-tag"></i> 分布式</a>
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 分布式数据库</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" rel="prev" title="Frangipani分布式文件系统">
+      <i class="fa fa-chevron-left"></i> Frangipani分布式文件系统
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E6%97%A0%E5%A6%A5%E5%8D%8F%E7%9A%84%E5%BC%BA%E4%B8%80%E8%87%B4%E6%80%A7%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="next" title="FaRM:无妥协的强一致性分布式数据库">
+      FaRM:无妥协的强一致性分布式数据库 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="nav-number">1.</span> <span class="nav-text">Spanner：“真”分布式数据库</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%8E%E4%BD%95%E8%80%8C%E6%9D%A5%EF%BC%9F"><span class="nav-number">1.0.1.</span> <span class="nav-text">从何而来？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AD%98%E5%82%A8%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.0.2.</span> <span class="nav-text">基本架构与存储设计</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.0.3.</span> <span class="nav-text">数据模型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.0.4.</span> <span class="nav-text">分布式事务实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E5%AE%9E%E7%8E%B0%E7%BB%86%E8%8A%82"><span class="nav-number">1.0.5.</span> <span class="nav-text">其他实现细节</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Spanner-vs-Aurora-vs-Frangampani"><span class="nav-number">1.1.</span> <span class="nav-text">Spanner vs Aurora vs Frangampani</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%A8%E5%B1%80%E9%A1%BA%E5%BA%8F-vs-%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6"><span class="nav-number">1.1.1.</span> <span class="nav-text">全局顺序 vs 并发控制</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.2.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">1.3.</span> <span class="nav-text">参考</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">84</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/fuhaifei" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;fuhaifei" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/fu-hai-fei" title="zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;fu-hai-fei" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : 'f82a9b495ae034eee57bcb304b757f1c',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

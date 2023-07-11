@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="写在开头开头废话：终于摆脱了没有前途的项目开始写论文了，虽然写论文不一定比做项目更有前途，但是可以预计的是只要我认真干，达到毕业标准是没问题的，而我目前对于实验室工作的目标就是满足毕业要求，所以说捋起袖子，加油干吧。正好李沐出了这个如何搞研究的视频，我也跟着学一学，不止为了写论文，更多的是从写论文这个经历里，为未来工作中各种报告文档的书写留下一点可用的经验。 跟着李沐的课程学习搞研究的基本概念，主">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何做研究-第一部分">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="写在开头开头废话：终于摆脱了没有前途的项目开始写论文了，虽然写论文不一定比做项目更有前途，但是可以预计的是只要我认真干，达到毕业标准是没问题的，而我目前对于实验室工作的目标就是满足毕业要求，所以说捋起袖子，加油干吧。正好李沐出了这个如何搞研究的视频，我也跟着学一学，不止为了写论文，更多的是从写论文这个经历里，为未来工作中各种报告文档的书写留下一点可用的经验。 跟着李沐的课程学习搞研究的基本概念，主">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-07-13T08:58:42.000Z">
+<meta property="article:modified_time" content="2023-02-09T12:14:27.934Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="杂文">
+<meta property="article:tag" content="论文写作">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>如何做研究-第一部分 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          如何做研究-第一部分
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-13 16:58:42" itemprop="dateCreated datePublished" datetime="2022-07-13T16:58:42+08:00">2022-07-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:14:27" itemprop="dateModified" datetime="2023-02-09T20:14:27+08:00">2023-02-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/" itemprop="url" rel="index"><span itemprop="name">如何做研究</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="写在开头"><a href="#写在开头" class="headerlink" title="写在开头"></a>写在开头</h2><p><em>开头废话：终于摆脱了没有前途的项目开始写论文了，虽然写论文不一定比做项目更有前途，但是可以预计的是只要我认真干，达到毕业标准是没问题的，而我目前对于实验室工作的目标就是满足毕业要求，所以说捋起袖子，加油干吧。正好李沐出了这个如何搞研究的视频，我也跟着学一学，不止为了写论文，更多的是从写论文这个经历里，为未来工作中各种报告文档的书写留下一点可用的经验。</em></p>
+<p>跟着李沐的课程学习搞研究的基本概念，主要的学习资料有</p>
+<ol>
+<li>李沐的<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1hY411T7vy">研究的艺术B站视频</a></li>
+<li>研究的艺术中文版第四版</li>
+</ol>
+<p>计划是先自己读一遍中文书的对应章节，再去看李沐的视频，加深印象，下面是第一部分内容。</p>
+<h2 id="研究、研究人员、读者"><a href="#研究、研究人员、读者" class="headerlink" title="研究、研究人员、读者"></a>研究、研究人员、读者</h2><h3 id="什么是研究"><a href="#什么是研究" class="headerlink" title="什么是研究"></a>什么是研究</h3><p>什么是研究？</p>
+<ul>
+<li><p>为了回答/解决某个问题搜集信息就是研究</p>
+</li>
+<li><p>日常生活中我们经常有类似的场景（例如百度小米的CEO是谁），只是我们并不会把这个过程规范化，结论文档化</p>
+</li>
+</ul>
+<p>为什么要把研究内容写下来？</p>
+<ul>
+<li>为了方便记忆（俗话说得好：好记性不如烂笔头）</li>
+<li>为了增进对于研究内容的理解。在梳理论据，描述论点的过程中，会加深自己对于相关内容的理解</li>
+<li>为了检验自己的思想。只说是无法证明自己思想的正确性，写在纸上，通过论据论述，数学公式的证明，为自己的思想进行强有力的证明</li>
+</ul>
+<span id="more"></span>
+<p>为什么写论文要遵循格式？</p>
+<ul>
+<li>写作不仅是为了自己，更是为了交流分享，你遵循外在的语言和格式要求，其实是在摆脱自己的主观愿望，使自己的思想向外界方便理解、更加真实的形式转变。（为了适应外界而改变自己，才能够好的理解自己的思想）</li>
+<li>论文的格式是在长期实践中形成的，格式存在有其存在合理性（便于作者与读者联系起来，方便阅读等等）</li>
+<li>用程序员的思路理解就是<strong>内容要满足通信格式才能在网络上发送和传播</strong></li>
+</ul>
+<p><strong>总结</strong></p>
+<ul>
+<li><strong>研究就是为了问题找答案</strong>，而这个寻找过程和答案本身需要<strong>通过规范的格式记录下来</strong></li>
+<li>以规范格式记录研究的过程，也就是思考研究本身的过程，这个思考不仅是从<strong>自身的角度</strong>（能否解决问题），更是从<strong>读者的角度</strong>（研究是否有价值、论文是否容易理解和阅读）</li>
+</ul>
+<h3 id="与读者建立联系"><a href="#与读者建立联系" class="headerlink" title="与读者建立联系"></a>与读者建立联系</h3><p>撰写论文的过程中我们首先要确定我们自身的角色和预期读者的角色，才能确保我们的论文表达方式的正确的，有读者惯性感兴趣的。</p>
+<h4 id="确定自己的角色"><a href="#确定自己的角色" class="headerlink" title="确定自己的角色"></a>确定自己的角色</h4><p>研究的过程不是你让你的老师知道你了解很多的事实，学会了很多的方法，应该是告诉老师问题是什么，方法的意义是什么，解决问题的效果如何，和其他方法相比有什么优略，从提供事实的角度自己可以分为三个角色</p>
+<ol>
+<li>找到了有趣的新信息 -<strong>提供关于问题的信息</strong><ul>
+<li>职责：搜集信息</li>
+<li>角色任务是陈列相关信息</li>
+<li>撰写文档：尽可能全面的展示我搜集到的相关信息</li>
+<li>eg: b站上的分享视频（我吃了什么，玩了什么）</li>
+</ul>
+</li>
+<li>解决了重要的实际问题（作报告）-<strong>解决问题</strong><ul>
+<li>职责：帮助决策者知道如何解决问题</li>
+<li>角色任务是展示解决问题的方案、证明方案的正确性</li>
+<li>撰写文档：使用合适的专业词汇，引用正确的信息，找到合适的证据，并以合适的方式表达，以达到说服决策者的目的</li>
+<li>eg：csdn上各种代码bug的解决方案的博客</li>
+</ul>
+</li>
+<li>给一个重要的问题找到了答案（<strong>做研究</strong>）-<strong>增进对问题的理解</strong><ul>
+<li>职责：更好的理解问题+解决方案</li>
+<li>角色任务是分析问题+阐述答案</li>
+<li>撰写文档：阐明研究问题+研究方案</li>
+</ul>
+</li>
+</ol>
+<p>写作</p>
+<h4 id="确定读者的角色"><a href="#确定读者的角色" class="headerlink" title="确定读者的角色"></a>确定读者的角色</h4><blockquote>
+<p>读者是谁，读者读到这里知道什么了，接下来他们想要知道什么</p>
+</blockquote>
+<ol>
+<li>图一乐，只是为了了解一下相关信息</li>
+<li>希望通过读论文得到解决问题的方案</li>
+<li>系统通过读论文对问题得到更深的理解</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E6%9D%82%E6%96%87/" rel="tag"><i class="fa fa-tag"></i> 杂文</a>
+              <a href="/tags/%E8%AE%BA%E6%96%87%E5%86%99%E4%BD%9C/" rel="tag"><i class="fa fa-tag"></i> 论文写作</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/" rel="prev" title="共识算法-Raft">
+      <i class="fa fa-chevron-left"></i> 共识算法-Raft
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/" rel="next" title="如何做研究-第二部分">
+      如何做研究-第二部分 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E5%BC%80%E5%A4%B4"><span class="nav-number">1.</span> <span class="nav-text">写在开头</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A0%94%E7%A9%B6%E3%80%81%E7%A0%94%E7%A9%B6%E4%BA%BA%E5%91%98%E3%80%81%E8%AF%BB%E8%80%85"><span class="nav-number">2.</span> <span class="nav-text">研究、研究人员、读者</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E7%A0%94%E7%A9%B6"><span class="nav-number">2.1.</span> <span class="nav-text">什么是研究</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8E%E8%AF%BB%E8%80%85%E5%BB%BA%E7%AB%8B%E8%81%94%E7%B3%BB"><span class="nav-number">2.2.</span> <span class="nav-text">与读者建立联系</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A1%AE%E5%AE%9A%E8%87%AA%E5%B7%B1%E7%9A%84%E8%A7%92%E8%89%B2"><span class="nav-number">2.2.1.</span> <span class="nav-text">确定自己的角色</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A1%AE%E5%AE%9A%E8%AF%BB%E8%80%85%E7%9A%84%E8%A7%92%E8%89%B2"><span class="nav-number">2.2.2.</span> <span class="nav-text">确定读者的角色</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">84</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/fuhaifei" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;fuhaifei" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/fu-hai-fei" title="zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;fu-hai-fei" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : 'fd170ab1f7f720070102c880ebd20438',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

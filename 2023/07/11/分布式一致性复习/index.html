@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="分布式一致性与共识在学习微服务RPC，服务注册发现等相关概念时，总是绕不开一个话题分布式一致性，虽然之前在MIT6.824的课程中已经进行深入的学习，但是每每遇到还是对这些概念不甚清晰，因此这篇博客主要是从整合的角度复习之前学过的知识。 常见概念分布式和单机本质的不同在于没有一个统一的时钟以及一份数据有多个副本，不同的用户请求于不同时间发出，由于网络延迟等问题以不同的顺序，对不同数据副本进行操作，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分布式一致性复习">
+<meta property="og:url" content="https://fuhaifei.github.io/2023/07/11/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%A4%8D%E4%B9%A0/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="分布式一致性与共识在学习微服务RPC，服务注册发现等相关概念时，总是绕不开一个话题分布式一致性，虽然之前在MIT6.824的课程中已经进行深入的学习，但是每每遇到还是对这些概念不甚清晰，因此这篇博客主要是从整合的角度复习之前学过的知识。 常见概念分布式和单机本质的不同在于没有一个统一的时钟以及一份数据有多个副本，不同的用户请求于不同时间发出，由于网络延迟等问题以不同的顺序，对不同数据副本进行操作，">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-07-11T13:54:26.000Z">
+<meta property="article:modified_time" content="2023-07-11T13:55:22.507Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="分布式">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2023/07/11/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%A4%8D%E4%B9%A0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>分布式一致性复习 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/07/11/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%A4%8D%E4%B9%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          分布式一致性复习
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-07-11 21:54:26 / 修改时间：21:55:22" itemprop="dateCreated datePublished" datetime="2023-07-11T21:54:26+08:00">2023-07-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="分布式一致性与共识"><a href="#分布式一致性与共识" class="headerlink" title="分布式一致性与共识"></a>分布式一致性与共识</h2><p>在学习微服务RPC，服务注册发现等相关概念时，总是绕不开一个话题分布式一致性，虽然之前在MIT6.824的课程中已经进行深入的学习，但是每每遇到还是对这些概念不甚清晰，因此这篇博客主要是从整合的角度复习之前学过的知识。</p>
+<h3 id="常见概念"><a href="#常见概念" class="headerlink" title="常见概念"></a>常见概念</h3><p>分布式和单机本质的不同在于没有一个统一的时钟以及一份数据有多个副本，不同的用户请求于不同时间发出，由于网络延迟等问题以不同的顺序，对不同数据副本进行操作，这就带来两个问题：</p>
+<ol>
+<li>如何确定谁的请求先来，谁的请求后来，怎么确定一个所谓的“先来后到”？（可以类比Mysql并发控制的感觉）</li>
+<li>副本的操作如何及时同步，用户能不能看到最新的副本？</li>
+</ol>
+<span id="more"></span>
+<p><strong>分布式一致性</strong> 实际上就是对<strong>分布式服务对上述两个问题解决程度</strong>的一种抽象描述，定义了一个分布式应用能够有像“单机应用”的衡量标准，几个分布式一致性的概念不在赘述，见<a href="https://fuhaifei.github.io/2022/07/31/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%80%BB%E7%BB%93/">分布式事务总结</a>。而<strong>共识算法</strong>则是保证分布式一致性的手段，采取合适的共识算法达到不同程度的分布式一致性,简单理解就是如何在一群人中对一个方案达成共识，常见的共识算法包括：</p>
+<ol>
+<li>Paxos：所有共识算法的亲爹，见 <a href="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/">共识算法-Paxos</a></li>
+<li>Raft：目前广泛应用的共识算法， 见 <a href="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/">共识算法-Raft</a></li>
+<li>ZAB：zookeeper中实现的共识算法，见 <a href="https://fuhaifei.github.io/2022/07/13/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/ZooKeeper%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/">ZooKeeper论文总结</a></li>
+<li>Gossip：经典的弱一致性共识算法</li>
+<li>Distro：Nacos实现的弱一致性共识算法</li>
+</ol>
+<p>上述是从理论的角度分析分布式一致性问题，当我们把视角转到分布式应用又会引出两个概念：</p>
+<ul>
+<li>CAP：当发生网络分区时（Partition），一个分布式应用是选择保C（Consitincy）还是选择保A（Availability）</li>
+<li>BASE：作为一个服务提供商，在网络分区问题出现时我不可能舍弃A，在牺牲一定程度C的情况下，继续提供一定程度的A。<ul>
+<li>Basically Available：提供一定程度的可用性</li>
+<li>Soft State: 软状态指允许系统中的数据存在中间状态，并认为该中间状态的存在不会影响系统的整体可用性， 即允许系统在不同节点的数据副本之间进行数据同步的过程存在延时</li>
+<li>Eventually Consistency: 经过一段时间同步后，所有副本都达到一致性的</li>
+</ul>
+</li>
+</ul>
+<p>主要的概念其实就这么多，其他都是深入实现细节后引出的拓展概念，下面简单总结一下之前没学过的分布式共识算法。</p>
+<h3 id="共识算法"><a href="#共识算法" class="headerlink" title="共识算法"></a>共识算法</h3><p>三个强一致性协议在之前就已经学习过，不再废话，主要新整理一下最近接触到的弱一致性共识算法。</p>
+<h4 id="Gossip算法"><a href="#Gossip算法" class="headerlink" title="Gossip算法"></a>Gossip算法</h4><blockquote>
+<p>原论文：<a href="https://link.juejin.cn/?target=http%3A%2F%2Fbitsavers.trailing-edge.com%2Fpdf%2Fxerox%2Fparc%2FtechReports%2FCSL-89-1_Epidemic_Algorithms_for_Replicated_Database_Maintenance.pdf">《Epidemic Algorithms for Replicated Database Maintenance》</a></p>
+<p>博客写的太好了，我在他的基础上简单总结强化记忆，建议直接看：<a target="_blank" rel="noopener" href="https://juejin.cn/post/6930774718114955278">[分布式系列]Gossip协议</a></p>
+</blockquote>
+<p>论文中描述了三种节点见数据同步的方式：</p>
+<ol>
+<li>直接邮寄（direct mail）：广播模式，每个结点的更新都会通知到其他所有节点。</li>
+<li>反熵传播（anti-entropy）：每个节点都会定期随机选择节点池中的一些节点，交换数据实现同步。</li>
+<li>谣言传播（rumor mongering）：当节点更新时，周期性随机选择向周围固定数量的节点同步更新，接收到的节点更新的节点执行相同逻辑（不会向发送个自己的节点发送），直到节点节点发现周边节点都获取到这个更新</li>
+</ol>
+<p>其中通信模式包括：</p>
+<ol>
+<li>推模式：推送数据到目标节点，目标节点更新</li>
+<li>拉模式：发送节点通知目标节点自己版本号，目标节点根据版本号推送新数据到发送节点，发送节点完成更新</li>
+<li>推拉模式：在拉模式最后，发送节点再发送自己更新的数据给目标节点。</li>
+</ol>
+<p>Gossip协议存在消息冗余，收敛速度不可控等问题</p>
+<h4 id="Distro算法"><a href="#Distro算法" class="headerlink" title="Distro算法"></a>Distro算法</h4><p> Distro算法是Nacos自己实现的AP共识算法，直观感觉就是Gossip算法的变形优化，其主要特点为：</p>
+<ol>
+<li><p>Nacos每个节点是平等的都可以处理写请求，同时把新数据同步到其他节点</p>
+</li>
+<li><p>每个节点只负责部分数据，定时发送自己负责数据的校验值到其他节点来保持数据一致性</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> target = distroHash(serviceName) % healthyList.size();</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>每个节点独立处理读请求，及时从本地发出响应</p>
+</li>
+</ol>
+<p>当一个Nacos集群进程上线时，会轮询集群中所有的节点获取全量数据，正常运行时定期相互发送带有元数据信息的心跳，当接收方发现数据不一致时，会主动发起拉取任务。</p>
+<p>由于每个节点负责部分数据，存储全量数据，因此读操作可以在任意实例上执行，写操作需要转发到对应的实例上执行。</p>
+<p><strong>总结</strong>：本质上还是Gossip协议，通过数据分片管理缓解了Gossip协议的消息冗余问题</p>
+<ul>
+<li>eureka类似于Nacos，同样基于一个类似于Gossip的协议实现了AP性质</li>
+<li>Consul基于raft实现了强一致，但是提供了三种读取模式，default（基于lease的leader读一致），consistent（基于确认消息的leader读一致），stale（任意节点均可读）</li>
+</ul>
+<h4 id="Raft补充"><a href="#Raft补充" class="headerlink" title="Raft补充"></a>Raft补充</h4><blockquote>
+<p>开头废话：之前在面试中回答完Raft协议本身，总要被问到一个问题：“你怎么保证客户端一定读取到最新的数据？“，对于这个问题我每次都会回答只要保证每次读取在leader节点读即可，然而往往会引入下一个问题：”只读主节点那么是不是浪费了副本节点的性能？有没有其他的解决方法？“。问题到这里我就回答不上来了，下面补充一下相关知识。</p>
+</blockquote>
+<p>回顾上文中提到的分布式环境带来的两个主要问题，不难发现类似Raft一系列的强共识算法的解决方案基本相同：</p>
+<ol>
+<li>通过定义逻辑时钟解决分布式环境下的”统一时钟问题“。如Raft的term，zab的zxid中高 32 位的epoch号</li>
+<li>通过选举唯一的leader解决请求先来后到的问题，所有请求都由唯一leader执行，自然就有了顺序。</li>
+</ol>
+<p>所以”读到最新副本问题“从何而来，本质上有两个原因：</p>
+<ol>
+<li>”读操作“并不改变副本状态，不是一致性算法考虑的问题，一致性算法只保证修改状态的”写操作“的一致性。</li>
+<li>一致性算法只能保证所有副本一致性的修改状态，不能保证何时达到一致性的状态（参考分布式中的safety &amp; liveness概念）</li>
+</ol>
+<p>因此要保证”读到最新副本“ 有两种解决方案：一是读leader，leader一定是最新数据；二是拓展一致性协议，使之兼顾follower 读。</p>
+<p><strong>leader读</strong></p>
+<p>leader读看起来美好，但是在遇到”脑裂“问题是还是会读到过期数据：</p>
+<ul>
+<li>”脑裂“场景：网络出现分区划分为多数和少数节点分区，旧leader在少数节点分区仍认为自己是leader，然而此时多数节点分区已经选举出新的leader并执行了写操作</li>
+<li>此时如果客户端向旧leader发起读操作，旧leader认为自己还是leader返回请求，就导致客户端读到了旧数据。</li>
+</ul>
+<p>针对上述问题两个解决方案：</p>
+<ul>
+<li><strong>follower read</strong>：leader在选举成功后维护一个lease（大于选举超时时间）,在当前lease内认为不会有其他的<strong>leader</strong>出现（即自己不会被取代），在lease时间内响应客户端请求，lease失效请求多数节点更新lease</li>
+<li><strong>ReadIndex</strong>：leader在响应前通过心跳多数节点确认自身的leader身份</li>
+</ul>
+<p><strong>follower读取</strong></p>
+<p>leader读再怎么改进还是存在着单点性能问题，实现follower读方式为：</p>
+<ul>
+<li><strong>follower read</strong>：follower向leader查询commitIndex，若commitIndex &gt; applyIndex，则副本等待日志应用到对应index后再响应用户请求。</li>
+</ul>
+<h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><p>根据上文中分析能够得到通过增加节点通信的方式能够解决”读不到“最新数据的问题，需要根据应用场景考虑是否一定需要保证读到最新数据，下面举几个例子：</p>
+<ul>
+<li>zookeeper 只提供弱一致性支持，即不保证客户端读到最新数据，除非客户端显式调用<code>sync()</code>方法</li>
+<li>redis cluster基于raft选主，但是基于gossip实现同步集群信息同步，基于主从同步实现副本同步</li>
+<li>TiKV 默认支持 lease read（基于raft log 更新lease），后续版本更新了对于 follower read的支持</li>
+<li>etcd基于ReadIndex实现强一致性</li>
+</ul>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6930774718114955278">[分布式系列]Gossip协议</a></p>
+<p><a target="_blank" rel="noopener" href="https://cn.pingcap.com/blog/lease-read">TiKV 功能介绍 - Lease Read</a></p>
+<p><a target="_blank" rel="noopener" href="https://docs.pingcap.com/zh/tidb/stable/follower-read#follower-read">TiKV Follower Read</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag"><i class="fa fa-tag"></i> 分布式</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/07/11/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RPC%E7%9B%B8%E5%85%B3/RPC%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6%E7%90%86%E8%A7%A3/" rel="prev" title="RPC框架整体理解">
+      <i class="fa fa-chevron-left"></i> RPC框架整体理解
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E4%B8%8E%E5%85%B1%E8%AF%86"><span class="nav-number">1.</span> <span class="nav-text">分布式一致性与共识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E6%A6%82%E5%BF%B5"><span class="nav-number">1.1.</span> <span class="nav-text">常见概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B1%E8%AF%86%E7%AE%97%E6%B3%95"><span class="nav-number">1.2.</span> <span class="nav-text">共识算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Gossip%E7%AE%97%E6%B3%95"><span class="nav-number">1.2.1.</span> <span class="nav-text">Gossip算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Distro%E7%AE%97%E6%B3%95"><span class="nav-number">1.2.2.</span> <span class="nav-text">Distro算法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Raft%E8%A1%A5%E5%85%85"><span class="nav-number">1.2.3.</span> <span class="nav-text">Raft补充</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">1.3.</span> <span class="nav-text">参考</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">84</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/fuhaifei" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;fuhaifei" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/fu-hai-fei" title="zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;fu-hai-fei" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : '0fcc31fa5dd0ec15db0e1f59a902956a',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

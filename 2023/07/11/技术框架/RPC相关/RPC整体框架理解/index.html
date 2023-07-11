@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="RPC框架整体理解 In distributed computing, a remote procedure call (RPC) is when a computer program causes a procedure (subroutine) to execute in a different address space (commonly on another computer on a">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RPC框架整体理解">
+<meta property="og:url" content="https://fuhaifei.github.io/2023/07/11/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RPC%E7%9B%B8%E5%85%B3/RPC%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6%E7%90%86%E8%A7%A3/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="RPC框架整体理解 In distributed computing, a remote procedure call (RPC) is when a computer program causes a procedure (subroutine) to execute in a different address space (commonly on another computer on a">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cn.dubbo.apache.org/imgs/dev/dubbo_protocol_header.png">
+<meta property="article:published_time" content="2023-07-11T13:51:45.000Z">
+<meta property="article:modified_time" content="2023-07-11T13:55:09.482Z">
+<meta property="article:author" content="NEU-FHF">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cn.dubbo.apache.org/imgs/dev/dubbo_protocol_header.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2023/07/11/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RPC%E7%9B%B8%E5%85%B3/RPC%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6%E7%90%86%E8%A7%A3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>RPC框架整体理解 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/07/11/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RPC%E7%9B%B8%E5%85%B3/RPC%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6%E7%90%86%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RPC框架整体理解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-07-11 21:51:45 / 修改时间：21:55:09" itemprop="dateCreated datePublished" datetime="2023-07-11T21:51:45+08:00">2023-07-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">技术框架</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RPC/" itemprop="url" rel="index"><span itemprop="name">RPC</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="RPC框架整体理解"><a href="#RPC框架整体理解" class="headerlink" title="RPC框架整体理解"></a>RPC框架整体理解</h1><blockquote>
+<p>In <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Distributed_computing">distributed computing</a>, a <strong>remote procedure call</strong> (<strong>RPC</strong>) is when a computer program causes a procedure (subroutine) to execute in a different <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Address_space">address space</a> (commonly on another computer on a shared network), which is written as if it were a normal (local) procedure call, without the programmer explicitly writing the details for the remote interaction. </p>
+<p>— wikipedia</p>
+</blockquote>
+<p>RPC（remote procedure call）远程过程调用，通过封装底层网络通信细节，向跨网络的服务提供如同本地调用一般的远程调用接口</p>
+<ul>
+<li>RPC来源于微服务架构的发展，越来越多业务系统被拆解为多个相互协作的微服务，借助RPC工具能够方便实现不同服务之间相互调用。</li>
+<li>常见的RPC框架有：Dubbo、Thrift、GRPC、Spring Cloud（部分）</li>
+</ul>
+<span id="more"></span>
+<p>根据RPC在微服务架构中所处的位置和作用，容易知道如果要实现一个RPC框架所需要解决的问题包括：</p>
+<ol>
+<li>如何使得远程调用用起来像“本地调用”？<strong>动态代理</strong></li>
+<li>如何找到被调用的服务在哪里？ —— <strong>服务注册与发现</strong></li>
+<li>微服务高级功能如何支持？—— <strong>负载均衡/流量控制/调用链路监控</strong></li>
+<li>内存数据如何转化为网络传输的二进制数据? —— <strong>序列化方法</strong></li>
+<li>调用双方如何通信？—— <strong>通信协议设计</strong></li>
+<li>底层通信逻辑如何设计？ —— <strong>网络IO设计</strong></li>
+</ol>
+<p>综上所属，一个典型的RPC框架的架构，如下图所示：</p>
+<ul>
+<li>接入层：通过动态代理将本地调用转化为远程调用，基于过滤器链进行调用</li>
+<li>服务治理层：负责包括注册发现，负载均衡，路由/鉴权等RPC服务治理功能，或者说辅助rpc功能</li>
+<li>协议层：主要负责实现从内存对象到网络传输数据的相互转换，并按照约定的通信协议进行封装/拆封</li>
+<li>传输层：基于特定IO模型和底层通信协议实现调用数据肚饿传输。</li>
+</ul>
+
+<p>一个RPC框架的主要业务逻辑包括：</p>
+<ol>
+<li>服务注册和上线</li>
+<li>RPC调用执行</li>
+</ol>
+<h2 id="常用RPC框架"><a href="#常用RPC框架" class="headerlink" title="常用RPC框架"></a>常用RPC框架</h2><p>常用的RPC框架包括Dubbo、Thrift、GRPC、Spring Cloud等，下面简单总结本人对于不同RPC框架的学习</p>
+<h3 id="Thrift"><a href="#Thrift" class="headerlink" title="Thrift"></a>Thrift</h3><blockquote>
+<p>The Apache Thrift software framework, for scalable cross-language services development, combines a software stack with a code generation engine to build services that work efficiently</p>
+<p>本部分的大部分内容来自：<a target="_blank" rel="noopener" href="https://diwakergupta.github.io/thrift-missing-guide/">Thrift: The Missing Guide</a></p>
+</blockquote>
+<p>Thrift 作为Apache旗下的顶级项目，具备支持多种语言，多种消息格式，同步异步通信等特点，其基本架构为：</p>
+<ul>
+<li>Server层：以Client-Server模式定义RPC通信逻辑，支持单/多线程，阻塞非阻塞通信模式</li>
+<li>Processor层：封装从输入流读取/写入输出流的操作，是协议和流之间的转化层。</li>
+<li>Protocol层：定义传输协议（内存对象到传输数据的转化）+ 序列化，其中序列化方式包括Binary 协议/Compact 协议/json</li>
+<li>Transport层：对网络读写提供了一个简单的抽象接口，不负责消息的序列化/反序列化等操作(TCP/HTTP)。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">+-------------------------------------------+</span><br><span class="line">| Server                                    |</span><br><span class="line">| (single-threaded, event-driven etc)       |</span><br><span class="line">+-------------------------------------------+</span><br><span class="line">| Processor                                 |</span><br><span class="line">| (compiler generated)                      |</span><br><span class="line">+-------------------------------------------+</span><br><span class="line">| Protocol                                  |</span><br><span class="line">| (JSON, compact etc)                       |</span><br><span class="line">+-------------------------------------------+</span><br><span class="line">| Transport                                 |</span><br><span class="line">| (raw TCP, HTTP etc)                       |</span><br><span class="line">+-------------------------------------------+</span><br></pre></td></tr></table></figure>
+<p>Thrift的使用也比较简单，参考官方文档即可。</p>
+<h3 id="gRPC"><a href="#gRPC" class="headerlink" title="gRPC"></a>gRPC</h3><p>gRPC 一开始由 google 开发，是一款语言中立、平台中立、开源的远程过程调用(RPC)系统</p>
+<ul>
+<li>基于Protocol Buffer协议实现序列化功能</li>
+<li>底层通信基于HTTP2.0实现</li>
+</ul>
+<p>其他基本和thrift大差不差，不再赘述，使用也比较简单，参考<a target="_blank" rel="noopener" href="https://grpc.io/docs/languages/java/quickstart/">官方文档</a>即可</p>
+<h3 id="Dubbo"><a href="#Dubbo" class="headerlink" title="Dubbo"></a>Dubbo</h3><p>Apache Dubbo 是一款 RPC 服务开发框架，用于解决微服务架构下的服务治理与通信问题，相较于上述两个RPC框架，Dubbo最大的区别在于其涵盖了更多的服务治理功能：</p>
+<ul>
+<li><strong>服务开发框架</strong> ：定义了一套微服务定义，服务间调用模型，服务发现，负载均衡策略，流量路由和管控的范式，其中一部分功能由Dubbo自身实现（服务定义，调用模型，负载均衡），另一部分功能可与其他组件配合实现（地址发现，链路追踪，认证鉴权等）。</li>
+<li><strong>RPC 通信协议实现</strong> ：Dubbo 从设计上不绑定任何一款特定通信协议，HTTP/2、REST、gRPC、JsonRPC、Thrift、Hessian2 等几乎所有主流的通信协议。</li>
+</ul>
+<p>与上述两个rpc框架的区别在于，Dubbo整体上是一个微服务治理框架，rpc只是微服务治理中的一个重要问题。</p>
+<h2 id="实现一个RPC框架？"><a href="#实现一个RPC框架？" class="headerlink" title="实现一个RPC框架？"></a>实现一个RPC框架？</h2><p>根据上文中对于RPC架构的总结，我们可以模型计网中OSI七层协议的，自底向上分析每一层会遇到的问题以及如何实现。</p>
+<h3 id="网络通信模型"><a href="#网络通信模型" class="headerlink" title="网络通信模型"></a>网络通信模型</h3><p>RPC网络通信实际上就是Cilent与Server之间的网络IO，《UNIX 网络编程卷 I》中根据同/异步，阻塞/非阻塞定义了五种IO通信模型：</p>
+<ol>
+<li>阻塞IO模型：发起IO端（客户端/应用程序）在发出IO请求后，阻塞等待当前请求返回后，再向下执行</li>
+<li>非阻塞IO：发起IO端（客户端/应用程序）在发出IO请求后，继续执行，在合适的时机询问IO是否执行完毕。</li>
+<li>异步IO：发起IO端（客户端/应用程序）在发出IO请求后，等待IO结束，通知自己数据准备完毕。</li>
+<li>IO复用：select/poll/epoll。</li>
+<li>信号驱动IO：数据在内核中准备完毕后，以事件的形式通知用户程序</li>
+</ol>
+<p>Java 在上述网络模型的基础上定义了自身的IO模型：</p>
+<ol>
+<li>BIO(Blocking IO)，同步阻塞IO，每当服务器接收到一个客户端连接请求，创建新线程处理</li>
+<li>NIO(Non Blocking IO)，同步非阻塞IO，底层基于LInux内核函数的多路复用函数(select，poll，epoll)</li>
+<li>AIO(Asynchronous IO)，异步非阻塞IO</li>
+</ol>
+<p>另外Netty基于 <a target="_blank" rel="noopener" href="http://hxz.ink/2021/09/11/reactor-pattern/">Reactor模型 </a>实现了更高性能的网络通信，是目前常用的网络IO框架</p>
+<h4 id="Thrift实现"><a href="#Thrift实现" class="headerlink" title="Thrift实现"></a>Thrift实现</h4><p>Thrift基于java原声socket模型实现了底层的io通信机制，服务端包含四种通信模式的server:</p>
+<ul>
+<li>TSimpleServer：单线程服务器端，阻塞IO</li>
+<li>TThreadPoolServer：多线程服务器端，阻塞IO<ul>
+<li>持有一个线程池，scoket接收到连接后交给线程池处理</li>
+</ul>
+</li>
+<li>TNonblockingServer：单线程服务器端，使用非阻塞式I/O<ul>
+<li>底层基于java NIO实现，单线程Reactor模型，处理连接/读取/写入等均由单一线程执行</li>
+</ul>
+</li>
+<li>THsHaServer：半同步半异步服务器端，基于非阻塞式IO读写和多线程工作任务处理<ul>
+<li>在TNonblockingServer的基础上增加了线程池处理具体的任务逻辑，主线程处理连接建立/读写请求，即多线程Reactor模型</li>
+</ul>
+</li>
+<li>TThreadedSelectorServer：多线程选择器服务器端，对THsHaServer在异步IO模型上进行增强<ul>
+<li>将主线程的任务进一步拆分，主Reactor线程负责建立连接等，从Reactor线程负责读写，其余交由线程池处理，即主从Reactor模型</li>
+</ul>
+</li>
+</ul>
+<p>客户端支持两种通信模式的server：</p>
+<ul>
+<li>TSocket：阻塞IO</li>
+<li>TNonblockingSocket：非阻塞IO</li>
+</ul>
+<p>另外 TFramedTransport 包装类支持数据以帧进行传输，具体传输IO模式依赖内部包装的类，如Tsocket。</p>
+<h4 id="gRPC实现"><a href="#gRPC实现" class="headerlink" title="gRPC实现"></a>gRPC实现</h4><p>gRPC基于基于Netty4.1 的 HTTP/2 协议栈框架构建，在以往传统的RPC调用方式上，额外支持了基于HTTP/2.0的stream调用方式。其中服务端Server 基于Reactor模型实现：</p>
+<ul>
+<li>主线程监听指定的 port，来等待Client连接请求, 分给 worker 线程池处理. </li>
+<li>HTTP/2请求消息的请求和响应发送都由Netty负责(NioEventLoop)</li>
+<li>gRPC 负责消息的序列化和反序列化、以及应用服务接口的调用</li>
+</ul>
+<p>客户端线程模型分为：</p>
+<ol>
+<li>同步阻塞服务调用：普通的请求响应模型</li>
+<li>同步非阻塞服务调用：基于Future机制实现</li>
+<li>异步非阻塞调用：基于回调函数</li>
+<li>基于HTTP/2.0的stream调用（协议层详细了解）</li>
+</ol>
+<h4 id="Dubbo中的实现"><a href="#Dubbo中的实现" class="headerlink" title="Dubbo中的实现"></a>Dubbo中的实现</h4><blockquote>
+<p>内容来自，我只是简化总结强化记忆：<a target="_blank" rel="noopener" href="https://cn.dubbo.apache.org/zh-cn/overview/mannual/java-sdk/advanced-features-and-usage/performance/threading-model/provider/">Dubbo服务端线程模型</a></p>
+</blockquote>
+<p>Dubbo 底层 IO 框架基于Netty实现，其中服务端根据  通信的不同阶段是否在IO线程执行 分为了五种通信线程模型：</p>
+<ol>
+<li>All：在 IO 线程（Netty handler主线程）上执行sent/序列化response 操作，在Dubbo线程池中执行其他操作和反序列化</li>
+<li>Direct：所有操作均在IO线程执行</li>
+<li>Execution：IO 线程执行 sent/connected/disconnected/caught和序列化 response 操作，Dubbo 线程池中执行r eceived 和反序列化request</li>
+<li>Message Only</li>
+<li>Connection Ordered</li>
+</ol>
+<p>上述线程模型在配置文件中配置，Dubbo通过SPI机制实现动态设置。</p>
+<p>客户端线程模型为：</p>
+<ol>
+<li>业务线程发出请求，拿到一个 Future 实例。</li>
+<li>在调用 future.get() 之前，先调用 ThreadlessExecutor.wait()，wait 会使业务线程在一个阻塞队列上等待，直到队列中被加入元素。</li>
+<li>当业务数据返回后，生成一个 Runnable Task 并放入 ThreadlessExecutor 队列</li>
+<li>业务线程将 Task 取出并在本线程中执行：反序列化业务数据并 set 到 Future。</li>
+<li>业务线程拿到结果直接返回</li>
+</ol>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>结合上文对于不同框架中网络IO模型的分析，我们很容易得到如下结论：</p>
+<ol>
+<li>服务端IO基于Reactor模型实现，结合线程池实现高性能网络IO，常用Netty实现底层IO</li>
+<li>客户端往往支持阻塞/非阻塞/异步三种通信模式</li>
+</ol>
+<p>不同RPC框架的底层IO原理没有很大的区别，区别在于多线程和线程池的使用。</p>
+<h3 id="通信协议"><a href="#通信协议" class="headerlink" title="通信协议"></a>通信协议</h3><p>在进行通信前通信双方必须事先约定好通信的方式，才能理解从网络上传送来的二进制数据，这就是传输协议的作用，RPC框架位于应用层，需要基于网络层的TCP/UDP协议实现通信，因此在通信时会遇到一下通信单位与应用层传输单位的不对应问题。</p>
+<p>例如：一次RPC调用对应 TCP流的一段数据 或 UDP的一到多个数据包，如何确定数据的终点（TCP拆包问题），不同调用之间的分隔（TCP粘包问题），所以通信协议实际上用来解决以下问题：</p>
+<ul>
+<li>确定一次RPC通信传输数据长度和边界。</li>
+<li>确定通信传输数据的存储和解析方式。</li>
+</ul>
+<p>参考IP数据报的设计方式，我们不难想到通信协议包括。</p>
+<ul>
+<li>协议头：整体长度，数据长度，以及其他如版本，消息ID等的控制信息。</li>
+<li>协议体：携带的数据本身。</li>
+</ul>
+<h4 id="TCP拆包粘包"><a href="#TCP拆包粘包" class="headerlink" title="TCP拆包粘包"></a>TCP拆包粘包</h4><p>TCP是面向流，没有边界，而操作系统在发送TCP数据时，会通过缓冲区来进行优化，例如缓冲区为1024个字节大小</p>
+<ul>
+<li>粘包：如果一次请求发送的数据量比较小，没达到缓冲区大小，TCP则会将多个请求合并为同一个请求进行发送</li>
+<li>拆包：如果一次请求发送的数据量比较大，超过了缓冲区大小，TCP就会将其拆分为多次发送，这就是拆包</li>
+</ul>
+<p>常见的解决方法包括：</p>
+<ul>
+<li>以固定长度形式传输。每次通信传输固定长度的数据，不足则补0</li>
+</ul>
+<ul>
+<li>发送端在每个包的末尾使用固定的分隔符。<strong>FTP命令</strong>的一般报文格式是：<code>命令 选项参数 \r\n</code>，<strong>FTP应答</strong>的一般报文格式为：<code>状态码 报文选项 \r\n</code></li>
+<li>将消息分为头部和消息体，头部中保存整个消息的长度，只有读取到足够长度的消息之后才算是读到了一个完整的消息；</li>
+<li>通过自定义协议进行粘包和拆包的处理。</li>
+</ul>
+<h4 id="现有RPC框架中的通信协议"><a href="#现有RPC框架中的通信协议" class="headerlink" title="现有RPC框架中的通信协议"></a>现有RPC框架中的通信协议</h4><p><strong>Thrift</strong></p>
+<blockquote>
+<p>内容来自 <a target="_blank" rel="noopener" href="https://github.com/apache/thrift/blob/master/doc/specs/thrift-binary-protocol.md">Thrift Binary protocol encoding</a>等文档</p>
+</blockquote>
+<p>thrift支持多种通信协议，包括：</p>
+<ul>
+<li><code>TBinaryProtocol</code>：二进制协议</li>
+<li><code>TCompactProtocl</code>：带压缩的二进制协议</li>
+</ul>
+<p>整体协议分为head和body两部分，具体格式如下：</p>
+
+<p>其中head包括：</p>
+<ol>
+<li>magic(4byte)：包含版本号，消息类型等，严格模式首位取1，非严格模式首位取0。消息类型包括：<ul>
+<li>CALL = 1 调用消息，如<code>0x80010001</code></li>
+<li>REPLY = 2 应答消息，如<code>0x80010002</code></li>
+<li>EXCEPTION = 3 异常消息，如<code>0x80010003</code></li>
+<li>ONEWAY = 4 单向消息，属于调用消息，但是不需要应答，如<code>0x80010004</code></li>
+</ul>
+</li>
+<li>mehod name length(4byte)：调用方法名长度</li>
+<li>mehod name (Nbyte)：调用方法名</li>
+<li>seqid(4byte)：序列号</li>
+</ol>
+<p>Body对应方法参数/返回值，对应一个<code>struct</code>类型，<code>struct</code>针对常用数据类型分别定义序列化方式，如string类型占4+N字节，格式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">--------------------</span><br><span class="line">| size |  content  |</span><br><span class="line">|   4  |     N     |</span><br><span class="line">--------------------</span><br></pre></td></tr></table></figure>
+<p><strong>grpc</strong></p>
+<p>gropc基于http2.0协议实现，http2.0通过引入二进制分帧在兼容http1.x的基础上实现了性能提升，其新特性包括：</p>
+<ol>
+<li>二进制分帧。在应用层和网络层之间添加了二进制分帧操作，对于http1.x报文划分为头部帧和数据帧分别发送</li>
+<li>首部压缩+首部缓存。通信双方缓存首部帧，传输时只需要发送变化的头部和数据帧即可。另外基于HPACK算法（传输索引+存储参数表）对首部进行压缩。</li>
+<li>多路复用：引入“流”概念将一个逻辑上的http2请求拆分为多个流复用，提供了通过单一的http/2 连接发起多重的请求的能力。</li>
+<li>请求优先级。分帧后可根据帧携带数据内容调整传输顺序提升通信效率，每个流都可以带有一个31比特的优先值，根据流优先级进行帧传输</li>
+<li>服务端推送。服务器可以对一个客户端请求发送多个响应，服务器向客户端推送资源无需客户端明确地请求。</li>
+</ol>
+<p>其余内容参考<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/161577635">gRPC系列(三) 如何借助HTTP2实现传输</a>，<del>我写也是cv不写了</del>，其中不同数据存储在不同帧：</p>
+<ul>
+<li>请求的Method在header中传递</li>
+<li>参数用DATA帧</li>
+<li>返回状态用HEADER帧</li>
+<li>返回数据用DATA帧</li>
+</ul>
+<p>通信过程：client发送header帧携带method信息，server返回header帧后，通过data帧交换数据</p>
+<p><strong>Dubbo</strong></p>
+<p>Dubbo除去提供Triple，Dubbo2两种通信协议外，同时支持任意第三方通信协议，如官方支持的 gRPC、Thrift、REST、JsonRPC、Hessian2 等。</p>
+<ul>
+<li>Triple协议同时支持基于http1（unary），http2（stream）的请求协议，其中http2在实现上与标准gRPC协议基本一致。</li>
+<li>Dubbo2协议类似于常规的通信协议，如下图所示，基本属性包括版本号（magic number），请求响应表示（res/requst），序列化标识（serilization ID），响应状态（Status id），请求ID（request id），Variable Part（请求中携带方法名，服务名，参数列表等，响应携带返回值和异常）</li>
+</ul>
+<p><img src="https://cn.dubbo.apache.org/imgs/dev/dubbo_protocol_header.png" alt="/dev-guide/images/dubbo_protocol_header.jpg"></p>
+<h4 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h4><p>从上面对现有协议的总结，我们能够大体知道目前rpc协议的主要方式包括：</p>
+<ol>
+<li>基于TCP自定义通信协议，一般结构为：协议头+数据</li>
+<li>基于http/http2协议实现通信，方法名/服务名等数据存放在请求头，参数/返回等数据存放在请求体</li>
+</ol>
+<p>自定义数据格式通常由一下字段组成：</p>
+<ol>
+<li>魔术位：表明这是什么协议，协议的版本等，为了兼容不同通信协议</li>
+<li>长度信息：无论是整体/数据长度，解决粘包拆包问题</li>
+<li>消息ID，消息类型：定位此次消息，以及消息是什么类型（响应/请求）</li>
+<li>序列化方式：标识携带数据序列化方式，兼容不同的序列化方式。</li>
+</ol>
+<h3 id="内存对象-gt-网络传输"><a href="#内存对象-gt-网络传输" class="headerlink" title="内存对象-&gt;网络传输"></a>内存对象-&gt;网络传输</h3><p>在进行网络传输前，由于调用参数/返回参数均为内存中的对象，需要转化为可在网络上传输数据形式后才能按照协议封装传输，序列化方法解决了内存到传输数据形式的转化，目前主要的序列化方法包括：</p>
+<ol>
+<li>JDK原生</li>
+<li>JSON：将对象的属性名-属性值以kv形式存储为json文件形式<ul>
+<li>以纯文本json文件形式传输，文本形式空间开销较大，不适合大量rpc调用情况.</li>
+<li>JSON 没有类型，但像 Java 这种强类型语言，需要通过反射统一解决。</li>
+</ul>
+</li>
+<li>Thrift：上文中简单提及了Thrift序列化方式，与Hessian属于一流派</li>
+<li>Hessian</li>
+<li>Kryo</li>
+<li>Protobuf</li>
+</ol>
+<h4 id="JDK原生"><a href="#JDK原生" class="headerlink" title="JDK原生"></a>JDK原生</h4><p>JDK原生提供了java对象的序列化，通过<code>ObejctOutputStream</code> 和 <code>ObejctInputStream</code>提供的方法接口可以序列化/反序列化实现了<code>Serializable</code>的接口，主要的注意事项有：</p>
+<ol>
+<li>一旦变量被transient修饰，变量将不再是对象持久化的一部分。</li>
+<li>只会记录第一次序列化的编号，不会重复序列化，这会导致最新变量变更不会体现在序列化文件中。</li>
+<li>实现 <code>Externalizable</code> 接口可自定义序列化和反序列化方法。</li>
+</ol>
+<p>其序列化格式为类似于上文中的协议格式。</p>
+<p>JDK原生序列化协议存在空间利用效率较低，无法跨平台使用等问题</p>
+<h4 id="Hessian"><a href="#Hessian" class="headerlink" title="Hessian"></a>Hessian</h4><blockquote>
+<p>来自<a target="_blank" rel="noopener" href="https://cn.dubbo.apache.org/zh-cn/overview/mannual/java-sdk/reference-manual/serialization/hessian/">Dubbo Hessian介绍</a></p>
+</blockquote>
+<p>Hessian is a dynamically-typed, binary serialization and Web Services protocol designed for object-oriented transmission.</p>
+<ol>
+<li>自描述序列化类型。不依赖外部描述文件或者接口定义，将所有类字段信息都放入序列化字节数组中，直接利用字节数组进行反序列化</li>
+<li>把复杂对象的所有属性存储在一个Map中进行序列化。所以在父类、子类存在同名成员变量的情况下，Hessian序列化时，先序列化子类，然后序列化父类，因此反序列化结果会导致子类同名成员变量被父类的值覆盖</li>
+<li>兼容字段增、减，序列化和反序列化；不支持一部分java类型序列化：Linked 系列，LinkedHashMap、LinkedHashSet 等；Locale 类，可以通过扩展 ContextSerializerFactory 类修复Byte/Short 反序列化的时候变成 Integer。</li>
+</ol>
+<h4 id="Kryo"><a href="#Kryo" class="headerlink" title="Kryo"></a>Kryo</h4><p>Kryo 是一个快速高效的 Java 二进制对象图序列化框架，该项目的目标是高速、小尺寸和易于使用的 API。</p>
+<ul>
+<li>使用变长的int和long保证这种基本数据类型序列化后尽量小</li>
+<li>Kryo对Class的序列化只需要化Class的全路径名，在反序列化时根据Class通过类加载进行加载</li>
+<li>不是线程安全的，要通过ThreadLocal或者创建Kryo线程池来保证线程安全</li>
+<li>不需要实现Serializable接口</li>
+<li>字段增、减，序列化和反序列化时无法兼容</li>
+<li>必须拥有无参构造函数</li>
+</ul>
+<h4 id="Protobuf"><a href="#Protobuf" class="headerlink" title="Protobuf"></a>Protobuf</h4><p>Protocol Buffers 是一种轻便高效的结构化数据存储格式，可以用于结构化数据串行化，或者说序列化。目前提供了 C++、Java、Python 三种语言的 API。</p>
+<ul>
+<li>语言无关、平台无关。即 ProtoBuf 支持 Java、C++、Python 等多种语言，支持多个平台</li>
+<li>高效。即比 XML 更小（3 ~ 10倍）、更快（20 ~ 100倍）、更为简单</li>
+<li>扩展性、兼容性好。你可以更新数据结构，而不影响和破坏原有的旧程序</li>
+</ul>
+<p>使用Protobuf协议需要先定义IDL（Interface description language），根据IDL内容生成对应的序列化反序列化工具</p>
+<h4 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h4><p>该部分没有深入的去学具体的序列化协议内部原理，只是简单了解了主要的几种序列化方法（偷了一部分网上的八股内容）。</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>优点</th>
+<th>缺点</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kryo</td>
+<td>速度快，序列化后体积小</td>
+<td>跨语言支持较复杂</td>
+</tr>
+<tr>
+<td>Hessian</td>
+<td>默认支持跨语言</td>
+<td>较慢</td>
+</tr>
+<tr>
+<td>Protostuff</td>
+<td>速度快，基于protobuf</td>
+<td>需静态编译</td>
+</tr>
+<tr>
+<td>Protostuff-Runtime</td>
+<td>无需静态编译，但序列化前需预先传入schema</td>
+<td>不支持无默认构造函数的类，反序列化时需用户自己初始化序列化后的对象，其只负责将该对象进行赋值</td>
+</tr>
+<tr>
+<td>Java</td>
+<td>使用方便，可序列化所有类</td>
+<td>速度慢，占空间</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="如何找到服务？"><a href="#如何找到服务？" class="headerlink" title="如何找到服务？"></a>如何找到服务？</h3><p>为了解决服务之间的可见性，rpc框架往往需要基于第三方组件提供服务的注册发现功能，目前了解过的服务注册中心有：</p>
+<ol>
+<li>ZooKeeper：服务注册为Zookeeper中的ZNode，并给予Watcher机制实现服务发现。<ul>
+<li><a target="_blank" rel="noopener" href="https://juejin.cn/post/6864384493374242830">理解Zookeeper的Watch机制</a></li>
+<li>另外zookeeper基于强一致性的zab协议，保证CP性质</li>
+</ul>
+</li>
+<li>Nacos：阿里提供的开源服务注册发现组件，提供了基于Http和gRPC机制服务注册发现接口<ul>
+<li>Nacos将服务分为持久服务和临时服务，临时服务基于gRPC连接发送心跳信息保活，持久服务由注册中心发送心跳保活</li>
+<li>调用方订阅服务时会在服务本地和注册中心分别维护一个订阅列表，订阅信息的维护分为推逻辑和拉逻辑<ul>
+<li>服务端推送逻辑：当订阅服务发生变更（上下线/元信息变更）是，注册中心会主动向订阅客户端推送变更服务信息（只告诉客户端变了，让他自己拉取）</li>
+<li>客户端拉取逻辑：客户端会周期性向服务端请求最新服务信息，若服务发生变更，则拉取变更服务信息</li>
+</ul>
+</li>
+<li>nacos同时提供保证强一致性Raft协议实现AP，和弱一致性的Distro实现CP。对于持久化实例，采用raft保证AP。对于配置中心和服务注册发现中的临时实例场景，采用DIstro协议实现CP</li>
+</ul>
+</li>
+</ol>
+<h3 id="保证可靠的调用？"><a href="#保证可靠的调用？" class="headerlink" title="保证可靠的调用？"></a><strong>保证</strong>可靠的调用？</h3><h4 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h4><p>常见的负载均衡策略（Niginx）包括：</p>
+<ol>
+<li>轮询（round robin）：按照顺序逐个调用服务节点</li>
+<li>加权平滑轮询：指定权重轮询，每次调用后按照一定规则修改权重值，避免所有请求打在权重高的服务节点上<ul>
+<li>每个节点初始化一个当前值和权重值</li>
+<li>每次选择当前值+权重值最大的节点，选择该节点后，修改该节点当前值=当前值-总权重</li>
+<li>重复这个过程，能够保证不会一直选择权重最大的节点</li>
+</ul>
+</li>
+<li>ip_hash：根据ip hash值分配到对应服务器，解决session不共享问题</li>
+</ol>
+<p>Dubbo中提供的负载均衡策略包括：</p>
+<ul>
+<li>加权随机（Weighted Random）</li>
+<li>加权轮询（round robin）：借鉴自niginx</li>
+<li>最少活跃优先（LeastActive）：活跃数越低，越优先调用，相同活跃数的进行加权随机。活跃数=请求发送数 - 响应返回数</li>
+<li>最短响应优先：在最近一个滑动窗口中，响应时间越短（时间窗口内的平均数），越优先调用。相同响应时间的进行加权随机。</li>
+<li>一致性哈希：相同参数的请求总是发到同一提供者（特殊需求）</li>
+</ul>
+<p>从上述负载均衡算法我们容易看到，负载均衡的目标实际上就是将调用按照处理能力均匀的分配到对应服务节点上，分为两种派别：</p>
+<ol>
+<li>无权/固定加权 轮询/随机：随机/轮询不一定很好，但是一定不会太差</li>
+<li>根据参数动态确定权重：根据服务节点相关指标计算权重<ul>
+<li>调用方：请求-响应次数，响应时间</li>
+<li>被调用方发送给调用方：cpu负载，内存占用，CPU核数、内存大小、请求处理的耗时指标（如请求平均耗时、TP99、TP999）、服务节点的状态指标（如正常、亚健康）等指标，例如<a target="_blank" rel="noopener" href="https://cn.dubbo.apache.org/zh-cn/overview/reference/proposals/heuristic-flow-control/#adaptive%E7%AE%97%E6%B3%95">Dubbo对应负载策略</a></li>
+</ul>
+</li>
+</ol>
+<h4 id="调用异常处理"><a href="#调用异常处理" class="headerlink" title="调用异常处理"></a>调用异常处理</h4><p>RPC调用由于需要经过网络传输，相较于普通本地调用会出现由网络导致的异常等问题，这些也是RPC框架需要解决的问题，下面研究一下Dubbo中的异常定义和处理方法，以对RPC调用的异常处理有更加清晰的认知。</p>
+<p><strong>Dubbo异常处理</strong></p>
+<p>Dubbo将RPC过程的异常定义为RPCException，其枚举状态包括:网络相关异常/业务异常/权限异常/路由异常等</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> UNKNOWN_EXCEPTION = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NETWORK_EXCEPTION = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> TIMEOUT_EXCEPTION = <span class="number">2</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> BIZ_EXCEPTION = <span class="number">3</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> FORBIDDEN_EXCEPTION = <span class="number">4</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> SERIALIZATION_EXCEPTION = <span class="number">5</span>;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NO_INVOKER_AVAILABLE_AFTER_FILTER = <span class="number">6</span>;</span><br><span class="line">。。。。省略</span><br></pre></td></tr></table></figure>
+<p>Dubbo在<strong>provider端</strong>定义了ExceptionFilter处理服务端方法抛出的异常（<a target="_blank" rel="noopener" href="https://github.com/apache/dubbo/blob/e026b5bb596bbc48fa89bbf756cba504d52bed1d/dubbo-rpc/dubbo-rpc-api/src/main/java/org/apache/dubbo/rpc/filter/ExceptionFilter.java#L50">代码</a>），其处理逻辑为：</p>
+<ul>
+<li>对于客户端可识别的异常直接抛出。什么是可识别异常，即Dubbo认为客户端知道的异常，包括RuntimeException，方法名上声明的异常，JDK本身异常，异常和api定义在一个jar包的异常，dubbo异常（RPCException）</li>
+<li>对于客户端不可识别的异常，包装为RuntimeException包装返回给客户端。<ul>
+<li>可参考<a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000040337469">Dubbo异常处理源码探究及其最佳实践</a></li>
+</ul>
+</li>
+</ul>
+<p>客户端根据不同类型的异常进行不同处理：</p>
+<ol>
+<li><p>服务端异常：在根据返回结果中的异常类型进行异常重放。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> Object <span class="title">recreate</span><span class="params">()</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">      <span class="keyword">if</span> (exception != <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="comment">// fix issue#619</span></span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">              Object stackTrace = exception.getStackTrace();</span><br><span class="line">              <span class="keyword">if</span> (stackTrace == <span class="keyword">null</span>) &#123;</span><br><span class="line">                  exception.setStackTrace(<span class="keyword">new</span> StackTraceElement[<span class="number">0</span>]);</span><br><span class="line">              &#125;</span><br><span class="line">          &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">              <span class="comment">// ignore</span></span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">if</span> ((exception <span class="keyword">instanceof</span> RpcException) &amp;&amp; !(exception <span class="keyword">instanceof</span> com.alibaba.dubbo.rpc.RpcException)) &#123;</span><br><span class="line">              com.alibaba.dubbo.rpc.RpcException recreated =</span><br><span class="line">                  <span class="keyword">new</span> com.alibaba.dubbo.rpc.RpcException(((RpcException) exception).getCode(),</span><br><span class="line">                      exception.getMessage(), exception.getCause());</span><br><span class="line">              recreated.setStackTrace(exception.getStackTrace());</span><br><span class="line">              <span class="keyword">throw</span> recreated;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">throw</span> exception;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> result;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>客户端调用异常：在invoke方法中处理（这里展示的默认invoker）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="comment">//**远程调用代码</span></span><br><span class="line">&#125; <span class="keyword">catch</span> (TimeoutException e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> RpcException(RpcException.TIMEOUT_EXCEPTION, <span class="string">&quot;Invoke remote method timeout. method: &quot;</span> + RpcUtils.getMethodName(invocation) + <span class="string">&quot;, provider: &quot;</span> + getUrl() + <span class="string">&quot;, cause: &quot;</span> + e.getMessage(), e);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (RemotingException e) &#123;</span><br><span class="line">            String remoteExpMsg = <span class="string">&quot;Failed to invoke remote method: &quot;</span> + RpcUtils.getMethodName(invocation) + <span class="string">&quot;, provider: &quot;</span> + getUrl() + <span class="string">&quot;, cause: &quot;</span> + e.getMessage();</span><br><span class="line">            <span class="keyword">if</span> (e.getCause() <span class="keyword">instanceof</span> IOException &amp;&amp; e.getCause().getCause() <span class="keyword">instanceof</span> SerializationException) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> RpcException(RpcException.SERIALIZATION_EXCEPTION, remoteExpMsg, e);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> RpcException(RpcException.NETWORK_EXCEPTION, remoteExpMsg, e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>Dubbo 服务在尝试调用一次之后，如出现非业务异常(服务突然不可用、超时等)，Dubbo 默认会进行额外的最多2次重试，其实现位于<code>FailbackClusterInvoker.java</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> Result <span class="title">doInvoke</span><span class="params">(Invocation invocation, List&lt;Invoker&lt;T&gt;&gt; invokers, LoadBalance loadbalance)</span> <span class="keyword">throws</span> RpcException </span>&#123;</span><br><span class="line">    Invoker&lt;T&gt; invoker = <span class="keyword">null</span>;</span><br><span class="line">    URL consumerUrl = RpcContext.getServiceContext().getConsumerUrl();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        invoker = select(loadbalance, invocation, invokers, <span class="keyword">null</span>);</span><br><span class="line">        <span class="comment">// Asynchronous call method must be used here, because failback will retry in the background.</span></span><br><span class="line">        <span class="comment">// Then the serviceContext will be cleared after the call is completed.</span></span><br><span class="line">        <span class="keyword">return</span> invokeWithContextAsync(invoker, invocation, consumerUrl);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable e) &#123;</span><br><span class="line">        logger.error(CLUSTER_FAILED_INVOKE_SERVICE,<span class="string">&quot;Failback to invoke method and start to retries&quot;</span>,</span><br><span class="line">            <span class="string">&quot;&quot;</span>,<span class="string">&quot;Failback to invoke method &quot;</span> + RpcUtils.getMethodName(invocation) +</span><br><span class="line">                <span class="string">&quot;, wait for retry in background. Ignored exception: &quot;</span></span><br><span class="line">            + e.getMessage() + <span class="string">&quot;, &quot;</span>,e);</span><br><span class="line">        <span class="keyword">if</span> (retries &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            addFailed(loadbalance, invocation, invokers, invoker, consumerUrl);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> AsyncRpcResult.newDefaultAsyncResult(<span class="keyword">null</span>, <span class="keyword">null</span>, invocation); <span class="comment">// ignore</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="降级-熔断-限流"><a href="#降级-熔断-限流" class="headerlink" title="降级/熔断/限流"></a>降级/熔断/限流</h4><blockquote>
+<p> 降级是指当服务器压力剧增的情况下，根据实际业务情况及流量，对一些服务和页面有策略的不处理或换种简单的方式处理，从而释放服务器资源以保证核心业务正常运作或高效运作。说白了，就是尽可能的把系统资源让给优先级高的服务。</p>
+<p> 熔断是指在固定时间窗口内，接口调用超时比率达到一个阈值，会开启熔断。进入熔断状态后，后续对该服务接口的调用不再经过网络，直接执行本地的默认方法，达到服务降级的效果。</p>
+<p> <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/419102097">服务降级和服务熔断万字讲解，从0到1，边学边实战</a></p>
+</blockquote>
+<p>当服务面临段时间大量请求调用系统资源耗尽无法有效响应请求时，服务需要采取一定的机制保证自身的高可用性，降级和熔断是从两个不同角度保护服务的机制：</p>
+<ol>
+<li>降级（服务方）：当我自身的服务能力跟不上请求来的速度，我是不是应该“降低我服务标准/数量”</li>
+<li>熔断（请求方）：如果我调用的服务响应很慢/总是报错等，我是不是应该停一会再调用</li>
+<li>限流：限制单位时间调用服务的请求数量，可以理解为降级的一种方法</li>
+</ol>
+<p>博客介绍的比较全面，不再赘述，简单总结一下主要的限流算法</p>
+<ol>
+<li>令牌桶<ul>
+<li>算法描述：为系统会以一个恒定的速度往桶里放入令牌，而如果请求需要被处理，则需要先从桶里获取一个令牌，当桶里没有令牌可取时，则拒绝服务。</li>
+<li>算法特点：流量均匀，桶中令牌能够一定程度上应对突发流量</li>
+</ul>
+</li>
+<li>漏桶<ul>
+<li>算法描述：为系统会以一个恒定的速度往桶里放入令牌，而如果请求需要被处理，则需要先从桶里获取一个令牌，当桶里没有令牌可取时，则拒绝服务。</li>
+<li>算法特点：流量均匀，桶中令牌能够一定程度上应对突发流量</li>
+</ul>
+</li>
+<li>固定/滑动窗口</li>
+</ol>
+<p>具体实现有：</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://www.wdbyte.com/java/rate-limiter/">代码实现</a></li>
+<li><a target="_blank" rel="noopener" href="https://juejin.cn/post/6889285100128305160">使用Guava RateLimiter限流入门到深入</a></li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://diwakergupta.github.io/thrift-missing-guide/">Thrift: The Missing Guide</a></p>
+<p><a target="_blank" rel="noopener" href="https://grpc.io/docs/languages/java/quickstart/">gRPC官方文档</a></p>
+<p><a href="jianshu.com/p/d0a3611819b1">gRPC基本原理</a></p>
+<p><a target="_blank" rel="noopener" href="http://hxz.ink/2021/09/11/reactor-pattern/">Reactor 模型｜为啥 Redis 单线程模型也能效率这么高？ </a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6968641908314751012"> Apache thrift 之网络模型</a></p>
+<p><a target="_blank" rel="noopener" href="https://wikimore.github.io/2016/04/04/thrift-protocol/">Thrift协议介绍</a></p>
+<p><a href="面试题：聊聊TCP的粘包、拆包以及解决方案">面试题：聊聊TCP的粘包、拆包以及解决方案</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.cn/post/6844903984524705800">深入理解http2.0协议，看这篇就够了！</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/161577635">gRPC系列(三) 如何借助HTTP2实现传输</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E9%9B%86%E7%BE%A4%E7%9B%B8%E5%85%B3/" rel="prev" title="RabbitMQ集群相关">
+      <i class="fa fa-chevron-left"></i> RabbitMQ集群相关
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/07/11/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%A4%8D%E4%B9%A0/" rel="next" title="分布式一致性复习">
+      分布式一致性复习 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#RPC%E6%A1%86%E6%9E%B6%E6%95%B4%E4%BD%93%E7%90%86%E8%A7%A3"><span class="nav-number">1.</span> <span class="nav-text">RPC框架整体理解</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E7%94%A8RPC%E6%A1%86%E6%9E%B6"><span class="nav-number">1.1.</span> <span class="nav-text">常用RPC框架</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Thrift"><span class="nav-number">1.1.1.</span> <span class="nav-text">Thrift</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gRPC"><span class="nav-number">1.1.2.</span> <span class="nav-text">gRPC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dubbo"><span class="nav-number">1.1.3.</span> <span class="nav-text">Dubbo</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AARPC%E6%A1%86%E6%9E%B6%EF%BC%9F"><span class="nav-number">1.2.</span> <span class="nav-text">实现一个RPC框架？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.2.1.</span> <span class="nav-text">网络通信模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Thrift%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">Thrift实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#gRPC%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">gRPC实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Dubbo%E4%B8%AD%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.2.1.3.</span> <span class="nav-text">Dubbo中的实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.2.1.4.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E4%BF%A1%E5%8D%8F%E8%AE%AE"><span class="nav-number">1.2.2.</span> <span class="nav-text">通信协议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#TCP%E6%8B%86%E5%8C%85%E7%B2%98%E5%8C%85"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">TCP拆包粘包</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%8E%B0%E6%9C%89RPC%E6%A1%86%E6%9E%B6%E4%B8%AD%E7%9A%84%E9%80%9A%E4%BF%A1%E5%8D%8F%E8%AE%AE"><span class="nav-number">1.2.2.2.</span> <span class="nav-text">现有RPC框架中的通信协议</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%BB%E7%BB%93-1"><span class="nav-number">1.2.2.3.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%AF%B9%E8%B1%A1-gt-%E7%BD%91%E7%BB%9C%E4%BC%A0%E8%BE%93"><span class="nav-number">1.2.3.</span> <span class="nav-text">内存对象-&gt;网络传输</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#JDK%E5%8E%9F%E7%94%9F"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">JDK原生</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Hessian"><span class="nav-number">1.2.3.2.</span> <span class="nav-text">Hessian</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Kryo"><span class="nav-number">1.2.3.3.</span> <span class="nav-text">Kryo</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Protobuf"><span class="nav-number">1.2.3.4.</span> <span class="nav-text">Protobuf</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%BB%E7%BB%93-2"><span class="nav-number">1.2.3.5.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E6%89%BE%E5%88%B0%E6%9C%8D%E5%8A%A1%EF%BC%9F"><span class="nav-number">1.2.4.</span> <span class="nav-text">如何找到服务？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%9D%E8%AF%81%E5%8F%AF%E9%9D%A0%E7%9A%84%E8%B0%83%E7%94%A8%EF%BC%9F"><span class="nav-number">1.2.5.</span> <span class="nav-text">保证可靠的调用？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="nav-number">1.2.5.1.</span> <span class="nav-text">负载均衡</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86"><span class="nav-number">1.2.5.2.</span> <span class="nav-text">调用异常处理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%99%8D%E7%BA%A7-%E7%86%94%E6%96%AD-%E9%99%90%E6%B5%81"><span class="nav-number">1.2.5.3.</span> <span class="nav-text">降级&#x2F;熔断&#x2F;限流</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">1.3.</span> <span class="nav-text">参考</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">84</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/fuhaifei" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;fuhaifei" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/fu-hai-fei" title="zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;fu-hai-fei" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : '88c968aa0f00fcef182ad6aea4a9d88d',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

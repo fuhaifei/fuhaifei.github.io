@@ -195,7 +195,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -209,7 +209,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/" class="post-title-link" itemprop="url">如何做研究-第二部分</a>
+            <a href="/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="post-title-link" itemprop="url">Spanner：“真”分布式数据库</a>
         </h2>
 
         <div class="post-meta">
@@ -218,17 +218,587 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-07-13 17:00:36 / 修改时间：17:01:13" itemprop="dateCreated datePublished" datetime="2022-07-13T17:00:36+08:00">2022-07-13</time>
+              <time title="创建时间：2022-07-31 10:23:09" itemprop="dateCreated datePublished" datetime="2022-07-31T10:23:09+08:00">2022-07-31</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:09:38" itemprop="dateModified" datetime="2023-02-09T20:09:38+08:00">2023-02-09</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%A7%91%E7%A0%94%E7%9B%B8%E5%85%B3/" itemprop="url" rel="index"><span itemprop="name">科研相关</span></a>
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Spanner：“真”分布式数据库"><a href="#Spanner：“真”分布式数据库" class="headerlink" title="Spanner：“真”分布式数据库"></a>Spanner：“真”分布式数据库</h2><blockquote>
+<p><a target="_blank" rel="noopener" href="https://dl.acm.org/doi/abs/10.1145/2491245">Spanner: Google’s Globally Distributed Database</a></p>
+</blockquote>
+<p>Spanner作为Google开发的全球分布式数据系统，具备外部一致性、支持分布式事务、多副本容错等特性，相较于Aurora，更具“分布式”特征。</p>
+<h4 id="从何而来？"><a href="#从何而来？" class="headerlink" title="从何而来？"></a>从何而来？</h4><p>论文的intro介绍Spanner是从类似于MegaStore的基于BigTable的kv存储系统演化而来的，MegaStore虽然能够很好得解决大部分客户的数据存储需求，但还存在一部分问题</p>
+<ol>
+<li>对于关系模型的支持较差，难以支持复杂的、经常变化的模型</li>
+<li>无法在使用大范围副本的同时保证强一致性，并且支持分布式事务</li>
+</ol>
+<p>针对以上问题，一个支持更强关系模式的多时间版本的数据库-Spanner诞生了。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" class="post-title-link" itemprop="url">Frangipani分布式文件系统</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-13 17:19:20" itemprop="dateCreated datePublished" datetime="2022-07-13T17:19:20+08:00">2022-07-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:09:24" itemprop="dateModified" datetime="2023-02-09T20:09:24+08:00">2023-02-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Frangipani-分布式文件系统"><a href="#Frangipani-分布式文件系统" class="headerlink" title="Frangipani 分布式文件系统"></a>Frangipani 分布式文件系统</h2><blockquote>
+<p><a target="_blank" rel="noopener" href="https://dl.acm.org/doi/10.1145/269005.266694">Frangipani: A Scalable Distributed File System</a></p>
+</blockquote>
+<p>Frangipani是20多年前发表论文中描述的一个分布式文件系统，之所以现在还要深度了解一篇这个“古老”的论文，是因为其中的一些设计思路值得我们学习和研究（<del>不还是因为MIT6.824里要讲吗</del>），Frangipani的设计出发点是要实现一个简单、方便扩展和管理的共享文件系统，在读论文时主要关注的点如下：</p>
+<ol>
+<li>如何在分布式环境下实现缓存一致性？</li>
+<li>如何实现分布式事务？</li>
+<li>如何在经常出错的分布式环境中，通过错误恢复实现容错？、</li>
+</ol>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/AmazonAurora%E4%BA%91%E6%95%B0%E6%8D%AE%E5%BA%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/AmazonAurora%E4%BA%91%E6%95%B0%E6%8D%AE%E5%BA%93/" class="post-title-link" itemprop="url">AmazonAurora云数据库</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-13 17:17:17" itemprop="dateCreated datePublished" datetime="2022-07-13T17:17:17+08:00">2022-07-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:09:19" itemprop="dateModified" datetime="2023-02-09T20:09:19+08:00">2023-02-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="Amazon-Aurora-云端分布式数据库"><a href="#Amazon-Aurora-云端分布式数据库" class="headerlink" title="Amazon Aurora 云端分布式数据库"></a>Amazon Aurora 云端分布式数据库</h2><blockquote>
+<p>论文: <a target="_blank" rel="noopener" href="https://dl.acm.org/doi/epdf/10.1145/3035918.3056101">Amazon Aurora: Design Considerations for High Throughput Cloud-Native Relational Database</a></p>
+</blockquote>
+<p>Amazon Aurora是亚马逊从2014年开始提供的一种云上关系型数据库架构，基于mysql的基础上改进而来，在实现传统关系型数据库特性的基础上，实现了事务吞吐量、错误恢复等性能巨大提升。</p>
+<h3 id="Amazon-Aurora到来之前"><a href="#Amazon-Aurora到来之前" class="headerlink" title="Amazon Aurora到来之前"></a>Amazon Aurora到来之前</h3><p>要理解Amazon Aurora的设计原理，首先要了解一般数据库的事务执行流程；传统单机事务型数据库数据一般以B-Tree形式组织存储在硬盘上，并在内存中存储数据的缓存以加速访问/修改过程。以写事务流程为例，<strong>一般的事务执行过程</strong>如下：</p>
+<ol>
+<li>首先锁定要想修改的数据，防止其他事务修改</li>
+<li>在WAL（Write-ahead-log）中写入当前事务日志项</li>
+<li>根据操作修改缓存中的数据项<ul>
+<li>修改前镜像+修改日志+修改后进行</li>
+</ul>
+</li>
+<li>提交事务，等待特定的时机(缓存区满等)，再将缓存持久化到磁盘中</li>
+</ol>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/AmazonAurora%E4%BA%91%E6%95%B0%E6%8D%AE%E5%BA%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E9%93%BE%E5%BC%8F%E5%A4%8D%E5%88%B6%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E9%93%BE%E5%BC%8F%E5%A4%8D%E5%88%B6%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">链式复制论文总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-13 17:14:35" itemprop="dateCreated datePublished" datetime="2022-07-13T17:14:35+08:00">2022-07-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:09:56" itemprop="dateModified" datetime="2023-02-09T20:09:56+08:00">2023-02-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="链式复制及其改进"><a href="#链式复制及其改进" class="headerlink" title="链式复制及其改进"></a>链式复制及其改进</h2><p><em>写在前面：CRAQ还涉及到了服务器放置策略等内容，我目前阶段学习并不关心，所以没有深入了解</em></p>
+<blockquote>
+<p>论文：<a target="_blank" rel="noopener" href="https://www.usenix.org/legacy/events/usenix09/tech/full_papers/terrace/terrace.pdf">Object Storage on CRAQ High-throughput chain replication for read-mostly workloads</a></p>
+</blockquote>
+<p>本文主要提出了一种区别于主从备份容错方式的链式复制容错方式，通过将备份服务器组织链结构，实现数据的冗余备份。本文中的CRAQ(Chain Replication with Apportioned Queries) 是在链式复制（Chain Replication）的基础上改进而来的，两者针对对象存储系统设计实现（object-based storage system），对象存储系统主要包括一下两个操作原语：</p>
+<ol>
+<li>write(objID, V)：更新某个obj关联的值</li>
+<li>read(objID): 获取某个obj的值</li>
+</ol>
+<p>对象存储只需要考虑修改读取特定对象的请求顺序，而并不需要考虑整个数据库，降低了保证一致性的成本</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/%E9%93%BE%E5%BC%8F%E5%A4%8D%E5%88%B6%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/ZooKeeper%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/ZooKeeper%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">ZooKeeper论文总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-13 17:10:42" itemprop="dateCreated datePublished" datetime="2022-07-13T17:10:42+08:00">2022-07-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:09:46" itemprop="dateModified" datetime="2023-02-09T20:09:46+08:00">2023-02-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="分布式消息中间件-ZooKeeper"><a href="#分布式消息中间件-ZooKeeper" class="headerlink" title="分布式消息中间件-ZooKeeper"></a>分布式消息中间件-ZooKeeper</h2><h3 id="线性一致性（linearizability）"><a href="#线性一致性（linearizability）" class="headerlink" title="线性一致性（linearizability）"></a>线性一致性（<strong>linearizability</strong>）</h3><p><strong>线性一致性</strong>是指分布式系统面对网络延迟和系统故障保证不同分布之间的数据一致性，使分布式系统在客户端看起来就像一个没有副本的单机系统。</p>
+<ul>
+<li><p>也成为 <strong>原子一致性（atomic consistency）</strong>，<strong>强一致性（strong consistency）</strong>，<strong>立即一致性（immediate consistency）</strong> 或 <strong>外部一致性（external consistency ）</strong>。</p>
+</li>
+<li><p>换一个角度：一旦新的值被写入或读取，所有后续的读都会看到写入的值，直到它被再次覆盖</p>
+</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/ZooKeeper%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E7%BA%BF%E6%AE%B5%E6%A0%91%E6%95%B4%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/13/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E7%BA%BF%E6%AE%B5%E6%A0%91%E6%95%B4%E7%90%86/" class="post-title-link" itemprop="url">线段树整理</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-13 17:04:19" itemprop="dateCreated datePublished" datetime="2022-07-13T17:04:19+08:00">2022-07-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:03:30" itemprop="dateModified" datetime="2023-02-09T20:03:30+08:00">2023-02-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95%E7%9B%B8%E5%85%B3/" itemprop="url" rel="index"><span itemprop="name">算法相关</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95%E7%9B%B8%E5%85%B3/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">算法整理</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="线段树总结"><a href="#线段树总结" class="headerlink" title="线段树总结"></a>线段树总结</h2><p>学完树状数组，很难控制住自己不学线段树，线段树是一种可以在$O(logN)$ 时间复杂度内实现区间和单点操作的数据结构：</p>
+<ol>
+<li>单点修改/查询</li>
+<li>区间修改/查询</li>
+</ol>
+<p>与树状数组的区别在于：树状数组只能执行 单点修改+区间查询 或 区间修改+单点查询 。线段树能够均能支持，但是复杂度的常数系数显著大于树状数组（ps:能用树状数组就用树状数组）</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/13/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E7%BA%BF%E6%AE%B5%E6%A0%91%E6%95%B4%E7%90%86/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/" class="post-title-link" itemprop="url">如何做研究-第二部分</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-13 17:00:36" itemprop="dateCreated datePublished" datetime="2022-07-13T17:00:36+08:00">2022-07-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:14:23" itemprop="dateModified" datetime="2023-02-09T20:14:23+08:00">2023-02-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/" itemprop="url" rel="index"><span itemprop="name">如何做研究</span></a>
                 </span>
             </span>
 
@@ -256,7 +826,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/#more" rel="contents">
+              <a class="btn" href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -280,7 +850,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -294,7 +864,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/" class="post-title-link" itemprop="url">如何做研究-第一部分</a>
+            <a href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/" class="post-title-link" itemprop="url">如何做研究-第一部分</a>
         </h2>
 
         <div class="post-meta">
@@ -303,17 +873,27 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-07-13 16:58:42 / 修改时间：17:00:23" itemprop="dateCreated datePublished" datetime="2022-07-13T16:58:42+08:00">2022-07-13</time>
+              <time title="创建时间：2022-07-13 16:58:42" itemprop="dateCreated datePublished" datetime="2022-07-13T16:58:42+08:00">2022-07-13</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:14:27" itemprop="dateModified" datetime="2023-02-09T20:14:27+08:00">2023-02-09</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%A7%91%E7%A0%94%E7%9B%B8%E5%85%B3/" itemprop="url" rel="index"><span itemprop="name">科研相关</span></a>
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/" itemprop="url" rel="index"><span itemprop="name">如何做研究</span></a>
                 </span>
             </span>
 
@@ -350,7 +930,7 @@
 </ul>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/07/13/%E6%9D%82%E6%96%87/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/#more" rel="contents">
+              <a class="btn" href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6/%E5%A6%82%E4%BD%95%E5%81%9A%E7%A0%94%E7%A9%B6-%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -374,7 +954,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -388,7 +968,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/" class="post-title-link" itemprop="url">共识算法-Raft</a>
+            <a href="/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/" class="post-title-link" itemprop="url">共识算法-Raft</a>
         </h2>
 
         <div class="post-meta">
@@ -405,7 +985,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-09-29 15:46:06" itemprop="dateModified" datetime="2022-09-29T15:46:06+08:00">2022-09-29</time>
+                <time title="修改时间：2023-02-09 20:09:35" itemprop="dateModified" datetime="2023-02-09T20:09:35+08:00">2023-02-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -413,7 +993,11 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
                 </span>
             </span>
 
@@ -442,7 +1026,7 @@
 </ol>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/#more" rel="contents">
+              <a class="btn" href="/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -466,7 +1050,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/post_head.jpg">
@@ -480,7 +1064,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/" class="post-title-link" itemprop="url">共识算法-Paxos</a>
+            <a href="/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/" class="post-title-link" itemprop="url">共识算法-Paxos</a>
         </h2>
 
         <div class="post-meta">
@@ -497,7 +1081,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-09-29 15:10:01" itemprop="dateModified" datetime="2022-09-29T15:10:01+08:00">2022-09-29</time>
+                <time title="修改时间：2023-02-09 20:09:32" itemprop="dateModified" datetime="2023-02-09T20:09:32+08:00">2023-02-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -505,7 +1089,11 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
                 </span>
             </span>
 
@@ -539,554 +1127,7 @@
 <p>单机系统由于不会出现分布网络失效，所以也就不需要P，可以同时保证CA</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/06/08/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/" class="post-title-link" itemprop="url">搜索算法整理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-06-08 16:23:51 / 修改时间：16:34:57" itemprop="dateCreated datePublished" datetime="2022-06-08T16:23:51+08:00">2022-06-08</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">算法整理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="搜索相关算法"><a href="#搜索相关算法" class="headerlink" title="搜索相关算法"></a>搜索相关算法</h2><p><em>开头废话：最近这几周搞辣鸡项目花了太长时间，好久没写博客了，整理一下这几周写的搜索算法</em></p>
-<p>通过枚举遍历问题的解空间，实现问题的求解，搜索作为比较基础的算法问题之一，题目数量众多，问题难度可难可易，希望通过这篇博客的整理能够加深我对目前学习到的相关搜索算法的理解。</p>
-<h4 id="主要的算法"><a href="#主要的算法" class="headerlink" title="主要的算法"></a>主要的算法</h4><ol>
-<li>DFS 深度优先搜索</li>
-<li>BFS 广度优先搜索</li>
-<li>双向搜索</li>
-<li>Best First Search 最佳优先搜索</li>
-<li>迭代加深搜索</li>
-<li>其他</li>
-</ol>
-<h4 id="基础搜索算法"><a href="#基础搜索算法" class="headerlink" title="基础搜索算法"></a>基础搜索算法</h4><p>最简单也是最常用的两个搜索算法（简单总结）</p>
-<ol>
-<li>深度优先搜索<ul>
-<li>每次递归首先尝试向更深的结点走</li>
-</ul>
-</li>
-<li>广度优先搜索<ul>
-<li>每次枚举穷尽同一层的所有结点</li>
-</ul>
-</li>
-</ol>
-<p>其中深度优先搜索更适合搜索解空间深度与目标解<strong>深度相近</strong>类型问题，广度优先遍历更适合搜索目标解深度<strong>一定程度小于</strong>目标解深度类型问题</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/04/24/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Mapreduce%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/24/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Mapreduce%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">Mapreduce论文总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-04-24 20:03:55 / 修改时间：20:05:39" itemprop="dateCreated datePublished" datetime="2022-04-24T20:03:55+08:00">2022-04-24</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">大数据理论</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="Mapreduce"><a href="#Mapreduce" class="headerlink" title="Mapreduce"></a>Mapreduce</h3><blockquote>
-<p>论文地址: <a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.824/papers/mapreduce.pdf">MapReduce: Simplified Data Processing on Large Clusters</a></p>
-</blockquote>
-<p>Mapreduce分布式编程模型，理解起来比较简单，主要总结一下模型+实现细节</p>
-<h4 id="编程模型"><a href="#编程模型" class="headerlink" title="编程模型"></a>编程模型</h4><p>将任务划分为Map和Reduce两个阶段由用户实现，每个阶段输入输出key-value对（形象理解可以看论文中的例子）</p>
-<img src="/2022/04/24/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Mapreduce%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/image-20220420082702737.png" class="" title="image-20220420082702737">
-<ol>
-<li>Map 输入key-value，经过处理输出新的中间 key-value对，由MapReduce执行程序，将相同<strong>中间key</strong>聚集发送给某一个reduce执行程序</li>
-<li>Reduce 输入一个中间key和key对应的value列表，reduce执行具体聚集操作后，获得最终的输出key-value</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/24/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Mapreduce%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/04/17/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/17/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">GFS论文总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-04-17 20:00:26" itemprop="dateCreated datePublished" datetime="2022-04-17T20:00:26+08:00">2022-04-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-07-13 17:20:26" itemprop="dateModified" datetime="2022-07-13T17:20:26+08:00">2022-07-13</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">大数据理论</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h3 id="GFS"><a href="#GFS" class="headerlink" title="GFS"></a>GFS</h3><blockquote>
-<p>论文地址：<a target="_blank" rel="noopener" href="https://research.google/pubs/pub51/">The Google File System</a></p>
-</blockquote>
-<p>google file system，入门大数据必读三篇文章之一，最近懒得看视频，小研究一波这篇论文，读完发现这种系统论文要比人工智能论文难读一些，涉及的技术比较多，粗浅的总结一下。</p>
-<h4 id="论文结构"><a href="#论文结构" class="headerlink" title="论文结构"></a>论文结构</h4><p><del>论文结构有点像我的毕业论文</del>，首先从系统的结构出发，描述系统架构、组成等,从静态角度了解系统组成，然后从动态系统交互出发，描述系统交互，主要数据和操作流，最后单独两章描述mater节点的主要职责以及系统如何实现fault tolerance.</p>
-<ol>
-<li><p>intro 介绍</p>
-<p>没讲很多背景，直接讲GFS这套解决方案与以往的GFS不同点，解决不同问题：</p>
-<ol>
-<li>分布式系统中组件经常失效（norm rather than exception）</li>
-<li>按照以往的标准，目前文件大小都很大</li>
-<li>目前对文件操作主要是添加和顺序读</li>
-<li>面向应用设计GFS，增加了整个系统的灵活性</li>
-</ol>
-</li>
-<li><p>DESIGN OVERVIEW </p>
-<p>系统的组成+一致性模型，基本讲明白了系统怎么实现的文件系统功能</p>
-</li>
-<li><p>SYSTEM INTERACTIONS</p>
-<p>描述了系统与client读写文件的交互流程，在这过程中如何保证GFS特性（从使用的角度，描述系统）</p>
-</li>
-<li><p>MASTER OPERATION</p>
-<p>阐述master节点的职责，client与GFS交互中不直接相关的操作（从管理的角度）</p>
-</li>
-<li><p>FAULT TOLERANCE AND DIAGNOSIS</p>
-<p>阐述容错机制（从策略角度）</p>
-</li>
-<li><p>MEASUREMENTS + EXPERIENCES + RELATED WORK + CONCLUSIONS</p>
-<p>实验验证+经验总结+相关工作+总结</p>
-</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/17/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/GFS%E8%AE%BA%E6%96%87%E6%80%BB%E7%BB%93/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/" class="post-title-link" itemprop="url">基于统计的文档语义表示</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-04-17 19:50:18 / 修改时间：19:53:32" itemprop="dateCreated datePublished" datetime="2022-04-17T19:50:18+08:00">2022-04-17</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ML-DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">ML/DL理论学习</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="基于统计的文档语义表示"><a href="#基于统计的文档语义表示" class="headerlink" title="基于统计的文档语义表示"></a>基于统计的文档语义表示</h2><p>在深度学习模型到来之前，通常使用统计学方法获得表示的文档语义的特征向量，主要方法包括</p>
-<ol>
-<li>TF-IDF</li>
-<li>基于SVD分解的LSA（潜在语义索引/分析 Latent Semantic Indexing/Analysis）</li>
-<li>LDiA 隐形迪利克雷分布</li>
-</ol>
-<p>其中前两种分布理解较为简单，LDiA涉及比较多的概率分布知识</p>
-<h3 id="TF-IDF"><a href="#TF-IDF" class="headerlink" title="TF-IDF"></a>TF-IDF</h3><p><strong>t</strong>erm <strong>f</strong>requency–<strong>i</strong>nverse <strong>d</strong>ocument <strong>f</strong>requency，用以评估一字词对于一个文件集或一个语料库中的其中一份文件的重要程度。字词的重要性随着它在文件中出现的次数成正比增加（TF），但同时会随着它在语料库中出现的频率成反比下降（IDF）</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/17/DL%E7%90%86%E8%AE%BA%E5%AD%A6%E4%B9%A0/%E6%9D%82%E7%9F%A5%E8%AF%86%E7%82%B9%E8%A1%A5%E5%85%85/%E5%9F%BA%E4%BA%8E%E7%BB%9F%E8%AE%A1%E7%9A%84%E6%96%87%E6%A1%A3%E8%AF%AD%E4%B9%89%E8%A1%A8%E7%A4%BA/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/04/10/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84%E6%95%B4%E7%90%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/10/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84%E6%95%B4%E7%90%86/" class="post-title-link" itemprop="url">树状数组整理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-04-10 20:35:17" itemprop="dateCreated datePublished" datetime="2022-04-10T20:35:17+08:00">2022-04-10</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-17 19:47:38" itemprop="dateModified" datetime="2022-04-17T19:47:38+08:00">2022-04-17</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/" itemprop="url" rel="index"><span itemprop="name">算法整理</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="树状数组（Binary-indexed-tree）"><a href="#树状数组（Binary-indexed-tree）" class="headerlink" title="树状数组（Binary indexed tree）"></a>树状数组（Binary indexed tree）</h2><blockquote>
-<p>A <strong>Fenwick tree</strong> or <strong>binary indexed tree</strong> is a data structure that can efficiently update elements and calculate <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Prefix_sum">prefix sums</a> in a table of numbers.</p>
-<p>来自Wikipedia</p>
-</blockquote>
-<p>树状数组是一种求解前缀和问题的简单数据结构，能够在<strong>O(logn)</strong>的时间复杂度内解决区间求和问题，主要支持两种操作</p>
-<ol>
-<li><strong>单点修改</strong></li>
-<li><strong>区间操作</strong></li>
-</ol>
-<h3 id="主要思路"><a href="#主要思路" class="headerlink" title="主要思路"></a>主要思路</h3><p>类比<strong>任何数</strong>均可以拆分为<strong>有限个不同2的幂次</strong>的求和，原论文作者认为<strong>一串序列</strong>的求和同样可以拆分为<strong>有限个不同长度为2的幂次的序列</strong>的和。在数字的拆分中，其二进制表示中1的个数即为不同2的幂次，例如 “10”，“12”</p>
-<script type="math/tex; mode=display">
-10 -> 1010 = 1000 + 0010\\
-14 -> 1110 = 1000 + 0100 + 0010</script>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/10/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84%E6%95%B4%E7%90%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/" class="post-title-link" itemprop="url">读论文4-GPT系列</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-04-03 19:10:41" itemprop="dateCreated datePublished" datetime="2022-04-03T19:10:41+08:00">2022-04-03</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-10 14:36:22" itemprop="dateModified" datetime="2022-04-10T14:36:22+08:00">2022-04-10</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="GPT"><a href="#GPT" class="headerlink" title="GPT"></a>GPT</h2><p>GPT作为NLP预训练语言模型的基石之一，从gpt1,gpt2到gpt3，不断扩大模型规模，将问题从fine-tuning拓展到zero-shot,试图解决更基础，但是更困难的无监督学习问题，三篇论文中的模型结构相同，不同的是试图解决的问题。</p>
-<h3 id="GPT1"><a href="#GPT1" class="headerlink" title="GPT1"></a>GPT1</h3><blockquote>
-<p><a target="_blank" rel="noopener" href="https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf">Improving Language Understanding by Generative Pre-Training</a></p>
-</blockquote>
-<h4 id="要解决的问题"><a href="#要解决的问题" class="headerlink" title="要解决的问题"></a>要解决的问题</h4><p>NLP中有监督训练数据较少，存在大量的无标签文本数据，如何使用这些数据解决NLP领域中各类问题？GPT提出了 <strong>自监督预训练+fine tuning</strong> 的方式，主要解决两个问题</p>
-<ol>
-<li>预训练的<strong>训练目标是什么</strong>？损失函数是什么？</li>
-<li>预训练得到的特征表示<strong>如何迁移</strong>到下游任务中？</li>
-</ol>
-<h4 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h4><p>使用语言模型作为预训练的目标，在下游任务上做有监督的fine tuning</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/04/03/%E8%AF%BB%E8%AE%BA%E6%96%87/%E8%AF%BB%E8%AE%BA%E6%96%874-GPT%E7%B3%BB%E5%88%97/#more" rel="contents">
+              <a class="btn" href="/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1109,7 +1150,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1177,20 +1218,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-count">84</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-count">24</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">49</span>
+        <span class="site-state-item-count">47</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

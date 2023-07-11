@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Frangipani 分布式文件系统 Frangipani: A Scalable Distributed File System  Frangipani是20多年前发表论文中描述的一个分布式文件系统，之所以现在还要深度了解一篇这个“古老”的论文，是因为其中的一些设计思路值得我们学习和研究（不还是因为MIT6.824里要讲吗），Frangipani的设计出发点是要实现一个简单、方便扩展和管理的共享">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Frangipani分布式文件系统">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="Frangipani 分布式文件系统 Frangipani: A Scalable Distributed File System  Frangipani是20多年前发表论文中描述的一个分布式文件系统，之所以现在还要深度了解一篇这个“古老”的论文，是因为其中的一些设计思路值得我们学习和研究（不还是因为MIT6.824里要讲吗），Frangipani的设计出发点是要实现一个简单、方便扩展和管理的共享">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/image-20220712154753633.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/image-20220712161534127.png">
+<meta property="article:published_time" content="2022-07-13T09:19:20.000Z">
+<meta property="article:modified_time" content="2023-02-09T12:09:24.797Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="分布式">
+<meta property="article:tag" content="分布式文件系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/image-20220712154753633.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Frangipani分布式文件系统 | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Frangipani分布式文件系统
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-13 17:19:20" itemprop="dateCreated datePublished" datetime="2022-07-13T17:19:20+08:00">2022-07-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:09:24" itemprop="dateModified" datetime="2023-02-09T20:09:24+08:00">2023-02-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Frangipani-分布式文件系统"><a href="#Frangipani-分布式文件系统" class="headerlink" title="Frangipani 分布式文件系统"></a>Frangipani 分布式文件系统</h2><blockquote>
+<p><a target="_blank" rel="noopener" href="https://dl.acm.org/doi/10.1145/269005.266694">Frangipani: A Scalable Distributed File System</a></p>
+</blockquote>
+<p>Frangipani是20多年前发表论文中描述的一个分布式文件系统，之所以现在还要深度了解一篇这个“古老”的论文，是因为其中的一些设计思路值得我们学习和研究（<del>不还是因为MIT6.824里要讲吗</del>），Frangipani的设计出发点是要实现一个简单、方便扩展和管理的共享文件系统，在读论文时主要关注的点如下：</p>
+<ol>
+<li>如何在分布式环境下实现缓存一致性？</li>
+<li>如何实现分布式事务？</li>
+<li>如何在经常出错的分布式环境中，通过错误恢复实现容错？、</li>
+</ol>
+<span id="more"></span>
+<h3 id="基本架构"><a href="#基本架构" class="headerlink" title="基本架构"></a>基本架构</h3><p>如下图所示，Frangipani的架构组成分为两层：</p>
+<ol>
+<li>Frangipani文件系统层（Frangipani file server module）：运行在操作系统kernel中，向kernel注册为一个文件系统实现，为上层的用于应用程序提供提供文件系统的操作接口</li>
+<li>Petal 虚拟磁盘层（Petal virutal disk）：为了方便扩展，Frangipani底层基于虚拟磁盘Petal，简化了磁盘管理、扩容等操作</li>
+</ol>
+<img src="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/image-20220712154753633.png" class="" title="image-20220712154753633">
+<p>整个系统中共有一下几种不同身份职责的运行进程：</p>
+<ol>
+<li>Petal server：Petal底层采用多个server+多块磁盘实现大容量分布式容错的虚拟磁盘，Petal server可以理解为接收磁盘操作请求、执行持久化操作的存储服务器</li>
+<li>Lock server：文件系统肯定离不开锁，其中lock server用来管理文件系统中的锁（multiple reader/singlewriter lock）。锁由多个lock server分别进行管理，每个lock server管理整个文件系统中部分锁。</li>
+<li>Clerk module：每个file server上运行的锁管理进程，用来维护和管理分配给当前file server的锁信息（申请、释放、锁降级等）</li>
+<li>Frangipani file server：提供文件系统操作接口，与Petal server交互实现数据操作。</li>
+<li>Petal device driver：隐藏petal的细节，使上层file server看起来就是一个大容量磁盘</li>
+</ol>
+<p>不同身份职责进程的实际部署情况：</p>
+<ol>
+<li>Pertal server: 运行于实际的存储节点上，多个server共同提供一个 <strong>large, scalable, fault tolerant</strong>的虚拟磁盘</li>
+<li>Lock server：可以运行于Pertal server上，也可以运行于Frangipani file server，数量并不是与Pertal server一一对应的</li>
+<li>Frangipani file server：运行于任意服务器上，不同的Frangipani file server是等价的，均为用户提供整个文件系统的读取和修改权限</li>
+</ol>
+<h3 id="文件系统结构"><a href="#文件系统结构" class="headerlink" title="文件系统结构"></a>文件系统结构</h3><p>Frangipani的文件系统结构如下图所示，和Unix的文件系统结构类似，均采用Inode+文件块的形式管理文件存储空间，由于Frangipani底层基于虚拟磁盘（优点是具备更大的可分配空间，缺点是虚拟磁盘上相邻的空间段可能分布于不同server上的磁盘），其对文件系统进行了更细致化的定义和管理。</p>
+<img src="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Frangipani%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/image-20220712161534127.png" class="" title="image-20220712161534127">
+<p>Frangipani将虚拟磁盘空间划分为了6个逻辑块</p>
+<ol>
+<li>参数块（parameters 0-1T）：存储共享配置信息以及文件系统管理信息，实际上只能用到几kb的空间</li>
+<li>存储日志块（logs 1-2T）：将1T的空间等大小划分为256块，其中每一块（$2^{40}$bytes）属于一个file server的日志存储区（<u>ps:日志是什么在下一部分进行介绍</u>），每个日志存储区可以存储256个日志，即每一条日志最大空间为（$2^{16}$bytes）。</li>
+<li>分配bitmap块（Allocation bitmaps 2-5T）：用来表示剩余的空间块是否为被占用</li>
+<li>Inodes块（Inodes 5-6T）：和unix文件系统中的inode功能相同，都是用来记录文件的元数据，每个inode大小与磁盘块大小保持一致512B（避免争抢情况），inode块与bitmap块的对应关系固定，即特定的bitmap永远标识指定的inode。(一方面释放文件是只需要释放bitmap，另一方面方便锁管理)</li>
+<li>小块区（Small blocks 6-134T）：每块大小4 KB ($2^12$ bytes)，用来存储大小小于64kb的文件，当文件大小大于64KB时，剩余文件记录存储在大块区中</li>
+<li>大块区（Large bolcks 136-$2^{34}$T）：每块大小为1T</li>
+</ol>
+<p>Frangipani在虚拟磁盘划分时，采用了大量的固定大小分块思想，这样必然会导致内存碎片问题（fragmentation），论文中表示将小文件数据直接存储在inode上，能够缓解这种问题（<del>存疑</del>）</p>
+<p>另外Frangipani文件系统还有几个小的trick</p>
+<ol>
+<li>只有真正的写入虚拟空间时，才会真正的分配实际的物理存储空间</li>
+<li>论文中说块的大小都是可调整的，Logs中日志存储区数量也是可调整的（<del>为了掩盖设计不完善，画的饼吧</del>）</li>
+</ol>
+<h3 id="基于log的持久化保证"><a href="#基于log的持久化保证" class="headerlink" title="基于log的持久化保证"></a>基于log的持久化保证</h3><p>Frangipani采用类似于WAL（write ahead log）日志机制，实现元数据（metadata）的容错，具体实现如下</p>
+<ol>
+<li>每个对于元数据的操作，首先创建一个相关日志写入到file server本地缓存中</li>
+<li>日志周期性的将日志缓存持久化到petal磁盘上（即上面的logs），每个file server有自己单独的log存储区（论文中描述同样支持实时同步，即生成日志立刻持久化到petal磁盘上）</li>
+<li>只有在日志持久化以后，才会真正的修改对应的metadata（<del>论文里没有说什么时候向客户端响应修改成功或者说修改对客户端可见？我觉得是修改缓存成功后，因为论文中说持久化的周期时30S，如果在持久化以后延迟太高</del>）</li>
+<li>对于用户数据（修改文件内容等），Frangipani不通过日志管理，即<strong>不保证持久性</strong></li>
+</ol>
+<p>随着时间的的增长，log的数量会越来越多，如何解决log的空间占用/不足问题？</p>
+<ul>
+<li>Frangipani将Petal磁盘上的log存储区管理为环状存储（circular buffer），当log空间不足，删除最老的25%的日志（老日志确保大部分均已提交，并且在踢出日志时，Frangipani会检查未提交日志，执行完毕再踢出存储）</li>
+<li>在两次从内存写入Petal磁盘上的刷新间隔中，最多允许1000-1600个对于元数据的操作</li>
+</ul>
+<h3 id="基于锁的一致性保证"><a href="#基于锁的一致性保证" class="headerlink" title="基于锁的一致性保证"></a>基于锁的一致性保证</h3><p>既然是文件系统就离不开锁，Frangipani提供了写锁和读写锁（multiplereader/singlewriterlocks）分布式锁实现，以实现文件系统的中的并发控制，从而保证数据一致性，基本实现机制如下：</p>
+<ol>
+<li>多个lock server+lock clerk模式：每个lock server管理一部分的锁，每个file server对应一个lock clerk，负责管理当前server的锁以及与lock server进行交互</li>
+<li>其中锁以64位整数命名，每个lock server上的锁组织在一个以ASCII字符命名的table中</li>
+<li>为了避免file server进程意外退出导致<strong>无限期占有锁</strong>，lock server分配锁时带有<strong>lease identifier</strong>（超时时间为30S），client必须在超时之前向lock server更新lease</li>
+<li>为了避免死锁，Frangipani为整个文件系统中的锁分配了<strong>全局编号</strong>，client获取锁之前首先要确定需要的所有锁，之后<strong>按照编号顺序从小到大获取</strong>，失败则释放已经占有的锁，从头开始从新获取。（<strong>分布式事务</strong>）</li>
+</ol>
+<p>补充一条：Frangipani的锁是<strong>sticky</strong>的，即client会一直持有锁，直到另外一个client申请锁</p>
+<p>lock server和lock clerk相关的锁操作包括：</p>
+<ul>
+<li>request：clerk向server发送的申请锁的请求</li>
+<li>grant：server向clerk发送的授予锁的响应</li>
+<li>revoke：server向clerk发送的撤销锁的请求</li>
+<li>release：clerk向server发送的释放锁</li>
+<li>另外以上四个操作，能够实现锁的升级和降级操作</li>
+</ul>
+<p><strong>如何保证一致性</strong></p>
+<p>锁通过控制并发实现一致性控制，实际上就是<strong>dirty cache刷新时机和锁重分配之间的协调关系</strong>，当某个client在持有锁的过程中对数据进行了修改，此时要发生锁权限的变更，根据不同情况需要进行不同处理：</p>
+<ol>
+<li>当前client持有读/读写锁，因为争抢要释放：首先要将dirty cache持久化到petal磁盘中，并将cache标记为无效（等待垃圾回收），最后再释放锁</li>
+<li>当前client持有写锁，要降级为读写锁共享锁（只读不写）：首先要将dirty cache持久化到petal磁盘中，锁降级。此时并不需要invalidate cache，因为另外的client也是读，并不会修改数据</li>
+</ol>
+<p>另个一角度理解（<strong>锁在缓存在，锁亡缓存亡</strong>-锁代表独占权，独占权保证了）：</p>
+<ul>
+<li>拥有数据的缓存，同时肯定拥有锁（如果是dirty cache，则拥有写锁）</li>
+<li>当server释放锁，同时要释放锁对应的缓存段</li>
+</ul>
+<p>通过上述机制，即可保证Fragipani元数据的持久性和一致性</p>
+<h3 id="容错和恢复（fault-tolerant-amp-recovery）"><a href="#容错和恢复（fault-tolerant-amp-recovery）" class="headerlink" title="容错和恢复（fault-tolerant &amp; recovery）"></a>容错和恢复（fault-tolerant &amp; recovery）</h3><p>容错和恢复是拆不开的两个话题，一般分布式系统中通过多server实现容错，当一个server崩溃其他server能够继续正常运行，恢复纸崩溃server恢复重新提供服务的过程，两者共同保证了分布式系统的高可用性质。由于Frangipani存在多种不同身份职责的进程，因此存在多种情况下的容错和恢复。</p>
+<h4 id="Lock-server"><a href="#Lock-server" class="headerlink" title="Lock server"></a>Lock server</h4><p>lock server可以看作一系列地位对等的p2p节点，相互直接之间通hearteart消息，监控状态。通过公式算法（Paxos）实现对于元数据的管理和一致性保证。</p>
+<ul>
+<li>元数据包括locker server列表，每个server负责管理的锁</li>
+<li>当lock server失效或者新的lock server加入时，lock会在不同节点间进行均匀分配，保证负载均衡</li>
+</ul>
+<p>当一个lock server失效时，他所持有的锁以及对映锁状态会重新分配到其他lock server上。lock server恢复即直接作为新的lock server加入server群即可</p>
+<h4 id="File-server"><a href="#File-server" class="headerlink" title="File server"></a>File server</h4><p>虽然Frangipani中存在多个file server，然而每个server只为其挂载在unix系统提供服务，当file server崩溃时，唯一的容错措施即在重启file server(<del>看起来不是那么的分布式，或者可以理解为文件系统接口层实际上还是单机</del>)。</p>
+<p>虽然只能通过重启进行file server的容错和恢复，在file server崩溃时，需要执行一系列操作以保证数据的一致性，因为当前file server可能存在未持久化的修改、占有锁资源等，具体机制如下：</p>
+<ol>
+<li><p>当client/lock server长期收不到file server响应时，即认为file server失效</p>
+</li>
+<li><p>当认定file server失效后，启动 recovery demon，获得失效server的log和lock,根据log重新执行未执行的更新，完成之后释放锁资源</p>
+<blockquote>
+<p>the changes to a block are applied only,if the block version number is less than the record version number.</p>
+<p>通过数据的version number判断是否需要重新执行log记录的操作</p>
+</blockquote>
+</li>
+</ol>
+<p>上述机制中，即使是由于网络分区问题导致的无法联系到file server，file server由于无法更新相关锁的lease，即没有权限操作数据，<strong>不会出现“脑裂”问题</strong></p>
+<h4 id="Petal-server"><a href="#Petal-server" class="headerlink" title="Petal server"></a>Petal server</h4><p>Frangipani实际上是偷懒了，由于Petal本身支持容错和恢复，所以存储层可以认识是可靠的</p>
+<h3 id="备份（Backup）"><a href="#备份（Backup）" class="headerlink" title="备份（Backup）"></a>备份（Backup）</h3><blockquote>
+<p><strong>Copy-on-write</strong>：sometimes referred to as <strong>implicit sharing</strong><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Copy-on-write#cite_note-1">[1]</a> or <strong>shadowing</strong>,<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Copy-on-write#cite_note-2">[2]</a> is a resource-management technique used in <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Computer_programming">computer programming</a> to efficiently implement a “duplicate” or “copy” operation on modifiable resources. - wikipedia</p>
+<p>对于Copy-on-write，实际上可以简单理解为为了避免写阻塞读，写在副本上写，读此时在原数据上读，写完将副本更新到原数据上</p>
+</blockquote>
+<p>在Petal的Copy-on-wirte机制上加了一点微调，实现了自己的备份机制（备份启动不需要recovery过程）</p>
+<ul>
+<li>采用了barrier同步机制，使用一个全局锁作为barrier</li>
+<li>file server执行任何修改之前，必须获得这个共享全局锁</li>
+<li>当备份进程要执行时，向所有持有全局锁的file server申请释放，file server释放之前首先将dirty cache持久化，并释放其他锁后进入barrier</li>
+<li>当所有file server进入barrier后，备份进程获得全局锁，开始备份，备份完成其他file server退出barrier</li>
+</ul>
+<p>显而易见的缺点是当系统备份时，整个系统只读不能写</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>读完这篇论文发现其中很多设计还是很落后的（file server假分布式等），也存在很多未解决的问题（写请求发送过程中锁超时等），然而其中比较值得学习的就是其锁的管理和缓存一致性的实现。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag"><i class="fa fa-tag"></i> 分布式</a>
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 分布式文件系统</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/07/13/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/AmazonAurora%E4%BA%91%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="prev" title="AmazonAurora云数据库">
+      <i class="fa fa-chevron-left"></i> AmazonAurora云数据库
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/07/31/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Spanner%EF%BC%9A%E2%80%9C%E7%9C%9F%E2%80%9D%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="next" title="Spanner：“真”分布式数据库">
+      Spanner：“真”分布式数据库 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Frangipani-%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.</span> <span class="nav-text">Frangipani 分布式文件系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%9E%B6%E6%9E%84"><span class="nav-number">1.1.</span> <span class="nav-text">基本架构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E7%BB%93%E6%9E%84"><span class="nav-number">1.2.</span> <span class="nav-text">文件系统结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8Elog%E7%9A%84%E6%8C%81%E4%B9%85%E5%8C%96%E4%BF%9D%E8%AF%81"><span class="nav-number">1.3.</span> <span class="nav-text">基于log的持久化保证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E9%94%81%E7%9A%84%E4%B8%80%E8%87%B4%E6%80%A7%E4%BF%9D%E8%AF%81"><span class="nav-number">1.4.</span> <span class="nav-text">基于锁的一致性保证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%B9%E9%94%99%E5%92%8C%E6%81%A2%E5%A4%8D%EF%BC%88fault-tolerant-amp-recovery%EF%BC%89"><span class="nav-number">1.5.</span> <span class="nav-text">容错和恢复（fault-tolerant &amp; recovery）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Lock-server"><span class="nav-number">1.5.1.</span> <span class="nav-text">Lock server</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#File-server"><span class="nav-number">1.5.2.</span> <span class="nav-text">File server</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Petal-server"><span class="nav-number">1.5.3.</span> <span class="nav-text">Petal server</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%87%E4%BB%BD%EF%BC%88Backup%EF%BC%89"><span class="nav-number">1.6.</span> <span class="nav-text">备份（Backup）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.7.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">84</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/fuhaifei" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;fuhaifei" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/fu-hai-fei" title="zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;fu-hai-fei" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : '37dc19d1d694f517a3fef23e72db1b0c',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

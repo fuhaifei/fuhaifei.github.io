@@ -195,6 +195,512 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/07/11/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%A4%8D%E4%B9%A0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/07/11/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%A4%8D%E4%B9%A0/" class="post-title-link" itemprop="url">分布式一致性复习</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-07-11 21:54:26 / 修改时间：21:55:22" itemprop="dateCreated datePublished" datetime="2023-07-11T21:54:26+08:00">2023-07-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="分布式一致性与共识"><a href="#分布式一致性与共识" class="headerlink" title="分布式一致性与共识"></a>分布式一致性与共识</h2><p>在学习微服务RPC，服务注册发现等相关概念时，总是绕不开一个话题分布式一致性，虽然之前在MIT6.824的课程中已经进行深入的学习，但是每每遇到还是对这些概念不甚清晰，因此这篇博客主要是从整合的角度复习之前学过的知识。</p>
+<h3 id="常见概念"><a href="#常见概念" class="headerlink" title="常见概念"></a>常见概念</h3><p>分布式和单机本质的不同在于没有一个统一的时钟以及一份数据有多个副本，不同的用户请求于不同时间发出，由于网络延迟等问题以不同的顺序，对不同数据副本进行操作，这就带来两个问题：</p>
+<ol>
+<li>如何确定谁的请求先来，谁的请求后来，怎么确定一个所谓的“先来后到”？（可以类比Mysql并发控制的感觉）</li>
+<li>副本的操作如何及时同步，用户能不能看到最新的副本？</li>
+</ol>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/07/11/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7%E5%A4%8D%E4%B9%A0/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/07/11/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RPC%E7%9B%B8%E5%85%B3/RPC%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6%E7%90%86%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/07/11/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RPC%E7%9B%B8%E5%85%B3/RPC%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6%E7%90%86%E8%A7%A3/" class="post-title-link" itemprop="url">RPC框架整体理解</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-07-11 21:51:45 / 修改时间：21:55:09" itemprop="dateCreated datePublished" datetime="2023-07-11T21:51:45+08:00">2023-07-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">技术框架</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RPC/" itemprop="url" rel="index"><span itemprop="name">RPC</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="RPC框架整体理解"><a href="#RPC框架整体理解" class="headerlink" title="RPC框架整体理解"></a>RPC框架整体理解</h1><blockquote>
+<p>In <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Distributed_computing">distributed computing</a>, a <strong>remote procedure call</strong> (<strong>RPC</strong>) is when a computer program causes a procedure (subroutine) to execute in a different <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Address_space">address space</a> (commonly on another computer on a shared network), which is written as if it were a normal (local) procedure call, without the programmer explicitly writing the details for the remote interaction. </p>
+<p>— wikipedia</p>
+</blockquote>
+<p>RPC（remote procedure call）远程过程调用，通过封装底层网络通信细节，向跨网络的服务提供如同本地调用一般的远程调用接口</p>
+<ul>
+<li>RPC来源于微服务架构的发展，越来越多业务系统被拆解为多个相互协作的微服务，借助RPC工具能够方便实现不同服务之间相互调用。</li>
+<li>常见的RPC框架有：Dubbo、Thrift、GRPC、Spring Cloud（部分）</li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/07/11/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RPC%E7%9B%B8%E5%85%B3/RPC%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6%E7%90%86%E8%A7%A3/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E9%9B%86%E7%BE%A4%E7%9B%B8%E5%85%B3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E9%9B%86%E7%BE%A4%E7%9B%B8%E5%85%B3/" class="post-title-link" itemprop="url">RabbitMQ集群相关</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-02-12 14:42:01 / 修改时间：14:43:04" itemprop="dateCreated datePublished" datetime="2023-02-12T14:42:01+08:00">2023-02-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">技术框架</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/" itemprop="url" rel="index"><span itemprop="name">RabbitMQ</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="RabbitMQ集群相关"><a href="#RabbitMQ集群相关" class="headerlink" title="RabbitMQ集群相关"></a>RabbitMQ集群相关</h2><blockquote>
+<p>Clustering is meant to be used across LAN. It is not recommended to run clusters that span WAN.</p>
+</blockquote>
+<p>似乎所有的中间件框架最后都要走到集群配置这一步，RabbitMQ通过集群配置实现数据和服务的可要行，官网推荐在局域网中使用RabbitMQ集群，跨网络间的同步建议通过 <a target="_blank" rel="noopener" href="https://www.rabbitmq.com/shovel.html">Shovel</a> or <a target="_blank" rel="noopener" href="https://www.rabbitmq.com/federation.html">Federation</a>等插件实现。</p>
+<p>RabbitMQ集群主要解决服务器崩溃导致的服务不可用以及数据丢失问题，集群中节点同步备份所有的元数据，由于集群本身并不执行队列的备份，通过特殊类型的队列（镜像和quorum）实现队列备份。</p>
+<ol>
+<li>队列元数据：并不同步队列本身以及队列中的消息</li>
+<li>交换机元数据</li>
+<li>绑定元数据</li>
+<li>vhost元数据</li>
+</ol>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E9%9B%86%E7%BE%A4%E7%9B%B8%E5%85%B3/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E6%AD%BB%E4%BF%A1%E9%98%9F%E5%88%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E6%AD%BB%E4%BF%A1%E9%98%9F%E5%88%97/" class="post-title-link" itemprop="url">RabbitMQ死信队列</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-02-12 14:40:32 / 修改时间：14:41:43" itemprop="dateCreated datePublished" datetime="2023-02-12T14:40:32+08:00">2023-02-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">技术框架</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/" itemprop="url" rel="index"><span itemprop="name">RabbitMQ</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>对于队列中存在的部分无法消费的消息（dead-lettered），RabbitMQ提供”死信队列”机制，实现死信的收集处理。死信队列还是普通的队列，只是其于某个队列绑定，当该队列出现私信时会将死信转发到该队列中，提供给该队列消费者处理。</p>
+<img src="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E6%AD%BB%E4%BF%A1%E9%98%9F%E5%88%97/image-20230112161219616.png" class="" title="image-20230112161219616">
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E6%AD%BB%E4%BF%A1%E9%98%9F%E5%88%97/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E5%85%A5%E9%97%A8%E6%A1%88%E4%BE%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E5%85%A5%E9%97%A8%E6%A1%88%E4%BE%8B/" class="post-title-link" itemprop="url">RabbitMQ入门案例</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-02-12 14:37:00 / 修改时间：14:40:08" itemprop="dateCreated datePublished" datetime="2023-02-12T14:37:00+08:00">2023-02-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">技术框架</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/" itemprop="url" rel="index"><span itemprop="name">RabbitMQ</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>RabbitMQ官网教程<a target="_blank" rel="noopener" href="https://www.rabbitmq.com/getstarted.html">RabbitMQ Tutorials</a>中提供了六个入门案例，下面按照案例顺序逐个进行实践操作，了解RabbitMQ的基本应用</p>
+<ol>
+<li>“Hello World”：简单一对一队列</li>
+<li>“Work Queues”：一对多队列，模拟任务分配</li>
+<li>“Publish/Subscrible”：Fanout类型交换机，广播消息</li>
+<li>“Routing”：direct类型交换机，根据RoutingKey发送到对应队列</li>
+<li>“Topics”：topic类型交换机，根据RoutingKey的匹配规则发送到对应队列</li>
+<li>“RPC”：使用消息队列模拟RPC调用</li>
+<li>“Publish Confirms”：通过发送确认，实现发送端可靠性保证</li>
+</ol>
+<p>为了基于Java操作RabbitMQ，需要加入对应的Client依赖</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- https://mvnrepository.com/artifact/com.rabbitmq/amqp-client --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.rabbitmq<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>amqp-client<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>5.14.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E5%85%A5%E9%97%A8%E6%A1%88%E4%BE%8B/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E5%92%8C%E5%AE%89%E8%A3%85/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E5%92%8C%E5%AE%89%E8%A3%85/" class="post-title-link" itemprop="url">RabbitMQ基本概念和安装</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-02-12 14:35:19 / 修改时间：14:36:37" itemprop="dateCreated datePublished" datetime="2023-02-12T14:35:19+08:00">2023-02-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/" itemprop="url" rel="index"><span itemprop="name">技术框架</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/" itemprop="url" rel="index"><span itemprop="name">RabbitMQ</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="RabbitMQ基本概念"><a href="#RabbitMQ基本概念" class="headerlink" title="RabbitMQ基本概念"></a>RabbitMQ基本概念</h2><p>如下图(来自<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/rabbitmq/9372144?fr=aladdin">百度百科</a>)，RabbitMQ是基于高级消息队列协议（AMQP）设计实现的消息中间件，主要包括的概念有交换机(Exchange)、消息队列(queue)、绑定(binding)、通道(channel)等。</p>
+<img src="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E5%92%8C%E5%AE%89%E8%A3%85/image-20230109104500878.png" class="" title="image-20230109104500878">
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/02/12/%E6%8A%80%E6%9C%AF%E6%A1%86%E6%9E%B6/RabbitMQ/RabbitMQ%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E5%92%8C%E5%AE%89%E8%A3%85/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2023/01/07/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Redis/Redis%E6%8C%81%E4%B9%85%E5%8C%96/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -218,10 +724,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2023-01-07 10:35:22 / 修改时间：10:38:24" itemprop="dateCreated datePublished" datetime="2023-01-07T10:35:22+08:00">2023-01-07</time>
+              <time title="创建时间：2023-01-07 10:35:22" itemprop="dateCreated datePublished" datetime="2023-01-07T10:35:22+08:00">2023-01-07</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:01:05" itemprop="dateModified" datetime="2023-02-09T20:01:05+08:00">2023-02-09</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -229,6 +741,10 @@
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/" itemprop="url" rel="index"><span itemprop="name">redis</span></a>
                 </span>
             </span>
 
@@ -308,10 +824,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2023-01-07 10:33:47 / 修改时间：10:42:19" itemprop="dateCreated datePublished" datetime="2023-01-07T10:33:47+08:00">2023-01-07</time>
+              <time title="创建时间：2023-01-07 10:33:47" itemprop="dateCreated datePublished" datetime="2023-01-07T10:33:47+08:00">2023-01-07</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 19:59:08" itemprop="dateModified" datetime="2023-02-09T19:59:08+08:00">2023-02-09</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -319,6 +841,10 @@
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/" itemprop="url" rel="index"><span itemprop="name">redis</span></a>
                 </span>
             </span>
 
@@ -386,10 +912,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2023-01-07 10:32:04 / 修改时间：10:36:21" itemprop="dateCreated datePublished" datetime="2023-01-07T10:32:04+08:00">2023-01-07</time>
+              <time title="创建时间：2023-01-07 10:32:04" itemprop="dateCreated datePublished" datetime="2023-01-07T10:32:04+08:00">2023-01-07</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:01:13" itemprop="dateModified" datetime="2023-02-09T20:01:13+08:00">2023-02-09</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -397,6 +929,10 @@
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/redis/" itemprop="url" rel="index"><span itemprop="name">redis</span></a>
                 </span>
             </span>
 
@@ -467,17 +1003,23 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2023-01-02 11:00:35 / 修改时间：11:12:12" itemprop="dateCreated datePublished" datetime="2023-01-02T11:00:35+08:00">2023-01-02</time>
+              <time title="创建时间：2023-01-02 11:00:35" itemprop="dateCreated datePublished" datetime="2023-01-02T11:00:35+08:00">2023-01-02</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:12:39" itemprop="dateModified" datetime="2023-02-09T20:12:39+08:00">2023-02-09</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%97%A5%E5%B8%B8%E6%89%AF%E6%B7%A1/" itemprop="url" rel="index"><span itemprop="name">日常扯淡</span></a>
+                  <a href="/categories/%E6%9D%82%E6%96%87/" itemprop="url" rel="index"><span itemprop="name">杂文</span></a>
                 </span>
             </span>
 
@@ -515,516 +1057,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" class="post-title-link" itemprop="url">MySQL性能调优</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-11-29 14:45:44 / 修改时间：14:49:06" itemprop="dateCreated datePublished" datetime="2022-11-29T14:45:44+08:00">2022-11-29</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="MySQL性能调优"><a href="#MySQL性能调优" class="headerlink" title="MySQL性能调优"></a>MySQL性能调优</h2><p>MySQL性能调优流程从低到高分别为：</p>
-<ol>
-<li><strong>查询及索引优化</strong>：SQL优化以及索引优化</li>
-<li><strong>库表优化</strong>：设计优化以及分库分表等操作</li>
-<li>MySQL参数/服务器优化：分为硬件调优和MySQL参数调优</li>
-<li>分库分表横向扩展优化</li>
-</ol>
-<h3 id="查询优化"><a href="#查询优化" class="headerlink" title="查询优化"></a>查询优化</h3><p>SQL作为访问操作数据库的主要手段，采用一定的优化手段提升SQL性能，对于提高数据库整体性能具有重要意义，下面内容为对于SQL性能优化的学习和总结，主要内容来自：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1iq4y1u7vj?p=150&amp;vd_source=69aca4985c128187979e0f8d4604125f">尚硅谷mysql教程</a>，<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/select-optimization.html">MySQL 8.0 Reference Manual Optimizing SELECT Statements</a>。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/" class="post-title-link" itemprop="url">MySQL事务</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-11-29 14:42:40 / 修改时间：14:52:25" itemprop="dateCreated datePublished" datetime="2022-11-29T14:42:40+08:00">2022-11-29</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="MySQL事务"><a href="#MySQL事务" class="headerlink" title="MySQL事务"></a>MySQL事务</h2><p>之前在分布式系统的学习中已经系统的整理了事务ACID以及隔离性概念，下面总结在MySQL中的事务，偏向于实现层面，主要内容来自<em>《MySQL技术内幕:InnoDB存储引擎(第2版)》</em>。</p>
-<h3 id="事务分类和使用"><a href="#事务分类和使用" class="headerlink" title="事务分类和使用"></a>事务分类和使用</h3><p>MySQL 默认提交事务（<code>autocommit = 1</code>），即执行完SQL一句后立马执行COMMIT操作，也就是所谓的<strong>隐性事务</strong>。显式事务的开启，需要手动输入事务控制语句，：</p>
-<ul>
-<li><code>START TRANSACTION|BEGIN</code>：开启事务</li>
-<li><code>COMMIT</code>：提交事务</li>
-<li><code>ROLLBACK</code>：回滚事务</li>
-<li><code>SAVEPOINT identifier</code>：创建事务中的保存点</li>
-<li><code>REPEASE SAVEPOINT identifier</code>：删除事务中的保存点</li>
-<li><code>ROLLBACK TO[SACEPOINT]indentifier</code>：回滚的指定的保存点</li>
-</ul>
-<p>其中包括DDL等在内的数据库管理和修改操作开启<strong>隐性事务</strong>，无法在显式事务控制中使用。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E4%BA%8B%E5%8A%A1/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/" class="post-title-link" itemprop="url">InnoDB存储引擎</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-11-29 14:40:42 / 修改时间：14:46:50" itemprop="dateCreated datePublished" datetime="2022-11-29T14:40:42+08:00">2022-11-29</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="InnoDB架构及物理存储"><a href="#InnoDB架构及物理存储" class="headerlink" title="InnoDB架构及物理存储"></a>InnoDB架构及物理存储</h2><blockquote>
-<p><code>InnoDB</code> is a general-purpose storage engine that balances high reliability and high performance. </p>
-</blockquote>
-<p>InnoDB作为MySQL默认引擎，深入了解InnoDB有助于加深对于数据库系统的理解，下面首先从InnoDB的架构出发，介绍InnoDB的组成以及表数据的物理存储方式，其他例如事务、并发控制等相关内容在本文中不展开。</p>
-<h3 id="InnoDB架构"><a href="#InnoDB架构" class="headerlink" title="InnoDB架构"></a>InnoDB架构</h3><blockquote>
-<p>这部分内容是对<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/">MySQL 8.0 Reference Manual</a>学习自我总结</p>
-</blockquote>
-<p>InnoDB分为内存结构和磁盘结构两部分，其中内存结构主要为了减少磁盘访问，从而让提升访问性能，磁盘结构部分负责InnoDB中数据的实际物理存储。</p>
-<img src="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/image-20221108183750949.png" class="" title="image-20221108183750949">
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/11/29/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/InnoDB%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">MySQL索引总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-11-06 19:01:32" itemprop="dateCreated datePublished" datetime="2022-11-06T19:01:32+08:00">2022-11-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-11-29 14:47:32" itemprop="dateModified" datetime="2022-11-29T14:47:32+08:00">2022-11-29</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="索引相关知识总结"><a href="#索引相关知识总结" class="headerlink" title="索引相关知识总结"></a>索引相关知识总结</h2><p>索引作为数据库的重要知识，在本科的数据库学习中基本没有接触过，在大四找工作准备面试笔试时才了解到这个常考的概念，本博客是对于以往索引相关知识缺失的补足和系统整理。</p>
-<h3 id="索引是什么？"><a href="#索引是什么？" class="headerlink" title="索引是什么？"></a>索引是什么？</h3><blockquote>
-<p>A <strong>database index</strong> is a <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Data_structure">data structure</a> that improves the speed of data retrieval operations on a <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Table_(database">database table</a>) at the cost of additional writes and storage space to maintain the index data structure.  -Wikipedia</p>
-</blockquote>
-<p>索引(index)是用来加速数据库表数据检索的一种特殊数据结构，其作用类似于目录，通过减少检索过程中的磁盘IO，提升检索效率，索引的优点可以概括为以下三点</p>
-<ol>
-<li>减少服务器需要扫描的数据量</li>
-<li>避免因检索导致的排序和临时表</li>
-<li>将随机I/O变为顺序I/O</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/11/06/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%90%86%E8%AE%BA/Mysql/MySQL%E7%B4%A2%E5%BC%95%E6%80%BB%E7%BB%93/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">基于Raft的ShardedKV数据库实现</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-09-06 10:52:12 / 修改时间：11:07:31" itemprop="dateCreated datePublished" datetime="2022-09-06T10:52:12+08:00">2022-09-06</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/" itemprop="url" rel="index"><span itemprop="name">项目总结</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="基于Raft的Sharded-KV-数据库实现"><a href="#基于Raft的Sharded-KV-数据库实现" class="headerlink" title="基于Raft的Sharded KV 数据库实现"></a>基于Raft的Sharded KV 数据库实现</h2><blockquote>
-<p>项目来自于<a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.824/index.html">MIT6.824分布式系统</a>的结课大作业，实现代码已上传 <a target="_blank" rel="noopener" href="https://github.com/fuhaifei/ProjectShardKV">github仓库</a>，该博客为项目的总体框架总结，省略了大量的实现细节和代码，细节总结可参考 <a href="https://fuhaifei.github.io/2022/09/06/分布式理论/MIT6.824实验总结/">MIT6.824实验总结</a></p>
-</blockquote>
-<p>该项目实现目标为一个分布式容错的简单KV数据库，系统主要的功能点可以总结为：</p>
-<ol>
-<li>提供包括<code>put(key, value), append(key, value), get(key)</code>的基本kv数据库功能</li>
-<li>基于Raft共识算法的多服务器备份，实现一致性备份存储，实现了系统容错功能</li>
-<li>基于Raft日志的WAL机制以及系统快照机制，允许系统在失效后通过日志重新执行、加载快照等，快速恢复数据</li>
-<li>通过数据分片和多复制服务器组存储方式，实现了系统的高并发访问性能</li>
-<li>支持存储服务器的动态配置，即可以动态的增加删除存储服务器</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/09/06/%E7%BC%96%E7%A8%8B%E6%80%BB%E7%BB%93/%E9%A1%B9%E7%9B%AE%E6%80%BB%E7%BB%93/%E5%9F%BA%E4%BA%8ERaft%E7%9A%84ShardedKV%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%9E%E7%8E%B0/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/09/06/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/post_head.jpg">
-      <meta itemprop="name" content="NEU-FHF">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="光与影的个人博客">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/09/06/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">MIT6.824实验总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-09-06 10:24:17 / 修改时间：11:09:59" itemprop="dateCreated datePublished" datetime="2022-09-06T10:24:17+08:00">2022-09-06</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">大数据理论</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>MIT6.824中共设计了四个实验，主要内容是一个分布式kv数据库。</p>
-<ol>
-<li>mapreduce分布式实现</li>
-<li>raft实现</li>
-<li>基于raft的kv数据库实现</li>
-<li>Sharded KV数据库实现</li>
-</ol>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/09/06/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/MIT6.824%E5%AE%9E%E9%AA%8C%E6%80%BB%E7%BB%93/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1092,20 +1128,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-count">84</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-count">24</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">49</span>
+        <span class="site-state-item-count">47</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

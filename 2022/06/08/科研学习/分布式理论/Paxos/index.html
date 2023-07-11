@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+<script>
+	(function(){
+		if(''){
+			if (prompt('请输入文章密码','') !== ''){
+				alert('密码错误！');
+				history.back();
+			}
+		}
+	})();
+</script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"fuhaifei.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"algolia":{"appID":"Z5NZZSJS0C","apiKey":"15b03f0f88d2c13ed04694ae0ca74f79","indexName":"blog_search_api","hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="分布式共识算法-Paxos共识算法目的是通过一系列通信约束，使得依靠不可靠通信网络上的不同结点之间能够通过算法得到一致的结论（区别于分布式一致性这一概念）,共识算法是实现state machine replication 的基础，后者是分布式系统中较为重要的备份容错算法策略 分布式CAP一个分布式系统只能满足一下三条性质中的两条  Consistency(一致性)：每个客户端的读操作均能读取到最近">
+<meta property="og:type" content="article">
+<meta property="og:title" content="共识算法-Paxos">
+<meta property="og:url" content="https://fuhaifei.github.io/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/index.html">
+<meta property="og:site_name" content="光与影的个人博客">
+<meta property="og:description" content="分布式共识算法-Paxos共识算法目的是通过一系列通信约束，使得依靠不可靠通信网络上的不同结点之间能够通过算法得到一致的结论（区别于分布式一致性这一概念）,共识算法是实现state machine replication 的基础，后者是分布式系统中较为重要的备份容错算法策略 分布式CAP一个分布式系统只能满足一下三条性质中的两条  Consistency(一致性)：每个客户端的读操作均能读取到最近">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/image-20220531103804034.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/image-20220531112542422.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/image-20220531112719316.png">
+<meta property="og:image" content="https://fuhaifei.github.io/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/image-20220531143508710.png">
+<meta property="article:published_time" content="2022-06-08T08:34:20.000Z">
+<meta property="article:modified_time" content="2023-02-09T12:09:32.079Z">
+<meta property="article:author" content="NEU-FHF">
+<meta property="article:tag" content="共识算法">
+<meta property="article:tag" content="CAP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://fuhaifei.github.io/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/image-20220531103804034.png">
+
+<link rel="canonical" href="https://fuhaifei.github.io/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>共识算法-Paxos | 光与影的个人博客</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">光与影的个人博客</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">NEUCoder</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://fuhaifei.github.io/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/post_head.jpg">
+      <meta itemprop="name" content="NEU-FHF">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="光与影的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          共识算法-Paxos
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-06-08 16:34:20" itemprop="dateCreated datePublished" datetime="2022-06-08T16:34:20+08:00">2022-06-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2023-02-09 20:09:32" itemprop="dateModified" datetime="2023-02-09T20:09:32+08:00">2023-02-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">科研学习</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">分布式理论</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="分布式共识算法-Paxos"><a href="#分布式共识算法-Paxos" class="headerlink" title="分布式共识算法-Paxos"></a>分布式共识算法-Paxos</h2><p>共识算法目的是通过一系列通信约束，使得依靠不可靠通信网络上的不同结点之间能够通过算法得到一致的结论（区别于分布式一致性这一概念）,共识算法是实现<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/State_machine_replication">state machine replication</a> 的基础，后者是分布式系统中较为重要的备份容错算法策略</p>
+<h3 id="分布式CAP"><a href="#分布式CAP" class="headerlink" title="分布式CAP"></a>分布式CAP</h3><p>一个分布式系统只能满足一下三条性质中的两条</p>
+<ol>
+<li>Consistency(一致性)：每个客户端的读操作均能读取到最近的写入内容或者返回错误</li>
+<li>Availability(可用性): 客户端的每个请求均能收到非报错响应（回复不一定正确即不一定保证C）</li>
+<li>Partition Tolerance(分区容错性)：不同结点或分区之间的网络故障不会影响系统的正常运行</li>
+</ol>
+<p>为什么说分布式系统只能保证其中两条？</p>
+<ol>
+<li>分布式系统由于系统结点/分区分布于不同的网络环境，通过网络进行通信，不可避免地会出现结点由于网络故障下线问题，为了系统的可用性，必须保证Partition Tolerance</li>
+<li>当部分结点出现网络故障时，面对客户端请求，系统有两种处理方式<ul>
+<li>回退操作，相当于保证了C但舍弃了A</li>
+<li>继续执行操作，由于部分结点下线，此时执行操作无法保证C，但是保证了A</li>
+</ul>
+</li>
+</ol>
+<p>单机系统由于不会出现分布网络失效，所以也就不需要P，可以同时保证CA</p>
+<span id="more"></span>
+<h3 id="Paxos"><a href="#Paxos" class="headerlink" title="Paxos"></a>Paxos</h3><blockquote>
+<p>The Paxos protocol was first submitted in 1989 and named after a fictional legislative consensus system used on the <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Paxi">Paxos</a> island in Greece</p>
+</blockquote>
+<p>Paxos是经典的基于消息传递共识算法，然而理解难度过高，简单整理以加深印象，算法中定义了四种不同的角色（一个结点可以有多个不同的角色）</p>
+<ol>
+<li>Client: 客户端向系统发送请求（例如：向分布式文件系统写入）</li>
+<li>Proposer: 提出提案</li>
+<li>Acceptor:  判断是否接受提案</li>
+<li>Learner: 当提案被接受时，执行具体操作（例如：执行写入操作）</li>
+<li>Leader: 唯一的Proposer</li>
+</ol>
+<p>其他概念</p>
+<ol>
+<li>Proposal: 提案，每个提案由提案号n和提案值组成v:<n, v></li>
+<li>Quorums: 由大多数Accepter组成的集合，用来投票确定是否接受提案</li>
+<li>safety/liveness/fault tolerance: 共识算法的三个形式，类似于CAP三者只能满足其二<ul>
+<li>safety: “坏事”永远不会发生</li>
+<li>liveness: “好事”终将发生</li>
+<li>没太理解和fault tolerance之间的关系和区别</li>
+</ul>
+</li>
+</ol>
+<p>Paxos保证safety+fault tolerance，不保证liveness</p>
+<img src="/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/image-20220531103804034.png" class="" title="image-20220531103804034">
+<h4 id="算法流程（Basic-Paxos）"><a href="#算法流程（Basic-Paxos）" class="headerlink" title="算法流程（Basic Paxos）"></a>算法流程（Basic Paxos）</h4><p>分为确定提案值+接受提案两个阶段</p>
+<ol>
+<li>阶段1（prepare+promise）：该阶段用来收集<strong>历史提案信息</strong><ul>
+<li>由Proposer创建Prepare message，其中包括此次提案号n（n保证大于之前任何Prepare中的n），发送给至少Quorums数量的Acceptor</li>
+<li>接收到Prepare message的Acceptor，根据提案号n确定返回消息类型<ul>
+<li>若当前提案号小于历史Prepare message和提交提案的提案号，不进行响应（过滤历史）</li>
+<li>若大于则根据是否存在历史提交提案，返回历史或者空的<strong>提案值+提案号</strong>（收集信息）</li>
+</ul>
+</li>
+<li>Proposer收到大多数Acceptor的响应信息，进入下一阶段</li>
+</ul>
+</li>
+<li><p>阶段2（accept+accepted）：提交<strong>提案</strong></p>
+<ul>
+<li>Proposer根据接收到的响应类型确定提案value，之后发送Accept message (n,v)到Acceptor<ul>
+<li>若响应中包含提案号m+提案value，将当前提案value设置为最大m对应的value</li>
+<li>若只有Promise响应，将提案value设置为 originally wanted value</li>
+</ul>
+</li>
+<li>若当前提案号小于Acceptor历史Prepare message和提交提案的提案号，不进行响应</li>
+<li>否则提交当前提案，返回信息</li>
+<li>Proposer收到大多数Acceptor的响应信息，确认提交，将提案值发给所有Learner</li>
+</ul>
+<img src="/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/image-20220531112542422.png" class="" title="image-20220531112542422">
+</li>
+</ol>
+<p>只看算法流程很难理解paxos为什么要这么设计，结合以下几个设计出发点方便理解</p>
+<ol>
+<li>paxos整个流程只针对一个值达到共识（多个提案仅仅是不同Proposer对于当前值的提议，最终决定一个），与直觉上的一个提案对应一个共识不同</li>
+<li>算法基于FIFO的原则，现提出提案的最先可能达成共识</li>
+</ol>
+<p>根据对算法流程的分析，Proposer和Acceptor的行为可以理解为：</p>
+<ul>
+<li>Acceptor：无条件接收更新的提案</li>
+<li>Proposer：第一任务是继续提交之前未提交成功的提案值（第一阶段收集信息的作用），只有在没有历史的时候才能自己确定提交value</li>
+</ul>
+<p>Paxos之所以能够保证safty，即保证得到共识，可以从以下角度理解：</p>
+<ul>
+<li>阶段1的存在，保证了不会出现split vote问题（一旦有过半的Acceptor提交了提案，后续继续提交提案的value只能从这些Acceptor中确定）</li>
+<li>提案号递增+多数提交，保证了一致性</li>
+</ul>
+<p>Basic Paxos无法保证livness，即无法保证算法能够终止找到共识</p>
+<ul>
+<li>两个Proposer在Accept阶段争抢,如下<ul>
+<li>Proposer1此时提出提案1，即将走到Accept阶段时，Proposer2提出提案2，导致提案1的编号因为小于最新提案2，无法通过，Proposer1重新提交提案3，导致提案2小于提案3，无法通过</li>
+<li>最终导致无限的抢占，无法达共识</li>
+</ul>
+</li>
+<li>通过Proposer的随机休眠避免抢占冲突发生</li>
+</ul>
+<img src="/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/image-20220531112719316.png" class="" title="image-20220531112719316">
+<h4 id="Multi-Paxos"><a href="#Multi-Paxos" class="headerlink" title="Multi Paxos"></a>Multi Paxos</h4><p>Paxos存在的如下问题，导致其只适合作为理论上的分布式共识算法模型</p>
+<ol>
+<li>模型上只针对一个共识的实现，无法重复进行多次共识操作</li>
+<li>两阶段流程在高并发情况下不仅存在livness问题，通信成本价高</li>
+</ol>
+<p>为了解决Paxos算法上述问题，改进得到Multi Paxos算法</p>
+<ol>
+<li>选举一个固定的Proposer,提案编号中变为 Proposer编号+提案编号<ul>
+<li>通过一个和basic Paxos相同两阶段选举主Proposer</li>
+</ul>
+</li>
+<li>每次提出提案，直接进行第二阶段</li>
+</ol>
+<img src="/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Paxos/image-20220531143508710.png" class="" title="image-20220531143508710">
+<p>Multi Paxos就和Raft以及Zab很接近了</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><ol>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Paxos_(computer_science">Paxos (computer science) From Wikipedia</a>)</li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/31780743">知乎：Paxos算法详解</a></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E5%85%B1%E8%AF%86%E7%AE%97%E6%B3%95/" rel="tag"><i class="fa fa-tag"></i> 共识算法</a>
+              <a href="/tags/CAP/" rel="tag"><i class="fa fa-tag"></i> CAP</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/06/08/%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95%E6%95%B4%E7%90%86/" rel="prev" title="搜索算法整理">
+      <i class="fa fa-chevron-left"></i> 搜索算法整理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/06/08/%E7%A7%91%E7%A0%94%E5%AD%A6%E4%B9%A0/%E5%88%86%E5%B8%83%E5%BC%8F%E7%90%86%E8%AE%BA/Raft/" rel="next" title="共识算法-Raft">
+      共识算法-Raft <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E5%85%B1%E8%AF%86%E7%AE%97%E6%B3%95-Paxos"><span class="nav-number">1.</span> <span class="nav-text">分布式共识算法-Paxos</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8FCAP"><span class="nav-number">1.1.</span> <span class="nav-text">分布式CAP</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Paxos"><span class="nav-number">1.2.</span> <span class="nav-text">Paxos</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%97%E6%B3%95%E6%B5%81%E7%A8%8B%EF%BC%88Basic-Paxos%EF%BC%89"><span class="nav-number">1.2.1.</span> <span class="nav-text">算法流程（Basic Paxos）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Multi-Paxos"><span class="nav-number">1.2.2.</span> <span class="nav-text">Multi Paxos</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">1.3.</span> <span class="nav-text">参考</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="NEU-FHF"
+      src="/images/post_head.jpg">
+  <p class="site-author-name" itemprop="name">NEU-FHF</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">84</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">47</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/fuhaifei" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;fuhaifei" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/fu-hai-fei" title="zhihu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;fu-hai-fei" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>zhihu</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:793515331@qq.com" title="邮件 → mailto:793515331@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>邮件</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1799821187/profile" title="weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1799821187&#x2F;profile" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      世外桃源
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://zhangxuzone.com/" title="http:&#x2F;&#x2F;zhangxuzone.com&#x2F;" rel="noopener" target="_blank">XuGodの后花园</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NEU-FHF</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-user"></i>
+    </span>
+    <span class="site-uv" title="总访客量">
+      已有<span class="busuanzi-value" id="busuanzi_value_site_uv"></span>人访问
+    </span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+  
+
+  
+    <span class="post-meta-item-icon">
+      <i class="fa fa-fa fa-eye"></i>
+    </span>
+    <span class="site-pv" title="总访问量">
+      总访问<span class="busuanzi-value" id="busuanzi_value_site_pv"></span>次
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '7286e7dc83cf6478eb9b',
+      clientSecret: '9874f53101e01e8a47a1520a91ccd73743e974c7',
+      repo        : 'MyBlogComment',
+      owner       : 'fuhaifei',
+      admin       : ['fuhaifei'],
+      id          : 'e0f6157c0adc37333f3bb2cf4192dfb3',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
