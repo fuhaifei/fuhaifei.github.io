@@ -7837,7 +7837,7 @@ shardId := hash(key) \% Server Group Num</script><p>未来可以优化的点：<
 <li>协议层：主要负责实现从内存对象到网络传输数据的相互转换，并按照约定的通信协议进行封装/拆封</li>
 <li>传输层：基于特定IO模型和底层通信协议实现调用数据肚饿传输。</li>
 </ul>
-
+<p><img src="RPC框架整体理解\RPC架构.svg" alt="RPC架构"></p>
 <p>一个RPC框架的主要业务逻辑包括：</p>
 <ol>
 <li>服务注册和上线</li>
@@ -7985,7 +7985,7 @@ shardId := hash(key) \% Server Group Num</script><p>未来可以优化的点：<
 <li><code>TCompactProtocl</code>：带压缩的二进制协议</li>
 </ul>
 <p>整体协议分为head和body两部分，具体格式如下：</p>
-
+<p><img src="RPC框架整体理解\thrift协议.svg" alt="thrift协议"></p>
 <p>其中head包括：</p>
 <ol>
 <li>magic(4byte)：包含版本号，消息类型等，严格模式首位取1，非严格模式首位取0。消息类型包括：<ul>
